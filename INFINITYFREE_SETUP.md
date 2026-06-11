@@ -71,7 +71,7 @@ From InfinityFree control panel:
 - Go to **FTP Manager**
 - Click **New Account** and create FTP access
 - Note: FTP Host, Username, Password
-
+ 
 ### Upload Files
 
 Use an FTP client (FileZilla, Cyberduck, etc.):
