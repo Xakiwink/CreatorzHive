@@ -1,0 +1,54 @@
+<div class="invoices-page">
+  <header class="page-header page-header--primary">
+    <div>
+      <span class="eyebrow">Billing</span>
+      <h1 class="page-title">Invoices</h1>
+      <p class="page-subtitle">Track amounts owed and paid across your deals.</p>
+    </div>
+    <a class="btn btn-secondary" href="?route=deals">← Deals</a>
+  </header>
+
+  <section class="hero-strip hero-strip--quiet" aria-label="Invoices overview">
+    <h2 class="hero-strip-title">Cash flow at a glance</h2>
+    <p>Filter by status, scan totals in the footer row, and jump back to deals when you need context.</p>
+  </section>
+
+  <div class="invoices-toolbar card card--feature card--flat">
+    <label class="sr-only" for="invoiceStatusFilter">Filter by status</label>
+    <select id="invoiceStatusFilter" class="input-select invoices-filter">
+      <option value="">All statuses</option>
+      <option value="draft">Draft</option>
+      <option value="sent">Sent</option>
+      <option value="paid">Paid</option>
+      <option value="overdue">Overdue</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+  </div>
+
+  <div class="card card--feature slide-up">
+    <div class="card-body">
+      <div class="table-wrapper">
+        <table class="table invoices-table" id="invoicesTable">
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Client</th>
+              <th class="num">Amount</th>
+              <th>Status</th>
+              <th>Due</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="invoicesTableBody"></tbody>
+          <tfoot>
+            <tr class="invoices-total-row">
+              <td colspan="2"><strong>Paid total</strong></td>
+              <td class="num" id="invoicesPaidTotal"><strong>—</strong></td>
+              <td colspan="3"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

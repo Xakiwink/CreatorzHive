@@ -1,0 +1,28 @@
+{
+  "name": "creatorzhive/app",
+  "description": "CreatorzHive — creator content, analytics, and deals platform",
+  "license": "proprietary",
+  "require": {
+    "php": ">=7.4",
+    "phpmailer/phpmailer": "^6.8"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.6"
+  },
+  "autoload": {
+    "psr-4": {
+      "CreatorzHive\\": "src/"
+    },
+    "files": [
+      "backend/helpers/functions.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "serve": "php -S 127.0.0.1:8080 -t . dev-server-router.php"
+  }
+}

@@ -1,0 +1,33 @@
+<div class="deals-page">
+  <header class="page-header deals-header page-header--primary">
+    <div>
+      <span class="eyebrow">Monetize</span>
+      <h1 class="page-title">Deals</h1>
+      <p class="page-subtitle">Track brand collaborations from first contact to completion.</p>
+    </div>
+    <div class="deals-header-actions">
+      <a class="btn btn-secondary" href="?route=invoices">Invoices</a>
+      <button type="button" class="btn btn-primary" id="btnNewDeal">+ New deal</button>
+    </div>
+  </header>
+
+  <section class="hero-strip hero-strip--quiet" aria-label="Deals overview">
+    <h2 class="hero-strip-title">From lead to paid invoice</h2>
+    <p>Drag cards on the board, open a deal for detail, and keep revenue summaries in view.</p>
+  </section>
+
+  <div class="revenue-summary dashboard-stat-grid" id="revenueSummary" aria-live="polite"></div>
+
+  <div class="kanban-board" id="kanbanBoard" aria-busy="true"></div>
+</div>
+
+<div class="deal-drawer-overlay hidden" id="dealDrawerOverlay" aria-hidden="true"></div>
+<aside class="deal-drawer hidden" id="dealDrawer" aria-hidden="true" aria-label="Deal details">
+  <div class="deal-drawer-inner">
+    <div class="deal-drawer-header">
+      <h2 class="deal-drawer-title" id="dealDrawerTitle">Deal</h2>
+      <button type="button" class="btn btn-ghost btn-sm" id="dealDrawerClose" aria-label="Close">✕</button>
+    </div>
+    <div class="deal-drawer-body" id="dealDrawerBody"></div>
+  </div>
+</aside>

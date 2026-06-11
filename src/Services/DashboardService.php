@@ -1,0 +1,86 @@
+<?php
+
+declare(strict_types=1);
+
+namespace CreatorzHive\Services;
+
+
+
+use function post_count_by_status;
+use function post_get_recent_by_user;
+use function post_get_upcoming;
+use CreatorzHive\Repositories\DashboardRepository;
+
+/**
+ * Dashboard business \logic(SRP: dashboard use cases).
+ */
+final class DashboardService
+{
+    /** @var DashboardRepository */
+    private $repository;
+
+    /** @var list<string> */
+    private const PLATFORM_SLUGS = ['instagram', 'tiktok', 'youtube', 'facebook', 'twitter'];
+
+    public function __construct(DashboardRepository $repository)
+    {
+        $this->repository = $repository;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function buildPayload(int $userId): array
+    {
+        $summary = $this->repository->findCreatorSummary($userId);
+
+        $stats = [
+            'total_posts' => (int) ($summary['total_posts'] ?? 0),
+            'published_posts' => (int) ($summary['published_posts'] ?? 0),
+            'scheduled_posts' => (int) ($summary['scheduled_posts'] ?? 0),
+            'total_followers' => (int) ($summary['total_followers'] ?? 0),
+            'avg_engagement_rate' => (float) ($summary['avg_engagement_rate'] ?? 0),
+            'total_revenue' => (float) ($summary['total_revenue'] ?? 0),
+            'active_deals' => (int) ($summary['active_deals'] ?? 0),
+            'unread_notifications' => (int) ($summary['unread_notifications'] ?? 0),
+            'trend_posts' => 0,
+            'trend_published' => 0,
+            'trend_scheduled' => 0,
+            'trend_followers' => 0,
+        ];
+
+        $recentPosts = \function_exists('post_get_recent_by_user')
+            ? \post_get_recent_by_user($userId, 5)
+            : [];
+        $upcomingPosts = \function_exists('post_get_upcoming')
+            ? \post_get_upcoming($userId, 5)
+            : [];
+        $breakdown = \function_exists('post_count_by_status')
+            ? \post_count_by_status($userId)
+            : [];
+
+        $accounts = $this->repository->findActiveSocialAccounts($userId);
+        $byPlatform = [];
+        foreach ($accounts as $account) {
+            $byPlatform[(string) $account['platform']] = $account;
+        }
+
+        $platformStatus = [];
+        foreach (self::PLATFORM_SLUGS as $platform) {
+            $acc = $byPlatform[$platform] ?? null;
+            $platformStatus[] = [
+                'platform' => $platform,
+                'connected' => $acc !== null,
+                'username' => $acc['username'] ?? null,
+            ];
+        }
+
+        return [
+            'stats' => $stats,
+            'recent_posts' => $recentPosts,
+            'upcoming_posts' => $upcomingPosts,
+            'platform_status' => $platformStatus,
+            'post_status_breakdown' => $breakdown,
+        ];
+    }
+}

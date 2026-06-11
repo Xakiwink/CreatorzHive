@@ -1,0 +1,22 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block direct access to sensitive paths/files.
+    RewriteRule (^|/)\.env$ - [F,L,NC]
+    RewriteRule ^backend(/|$) - [F,L,NC]
+    RewriteRule ^database(/|$) - [F,L,NC]
+
+    # Route all requests through public/index.php when not a real file/dir.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType font/woff2 .woff2
+    AddType font/woff .woff
+    AddType font/ttf .ttf
+    AddType font/otf .otf
+    AddType application/vnd.ms-fontobject .eot
+    AddType image/svg+xml .svg
+</IfModule>

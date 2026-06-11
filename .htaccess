@@ -1,0 +1,18 @@
+# Prefer the app over a bare directory listing when the docroot is this folder.
+DirectoryIndex index.php index.html
+
+# Hide directory listings (omit if your host forbids Options in .htaccess).
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block sensitive paths (works for subdirectory installs, e.g. /creatorzhive/backend/…).
+    RewriteRule (^|/)\.env$ - [F,L,NC]
+    RewriteRule ^(backend|database|vendor|scripts|tests|\.git)(/|$) - [F,L,NC]
+
+    # Front controller: only when the request is not a real file or directory.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ public/index.php [L]
+</IfModule>

@@ -1,0 +1,8 @@
+.env
+vendor/
+backend/storage/logs/
+backend/storage/cache/
+backend/storage/uploads/
+backend/storage/platform-api-secrets.json
+backend/storage/app-settings.json
+public/uploads/

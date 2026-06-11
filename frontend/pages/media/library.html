@@ -1,0 +1,33 @@
+<div class="media-library-page" id="mediaLibraryPage">
+  <div class="page-header planner-header page-header--primary">
+    <div>
+      <span class="eyebrow">Assets</span>
+      <h1 class="page-title">Media library</h1>
+      <p class="page-subtitle">Upload images and video. Files are stored under <code>public/uploads</code>.</p>
+    </div>
+    <div class="header-actions media-lib-toolbar">
+      <select id="mediaFilterType" class="input-select" aria-label="Media type">
+        <option value="">All types</option>
+        <option value="image">Images</option>
+        <option value="video">Video</option>
+      </select>
+      <button type="button" class="btn btn-primary" id="mediaUploadBtn">Upload</button>
+      <input type="file" id="mediaPageFileInput" accept="image/*,video/mp4,video/webm" multiple hidden>
+    </div>
+  </div>
+
+  <section class="hero-strip hero-strip--quiet" aria-label="Media tips">
+    <h2 class="hero-strip-title">Drop, upload, reuse everywhere</h2>
+    <p>Files live under <code>public/uploads</code> — attach them to planner posts or pick from the library when composing.</p>
+  </section>
+
+  <div class="card card--feature slide-up">
+    <div class="card-body">
+      <div class="media-page-dropzone" id="mediaPageDropzone" tabindex="0">
+        <p>Drag and drop files here or use <strong>Upload</strong> — max 10MB per file.</p>
+      </div>
+      <div id="mediaPageGrid" class="media-page-grid"></div>
+      <div class="media-page-pagination" id="mediaPagePagination"></div>
+    </div>
+  </div>
+</div>

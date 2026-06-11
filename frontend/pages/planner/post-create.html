@@ -1,0 +1,56 @@
+<form id="postComposerForm" class="post-composer">
+  <input type="hidden" id="pmPostId" value="">
+  <div class="quick-post-field">
+    <label for="pmTitle">Title</label>
+    <input type="text" id="pmTitle" required maxlength="255">
+  </div>
+  <div class="quick-post-field">
+    <label for="pmContent">Content <span class="label-hint">(max 500)</span></label>
+    <textarea id="pmContent" rows="6" required maxlength="500"></textarea>
+    <div class="char-count" id="pmCharContent">0 / 500</div>
+  </div>
+  <div class="quick-post-field">
+    <label for="pmCaption">Caption / hashtags</label>
+    <textarea id="pmCaption" rows="2" maxlength="2000"></textarea>
+    <div class="char-count" id="pmCharCaption">0 / 2000</div>
+  </div>
+  <div class="quick-post-field">
+    <span class="field-label">Platforms</span>
+    <div class="platform-cards" id="pmPlatformCards">
+      <label class="platform-card"><input type="checkbox" name="pm_platform" value="instagram"><span>Instagram</span></label>
+      <label class="platform-card"><input type="checkbox" name="pm_platform" value="tiktok"><span>TikTok</span></label>
+      <label class="platform-card"><input type="checkbox" name="pm_platform" value="youtube"><span>YouTube</span></label>
+      <label class="platform-card"><input type="checkbox" name="pm_platform" value="facebook"><span>Facebook</span></label>
+      <label class="platform-card"><input type="checkbox" name="pm_platform" value="twitter"><span>Twitter</span></label>
+    </div>
+  </div>
+  <div class="quick-post-field">
+    <span class="field-label">Media</span>
+    <div class="media-dropzone" id="pmDropzone" tabindex="0">
+      <p>Drag files here or <button type="button" class="btn btn-link" id="pmBrowse">browse</button></p>
+      <input type="file" id="pmFileInput" accept="image/*,video/mp4,video/webm" multiple hidden>
+    </div>
+    <div class="media-preview-grid" id="pmMediaPreview"></div>
+    <button type="button" class="btn btn-ghost btn-sm" id="pmPickLibrary">Choose from library</button>
+  </div>
+  <div class="quick-post-field">
+    <span class="field-label">Tags</span>
+    <div class="tag-input-row">
+      <input type="text" id="pmTagSearch" list="pmTagList" placeholder="Type to filter tags…" autocomplete="off">
+      <datalist id="pmTagList"></datalist>
+      <button type="button" class="btn btn-secondary btn-sm" id="pmTagCreate">New tag</button>
+    </div>
+    <div class="tag-chips" id="pmTagChips"></div>
+  </div>
+  <div class="quick-post-field">
+    <span class="field-label">Status</span>
+    <div class="quick-post-status">
+      <label><input type="radio" name="pm_status" value="draft" checked> Draft</label>
+      <label><input type="radio" name="pm_status" value="scheduled"> Schedule</label>
+    </div>
+  </div>
+  <div class="quick-post-field" id="pmScheduleRow" style="display:none">
+    <label for="pmScheduledAt">Scheduled time</label>
+    <input type="datetime-local" id="pmScheduledAt">
+  </div>
+</form>

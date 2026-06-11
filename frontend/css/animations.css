@@ -1,0 +1,116 @@
+/* ============================================================
+   CreatorzHive — Motion & loading states
+   Prefer reduced motion: animations shorten or disable
+   ============================================================ */
+
+.fade-in {
+  animation: fadeIn var(--duration-normal, 200ms) var(--ease-out, ease);
+}
+
+.slide-up {
+  animation: slideUp var(--duration-slow, 280ms) var(--ease-out, ease);
+}
+
+.slide-down {
+  animation: slideDown 0.22s var(--ease-out, ease);
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-border, #e2e8f0);
+  border-radius: var(--radius-md, 10px);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.65),
+    transparent
+  );
+  animation: shimmer 1.35s var(--ease-in-out, ease-in-out) infinite;
+}
+
+.skeleton-text {
+  height: 12px;
+  margin: var(--space-2, 8px) 0;
+  border-radius: var(--radius-sm, 6px);
+}
+
+.skeleton-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full, 9999px);
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.92;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .slide-up,
+  .slide-down {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .skeleton,
+  .skeleton::after {
+    animation: none !important;
+  }
+
+  .skeleton {
+    background: var(--color-border, #e2e8f0);
+  }
+}

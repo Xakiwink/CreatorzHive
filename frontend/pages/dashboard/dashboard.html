@@ -1,0 +1,94 @@
+      <div class="page-header page-header--primary">
+        <div>
+          <span class="eyebrow">Today</span>
+          <h1 class="page-title" id="dashGreeting">Good morning 👋</h1>
+          <p class="page-subtitle">Here's what's happening with your content today.</p>
+        </div>
+        <button type="button" class="btn btn-primary" id="quickPostBtn">+ New Post</button>
+      </div>
+
+      <section class="hero-strip hero-strip--quiet" aria-label="Overview">
+        <h2 class="hero-strip-title">Your creator workspace</h2>
+        <p>Plan posts, watch performance, and move deals forward — content-first, calm, and focused.</p>
+      </section>
+
+      <div class="dashboard-stat-grid" id="statGrid" aria-busy="true">
+        <div class="stat-card skeleton-block" data-skeleton>
+          <div class="skeleton skeleton-text" style="width:40%;height:14px;margin-bottom:12px"></div>
+          <div class="skeleton skeleton-text" style="width:55%;height:28px"></div>
+          <div class="skeleton skeleton-text" style="width:30%;height:12px;margin-top:10px"></div>
+        </div>
+        <div class="stat-card skeleton-block" data-skeleton>
+          <div class="skeleton skeleton-text" style="width:40%;height:14px;margin-bottom:12px"></div>
+          <div class="skeleton skeleton-text" style="width:55%;height:28px"></div>
+          <div class="skeleton skeleton-text" style="width:30%;height:12px;margin-top:10px"></div>
+        </div>
+        <div class="stat-card skeleton-block" data-skeleton>
+          <div class="skeleton skeleton-text" style="width:40%;height:14px;margin-bottom:12px"></div>
+          <div class="skeleton skeleton-text" style="width:55%;height:28px"></div>
+          <div class="skeleton skeleton-text" style="width:30%;height:12px;margin-top:10px"></div>
+        </div>
+        <div class="stat-card skeleton-block" data-skeleton>
+          <div class="skeleton skeleton-text" style="width:40%;height:14px;margin-bottom:12px"></div>
+          <div class="skeleton skeleton-text" style="width:55%;height:28px"></div>
+          <div class="skeleton skeleton-text" style="width:30%;height:12px;margin-top:10px"></div>
+        </div>
+        <div class="stat-card skeleton-block" data-skeleton>
+          <div class="skeleton skeleton-text" style="width:40%;height:14px;margin-bottom:12px"></div>
+          <div class="skeleton skeleton-text" style="width:55%;height:28px"></div>
+          <div class="skeleton skeleton-text" style="width:30%;height:12px;margin-top:10px"></div>
+        </div>
+        <div class="stat-card skeleton-block" data-skeleton>
+          <div class="skeleton skeleton-text" style="width:40%;height:14px;margin-bottom:12px"></div>
+          <div class="skeleton skeleton-text" style="width:55%;height:28px"></div>
+          <div class="skeleton skeleton-text" style="width:30%;height:12px;margin-top:10px"></div>
+        </div>
+      </div>
+
+      <div class="dashboard-columns">
+        <div class="dashboard-main-col">
+          <div class="card card--feature slide-up">
+            <div class="card-header">
+              <h3>Recent posts</h3>
+            </div>
+            <div class="card-body">
+              <div id="recentPostsMount"></div>
+            </div>
+            <div class="card-footer card-footer-links">
+              <a class="link-muted" id="linkViewAllPosts" href="__CHIVE_ROUTE_PLANNER__">View all posts →</a>
+            </div>
+          </div>
+
+          <div class="card card--feature slide-up dashboard-chart-card" style="margin-top:var(--space-6)">
+            <div class="card-header">
+              <h3>Post status breakdown</h3>
+            </div>
+            <div class="card-body">
+              <div class="chart-wrap">
+                <canvas id="postStatusChart" aria-label="Post status chart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-side-stack">
+          <div class="card card--feature slide-up">
+            <div class="card-header">
+              <h3>Upcoming scheduled</h3>
+            </div>
+            <div class="card-body">
+              <div id="upcomingMount"></div>
+            </div>
+            <div class="card-footer card-footer-links">
+              <a class="link-muted" id="linkFullCalendar" href="__CHIVE_ROUTE_PLANNER__">View full calendar →</a>
+            </div>
+          </div>
+
+          <div class="card card--feature slide-up">
+            <div class="card-header">
+              <h3>Platforms</h3>
+            </div>
+            <div class="card-body" id="platformStatusMount"></div>
+          </div>
+        </div>
+      </div>

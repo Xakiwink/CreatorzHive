@@ -1,0 +1,101 @@
+<div class="planner-page">
+  <div class="page-header planner-header page-header--primary">
+    <div>
+      <span class="eyebrow">Plan</span>
+      <h1 class="page-title">Content Planner</h1>
+      <p class="page-subtitle">Create, schedule, and manage posts across your platforms.</p>
+    </div>
+    <div class="header-actions">
+      <div class="view-toggle" role="tablist">
+        <button type="button" class="btn btn-ghost btn-sm active" data-view="calendar" id="tabCalendar">Calendar</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-view="list" id="tabList">List</button>
+      </div>
+      <button type="button" class="btn btn-primary" id="newPostBtn">+ New Post</button>
+    </div>
+  </div>
+
+  <section class="hero-strip hero-strip--quiet" aria-label="Planner tips">
+    <h2 class="hero-strip-title">Stay ahead of publish dates</h2>
+    <p>Switch between calendar and list, filter by platform, and bulk-update status in one place.</p>
+  </section>
+
+  <div id="calendarView" class="planner-calendar-view">
+    <div class="calendar-toolbar">
+      <button type="button" class="btn btn-ghost btn-sm" id="calPrev" aria-label="Previous month">←</button>
+      <h2 class="calendar-month-label" id="calMonthLabel">—</h2>
+      <button type="button" class="btn btn-ghost btn-sm" id="calNext" aria-label="Next month">→</button>
+    </div>
+    <div class="calendar-grid calendar-weekdays" aria-hidden="true">
+      <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+    </div>
+    <div class="calendar-grid calendar-cells" id="calendarCells"></div>
+  </div>
+
+  <div id="listView" class="planner-list-view" hidden>
+    <div class="planner-filters card card--feature">
+      <div class="card-body planner-filters-inner">
+        <select id="filterStatus" class="input-select" aria-label="Status">
+          <option value="">All statuses</option>
+          <option value="draft">Draft</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="published">Published</option>
+          <option value="failed">Failed</option>
+        </select>
+        <select id="filterPlatform" class="input-select" aria-label="Platform">
+          <option value="">All platforms</option>
+          <option value="instagram">Instagram</option>
+          <option value="tiktok">TikTok</option>
+          <option value="youtube">YouTube</option>
+          <option value="facebook">Facebook</option>
+          <option value="twitter">Twitter</option>
+        </select>
+        <input type="date" id="filterDateFrom" class="input-date" aria-label="From date">
+        <input type="date" id="filterDateTo" class="input-date" aria-label="To date">
+        <input type="search" id="filterSearch" class="input-search" placeholder="Search title or content…">
+        <select id="filterSort" class="input-select" aria-label="Sort">
+          <option value="date:desc">Newest first</option>
+          <option value="date:asc">Oldest first</option>
+          <option value="title:asc">Title A–Z</option>
+          <option value="title:desc">Title Z–A</option>
+          <option value="status:asc">Status</option>
+        </select>
+        <button type="button" class="btn btn-secondary btn-sm" id="filterApply">Apply</button>
+      </div>
+    </div>
+
+    <div class="planner-bulk card card--feature" id="bulkBar" hidden>
+      <div class="card-body planner-bulk-inner">
+        <span id="bulkCount">0 selected</span>
+        <button type="button" class="btn btn-sm btn-ghost" id="bulkDelete">Delete selected</button>
+        <select id="bulkStatus" class="input-select">
+          <option value="">Set status…</option>
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+          <option value="failed">Failed</option>
+        </select>
+        <button type="button" class="btn btn-sm btn-secondary" id="bulkStatusApply">Apply status</button>
+      </div>
+    </div>
+
+    <div class="card card--feature slide-up">
+      <div class="card-body table-overflow">
+        <table class="table planner-table" id="plannerTable">
+          <thead>
+            <tr>
+              <th class="th-check"><input type="checkbox" id="selectAllPosts" title="Select all"></th>
+              <th>Cover</th>
+              <th>Title</th>
+              <th>Platforms</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Tags</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="plannerTableBody"></tbody>
+        </table>
+      </div>
+      <div class="card-footer planner-pagination" id="listPagination"></div>
+    </div>
+  </div>
+</div>
