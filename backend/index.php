@@ -9,6 +9,19 @@ require_once __DIR__ . '/config/app.php';
 
 date_default_timezone_set((string) APP_TIMEZONE);
 
+// === SECURITY: Enforce APP_SECRET in production ===
+if (\defined('APP_ENV') && APP_ENV === 'production') {
+    $appSecret = trim((string) env('APP_SECRET', ''));
+    if (empty($appSecret) || strlen($appSecret) < 16) {
+        http_response_code(500);
+        die(
+            'FATAL: APP_SECRET is not configured in production.' . "\n" .
+            'Add a strong random value to .env: APP_SECRET=' . bin2hex(random_bytes(32)) . "\n" .
+            'Then restart the application.'
+        );
+    }
+}
+
 if (!\defined('CREATORZHIVE_PHPUNIT') || !CREATORZHIVE_PHPUNIT) {
     header('X-Content-Type-Options: nosniff');
     header('X-Frame-Options: SAMEORIGIN');
