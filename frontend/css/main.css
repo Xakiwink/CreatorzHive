@@ -23,18 +23,18 @@
   --gradient-card: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
   --gradient-success: linear-gradient(135deg, #1abc9c 0%, #2ecc71 100%);
 
-  /* Neutrals */
-  --color-bg: #fafaf7;
-  --color-bg-elevated: #ffffff;
-  --color-bg-subtle: #f1f5f9;
-  --color-surface: #ffffff;
-  --color-border: #e2e8f0;
-  --color-border-strong: #cbd5e1;
+  /* Neutrals — Light mode: Warm off-white for reduced eye strain */
+  --color-bg: #f5f3f0;
+  --color-bg-elevated: #fdfcfb;
+  --color-bg-subtle: #ede9e3;
+  --color-surface: #fdfcfb;
+  --color-border: #ddd7cd;
+  --color-border-strong: #cfc7ba;
 
-  /* Text (Deep Ink + muted) */
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #334155;
-  --color-text-muted: #64748b;
+  /* Text (Deep Ink + muted) — Improved contrast */
+  --color-text-primary: #1a1410;
+  --color-text-secondary: #3d3530;
+  --color-text-muted: #6b6359;
   --color-text-inverse: #ffffff;
 
   /* Brand tints */
