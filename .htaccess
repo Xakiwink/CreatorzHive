@@ -6,24 +6,15 @@ Options -Indexes
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /
 
-    # Block sensitive paths (works for subdirectory installs, e.g. /creatorzhive/backend/…).
+    # Block sensitive paths
     RewriteRule (^|/)\.env$ - [F,L,NC]
     RewriteRule ^(backend|database|vendor|scripts|tests|\.git)(/|$) - [F,L,NC]
 
-    # Allow requests already in /public directory to pass through
-    RewriteCond %{REQUEST_URI} ^/public/
-    RewriteRule ^ - [L]
-
-    # Route static files and directories to /public if they exist there
+    # Allow real files and directories to be served directly
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond /public%{REQUEST_URI} -f
-    RewriteRule ^(.*)$ /public/$1 [L]
 
-    # Route requests that don't exist in root to /public/index.php (for web interface)
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ /public/index.php [L]
+    # Route to public/index.php (front controller)
+    RewriteRule ^ public/index.php [L]
 </IfModule>
