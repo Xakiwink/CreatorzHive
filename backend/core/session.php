@@ -22,7 +22,7 @@ function session_start_safe(): void
         'path' => '/',
         'secure' => (bool) env('SESSION_SECURE', false),
         'httponly' => true,
-        'samesite' => 'Strict',
+        'samesite' => 'Lax',
     ]);
 
     session_start();
