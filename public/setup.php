@@ -22,15 +22,24 @@ declare(strict_types=1);
 
 // === SECURITY CHECKS ===
 
-// Only allow setup from localhost or if explicitly enabled
+// Allow setup from localhost by default, or if SETUP_ALLOWED_IPS env var is set
+// For InfinityFree: set SETUP_ALLOWED_IPS=* in .env to allow any IP (less secure but needed for shared hosting)
 $allowedIps = ['127.0.0.1', '::1'];
-$forceIp = getenv('SETUP_ALLOWED_IP');
-if ($forceIp) {
-    $allowedIps[] = trim((string) $forceIp);
-}
+$setupAllowedIps = getenv('SETUP_ALLOWED_IPS');
 
-$remoteIp = $_SERVER['REMOTE_ADDR'] ?? '';
-$isLocalhost = in_array($remoteIp, $allowedIps, true);
+if ($setupAllowedIps === '*') {
+    // Allow from any IP (use only during first setup, then delete this file!)
+    $isLocalhost = true;
+} else {
+    if ($setupAllowedIps) {
+        // Add comma-separated IPs from .env
+        foreach (explode(',', $setupAllowedIps) as $ip) {
+            $allowedIps[] = trim($ip);
+        }
+    }
+    $remoteIp = $_SERVER['REMOTE_ADDR'] ?? '';
+    $isLocalhost = in_array($remoteIp, $allowedIps, true);
+}
 
 // Check if already set up (setup.lock file)
 $setupLockFile = dirname(__FILE__) . '/setup.lock';

@@ -6,6 +6,10 @@
     RewriteRule ^backend(/|$) - [F,L,NC]
     RewriteRule ^database(/|$) - [F,L,NC]
 
+    # Allow direct access to setup.php and webhook files (needed for deployment and background jobs)
+    RewriteRule ^setup\.php$ - [L]
+    RewriteRule ^webhook/process-jobs\.php$ - [L]
+
     # Route all requests through public/index.php when not a real file/dir.
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
