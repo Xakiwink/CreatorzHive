@@ -6,3 +6,4 @@ backend/storage/uploads/
 backend/storage/platform-api-secrets.json
 backend/storage/app-settings.json
 public/uploads/
+deploy.php
