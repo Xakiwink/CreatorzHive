@@ -123,7 +123,7 @@ MAIL_USERNAME=your@gmail.com
 MAIL_PASSWORD=your_16_char_app_password    # NOT your Gmail password!
 MAIL_FROM_ADDRESS=your@gmail.com
 MAIL_FROM_NAME=CreatorzHive
-
+ 
 # Security (from Step 1 pre-deployment)
 APP_SECRET=<paste_generated_secret>
 SESSION_SECURE=true
