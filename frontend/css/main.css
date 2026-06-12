@@ -23,13 +23,13 @@
   --gradient-card: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
   --gradient-success: linear-gradient(135deg, #1abc9c 0%, #2ecc71 100%);
 
-  /* Neutrals — Light mode: Warm off-white for reduced eye strain */
-  --color-bg: #f5f3f0;
-  --color-bg-elevated: #fdfcfb;
-  --color-bg-subtle: #ede9e3;
-  --color-surface: #fdfcfb;
-  --color-border: #ddd7cd;
-  --color-border-strong: #cfc7ba;
+  /* Neutrals — Light mode: Creamy gray for comfortable viewing */
+  --color-bg: #e8e4df;
+  --color-bg-elevated: #f5f1ec;
+  --color-bg-subtle: #ddd8d1;
+  --color-surface: #f5f1ec;
+  --color-border: #d4cfc5;
+  --color-border-strong: #c8c0b5;
 
   /* Text (Deep Ink + muted) — Improved contrast */
   --color-text-primary: #1a1410;
