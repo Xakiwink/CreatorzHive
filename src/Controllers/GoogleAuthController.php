@@ -75,6 +75,9 @@ final class GoogleAuthController extends AbstractController
             $role = 'creator';
         }
 
+        // Force a new Set-Cookie header so any existing SameSite=Strict cookie is replaced with Lax before the cross-site redirect.
+        session_regenerate_safe();
+
         $state = bin2hex(random_bytes(16));
         session_set('google_auth_state', $state);
         session_set('google_auth_role', $role);
