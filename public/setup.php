@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 // Allow setup from localhost by default, or if SETUP_ALLOWED_IPS env var is set
 // For InfinityFree: set SETUP_ALLOWED_IPS=* in .env to allow any IP (less secure but needed for shared hosting)
+$remoteIp = $_SERVER['REMOTE_ADDR'] ?? '';
 $allowedIps = ['127.0.0.1', '::1'];
 $setupAllowedIps = getenv('SETUP_ALLOWED_IPS');
 
@@ -37,7 +38,6 @@ if ($setupAllowedIps === '*') {
             $allowedIps[] = trim($ip);
         }
     }
-    $remoteIp = $_SERVER['REMOTE_ADDR'] ?? '';
     $isLocalhost = in_array($remoteIp, $allowedIps, true);
 }
 
@@ -514,7 +514,7 @@ $dbHost = getenv('DB_HOST') ?: '127.0.0.1';
                 Setup endpoints should only be accessible from your local machine or trusted network.
                 <br><br>
                 To allow your IP, add this to your .env file:
-                <br><code style="background: #f5f5f5; padding: 2px 6px;">SETUP_ALLOWED_IP=<?= htmlspecialchars($remoteIp) ?></code>
+                <br><code style="background: #f5f5f5; padding: 2px 6px;">SETUP_ALLOWED_IPS=<?= htmlspecialchars($remoteIp) ?></code>
             </div>
 
         <?php else: ?>
