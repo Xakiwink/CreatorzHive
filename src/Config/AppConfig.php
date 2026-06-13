@@ -23,6 +23,9 @@ final class AppConfig
 
     public function __construct()
     {
+        // Ensure .env is loaded before reading configuration
+        $this->ensureEnvLoaded();
+
         $this->name = 'CreatorzHive';
         $this->version = '1.0.0';
         $this->url = (string) $this->envString('APP_URL', 'http://localhost/creatorzhive');
@@ -109,6 +112,57 @@ final class AppConfig
     public function appSecret(): string
     {
         return (string) $this->envString('APP_SECRET', '');
+    }
+
+    private function ensureEnvLoaded(): void
+    {
+        // Check if DB_HOST is already in environment
+        if (!empty(getenv('DB_HOST'))) {
+            return;
+        }
+
+        $envFile = $this->findEnvFile();
+        if (!file_exists($envFile) || !is_readable($envFile)) {
+            return;
+        }
+
+        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($lines === false) {
+            return;
+        }
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '' || strpos($line, '#') === 0 || strpos($line, '=') === false) {
+                continue;
+            }
+
+            [$key, $value] = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value, ' "\'');
+
+            if ($key !== '') {
+                $_ENV[$key] = $value;
+                putenv($key . '=' . $value);
+            }
+        }
+    }
+
+    private function findEnvFile(): string
+    {
+        $paths = [
+            dirname(__DIR__, 2) . '/.env',
+            dirname(__DIR__, 3) . '/.env',
+            dirname(__DIR__, 4) . '/.env',
+        ];
+
+        foreach ($paths as $path) {
+            if (file_exists($path)) {
+                return $path;
+            }
+        }
+
+        return dirname(__DIR__, 2) . '/.env';
     }
 
     private function envString(string $key, string $default): string
