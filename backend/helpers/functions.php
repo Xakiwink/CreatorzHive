@@ -337,6 +337,13 @@ if (!function_exists('google_auth_start_url')) {
     }
 }
 
+if (!function_exists('meta_auth_start_url')) {
+    function meta_auth_start_url(string $platform = 'instagram'): string
+    {
+        return route_url('oauth-connect', ['platform' => $platform]);
+    }
+}
+
 if (!function_exists('app_connection')) {
     /**
      * OOP database connection when the application container is booted.

@@ -4,6 +4,7 @@ $csrf = htmlspecialchars(session_get('_csrf_token', ''), ENT_QUOTES, 'UTF-8');
 $authError = session_get_flash('auth_error');
 $authSuccess = session_get_flash('auth_success');
 $googleAuthStartUrl = google_auth_start_url('creator');
+$metaAuthStartUrl = meta_auth_start_url('instagram');
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -61,8 +62,9 @@ $googleAuthStartUrl = google_auth_start_url('creator');
         ?></p>
         <div class="social-row">
           <p class="social-row-label">Or continue with</p>
-          <div class="social-buttons social-buttons--single">
-            <a class="btn-google" href="<?= htmlspecialchars($googleAuthStartUrl) ?>">Continue with Google</a>
+          <div class="social-buttons social-buttons--dual">
+            <a class="btn-google" href="<?= htmlspecialchars($googleAuthStartUrl) ?>">Google</a>
+            <a class="btn-facebook" href="<?= htmlspecialchars($metaAuthStartUrl) ?>">Facebook</a>
           </div>
         </div>
         <p class="small">No account? <a href="<?= htmlspecialchars(route_url('register')) ?>">Create one</a></p>
