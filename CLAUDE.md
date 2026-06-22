@@ -156,7 +156,6 @@ Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>
 ### Read First
 - [INFINITYFREE_SETUP.md](docs/guides/INFINITYFREE_SETUP.md) — Deployment guide
 - [CODEBASE_ORGANIZATION.md](docs/guides/CODEBASE_ORGANIZATION.md) — File structure
-- [docs/code-explanations/](docs/code-explanations/) — 126 detailed file explanations
 
 ### Key References
 - [docs/MASTER_PROJECT_GUIDE.md](docs/MASTER_PROJECT_GUIDE.md) — Complete reference
