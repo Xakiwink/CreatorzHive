@@ -47,6 +47,9 @@ if (!function_exists('load_env')) {
 
             $_ENV[$key] = $value;
             putenv(sprintf('%s=%s', $key, $value));
+
+            // Force set in $_SERVER for environments where putenv() doesn't work
+            $_SERVER[$key] = $value;
         }
 
         $loaded = true;
@@ -56,7 +59,8 @@ if (!function_exists('load_env')) {
 if (!function_exists('env')) {
     function env(string $key, $default = null)
     {
-        $value = $_ENV[$key] ?? getenv($key);
+        // Check $_ENV first, then getenv(), then $_SERVER (fallback for restricted servers)
+        $value = $_ENV[$key] ?? getenv($key) ?? $_SERVER[$key] ?? null;
 
         if ($value === false || $value === null || $value === '') {
             return $default;
