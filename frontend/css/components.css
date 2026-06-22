@@ -517,6 +517,20 @@ input.success:focus {
   background: var(--color-bg);
 }
 
+/* --- Composer wide-modal override --- */
+.modal--composer {
+  width: min(1100px, 96vw);
+  max-height: min(92vh, 880px);
+}
+
+.modal--composer .modal-body {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 /* ---------- Toasts ---------- */
 
 .toast-container {

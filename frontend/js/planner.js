@@ -4,10 +4,20 @@
   let listPage = 1;
   let currentView = 'calendar';
   let allTags = [];
+  let activePreviewPlatform = 'instagram';
   const composerMedia = [];
   /** @type {Set<number>} */
   const selectedTagIds = new Set();
   const selectedPostIds = new Set();
+
+  const PLATFORM_LIMITS = {
+    instagram: 2200,
+    facebook: 63206,
+    twitter: 280,
+    tiktok: 2200,
+    youtube_title: 100,
+    youtube: 5000,
+  };
 
   function fetchRouteJson(route, query) {
     return fetch(window.routeQuery(route, query || {}), {
@@ -413,24 +423,32 @@
     wrap.innerHTML = '';
     composerMedia.forEach(function (item, idx) {
       const div = document.createElement('div');
-      div.className = 'media-preview-item';
+      div.className = 'media-preview-item-v2' + (idx === 0 ? ' is-cover' : '');
       const url = item.thumb || item.url;
-      if (item.mime && item.mime.indexOf('video/') === 0) {
-        div.innerHTML = '<video src="' + Utils.escapeHtml(item.url) + '" muted></video>';
+      const isVideo = item.mime && item.mime.indexOf('video/') === 0;
+      if (isVideo) {
+        div.innerHTML = '<video src="' + Utils.escapeHtml(item.url) + '" muted></video>' +
+          '<span class="pm-type-badge">VID</span>';
       } else {
         div.innerHTML = '<img src="' + Utils.escapeHtml(url) + '" alt="">';
       }
+      if (idx === 0) {
+        div.insertAdjacentHTML('beforeend', '<span class="pm-cover-badge">Cover</span>');
+      }
       const rm = document.createElement('button');
       rm.type = 'button';
-      rm.className = 'rm';
+      rm.className = 'pm-rm';
+      rm.setAttribute('aria-label', 'Remove');
       rm.textContent = '×';
       rm.addEventListener('click', function () {
         composerMedia.splice(idx, 1);
         renderComposerMedia();
+        updatePreview();
       });
       div.appendChild(rm);
       wrap.appendChild(div);
     });
+    updatePreview();
   }
 
   function resetComposer() {
@@ -456,23 +474,316 @@
     });
     composerMedia.length = 0;
     selectedTagIds.clear();
+    activePreviewPlatform = 'instagram';
     renderComposerMedia();
     renderComposerTags();
-    const cc = document.getElementById('pmCharContent');
-    if (cc) cc.textContent = '0 / 500';
-    const cp = document.getElementById('pmCharCaption');
-    if (cp) cp.textContent = '0 / 2000';
+    updateCharCounters();
+    updatePreview();
   }
+
+  /* ── Preview engine ──────────────────────────────────────── */
+
+  function updateCharCounters() {
+    const ta = document.getElementById('pmContent');
+    const cap = document.getElementById('pmCaption');
+    const contentLen = ta ? ta.value.length : 0;
+    const captionLen = cap ? cap.value.length : 0;
+
+    const cc = document.getElementById('pmCharContent');
+    if (cc) {
+      cc.textContent = String(contentLen);
+      cc.className = 'char-counter' +
+        (contentLen > 4500 ? ' over' : contentLen > 4000 ? ' warn' : '');
+    }
+    const cp = document.getElementById('pmCharCaption');
+    if (cp) {
+      cp.textContent = captionLen + ' / 2200';
+      cp.className = 'char-counter' +
+        (captionLen > 2200 ? ' over' : captionLen > 1980 ? ' warn' : '');
+    }
+
+    const warnWrap = document.getElementById('pmPlatformCharWarnings');
+    if (!warnWrap) return;
+    warnWrap.innerHTML = '';
+    const text = ta ? ta.value : '';
+    const checkedPlatforms = Array.from(document.querySelectorAll('input[name="pm_platform"]:checked'))
+      .map(function (c) { return c.value; });
+    checkedPlatforms.forEach(function (plat) {
+      const limit = PLATFORM_LIMITS[plat] || 0;
+      if (!limit) return;
+      const len = text.length;
+      if (len > limit) {
+        const badge = document.createElement('span');
+        badge.className = 'pcw-badge over';
+        badge.textContent = plat + ': ' + len + '/' + limit + ' (over by ' + (len - limit) + ')';
+        warnWrap.appendChild(badge);
+      } else if (len > limit * 0.9) {
+        const badge = document.createElement('span');
+        badge.className = 'pcw-badge warn';
+        badge.textContent = plat + ': ' + len + '/' + limit;
+        warnWrap.appendChild(badge);
+      }
+    });
+  }
+
+  function getPreviewData() {
+    const text = (document.getElementById('pmContent')?.value || '').trim();
+    const caption = (document.getElementById('pmCaption')?.value || '').trim();
+    const title = (document.getElementById('pmTitle')?.value || '').trim();
+    const firstMedia = composerMedia[0] || null;
+    const mediaUrl = firstMedia ? (firstMedia.thumb || firstMedia.url) : null;
+    const isVideo = firstMedia && firstMedia.mime && firstMedia.mime.indexOf('video/') === 0;
+    return { text: text, caption: caption, title: title, mediaUrl: mediaUrl, isVideo: isVideo };
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function buildInstagramPreview(d) {
+    const body = d.caption || d.text;
+    const media = d.mediaUrl
+      ? (d.isVideo
+          ? '<video src="' + escHtml(d.mediaUrl) + '" muted playsinline style="width:100%;height:100%;object-fit:cover"></video>'
+          : '<img src="' + escHtml(d.mediaUrl) + '" alt="" style="width:100%;height:100%;object-fit:cover">')
+      : '<div class="preview-ig-placeholder"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>No image yet</span></div>';
+
+    const captionHtml = body
+      ? '<p class="preview-ig-caption"><span class="ig-username-inline">you</span> ' + escHtml(body).replace(/\n/g, '<br>') + '</p>'
+      : '<p class="preview-ig-caption" style="color:#aaa;font-style:italic">Your caption will appear here…</p>';
+
+    return '<div class="post-preview-card">' +
+      '<div class="preview-ig-header">' +
+        '<div class="preview-ig-avatar">Y</div>' +
+        '<span class="preview-ig-username">you</span>' +
+        '<span class="preview-ig-more">···</span>' +
+      '</div>' +
+      '<div class="preview-ig-image">' + media + '</div>' +
+      '<div class="preview-ig-actions">' +
+        '<svg class="preview-ig-actions" style="width:22px;height:22px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>' +
+        '<svg style="width:22px;height:22px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>' +
+        '<svg style="width:22px;height:22px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
+        '<svg class="ig-save" style="width:22px;height:22px;margin-left:auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>' +
+      '</div>' +
+      '<div class="preview-ig-body">' +
+        '<div class="preview-ig-likes">1,234 likes</div>' +
+        captionHtml +
+        '<div class="preview-ig-time">Just now</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function buildFacebookPreview(d) {
+    const body = d.text;
+    const media = d.mediaUrl
+      ? (d.isVideo
+          ? '<video src="' + escHtml(d.mediaUrl) + '" muted playsinline style="width:100%;height:100%;object-fit:cover"></video>'
+          : '<img src="' + escHtml(d.mediaUrl) + '" alt="" style="width:100%;height:100%;object-fit:cover">')
+      : '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+
+    const bodyHtml = body
+      ? '<div class="preview-fb-body">' + escHtml(body).replace(/\n/g, '<br>') + '</div>'
+      : '<div class="preview-fb-body" style="color:#aaa;font-style:italic">Your post text will appear here…</div>';
+
+    return '<div class="post-preview-card">' +
+      '<div class="preview-fb-header">' +
+        '<div class="preview-fb-avatar">Y</div>' +
+        '<div class="preview-fb-meta">' +
+          '<div class="preview-fb-name">Your Page</div>' +
+          '<div class="preview-fb-sub">Just now · 🌐</div>' +
+        '</div>' +
+      '</div>' +
+      bodyHtml +
+      '<div class="preview-fb-image">' + media + '</div>' +
+      '<div class="preview-fb-reactions">' +
+        '<div class="preview-fb-react-icons">👍 ❤️ 😮</div>' +
+        '<span>123 · 12 comments</span>' +
+      '</div>' +
+      '<div class="preview-fb-action-row">' +
+        '<div class="preview-fb-action"><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg> Like</div>' +
+        '<div class="preview-fb-action"><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Comment</div>' +
+        '<div class="preview-fb-action"><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function buildTwitterPreview(d) {
+    const body = d.text;
+    const limit = PLATFORM_LIMITS.twitter;
+    const len = body.length;
+    const pct = Math.min(len / limit, 1);
+    const over = len > limit;
+    const warn = len > limit * 0.9;
+    const circumference = 2 * Math.PI * 9;
+    const offset = circumference * (1 - pct);
+    const ringColor = over ? '#f44336' : warn ? '#f59e0b' : '#1d9bf0';
+
+    const media = d.mediaUrl
+      ? (d.isVideo
+          ? '<video src="' + escHtml(d.mediaUrl) + '" muted playsinline style="width:100%;height:100%;object-fit:cover"></video>'
+          : '<img src="' + escHtml(d.mediaUrl) + '" alt="" style="width:100%;height:100%;object-fit:cover">')
+      : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="opacity:.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+
+    const bodyHtml = body
+      ? '<div class="preview-tw-body' + (over ? ' over-limit' : '') + '">' + escHtml(body).replace(/\n/g, '<br>') + '</div>'
+      : '<div class="preview-tw-body" style="color:#aaa;font-style:italic">What\'s happening?</div>';
+
+    const charLeft = limit - len;
+    const charLabel = over
+      ? '<span style="color:#f44336;font-weight:700">-' + Math.abs(charLeft) + '</span>'
+      : String(charLeft);
+
+    return '<div class="post-preview-card preview-tw">' +
+      '<div class="preview-tw-header">' +
+        '<div class="preview-tw-avatar">Y</div>' +
+        '<div class="preview-tw-meta">' +
+          '<div class="preview-tw-name-row"><span class="preview-tw-name">You</span><span class="preview-tw-verified">✓</span></div>' +
+          '<div class="preview-tw-handle">@yourhandle</div>' +
+        '</div>' +
+      '</div>' +
+      bodyHtml +
+      (d.mediaUrl ? '<div class="preview-tw-image">' + media + '</div>' : '') +
+      '<div class="preview-tw-actions">' +
+        '<div class="preview-tw-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Reply</div>' +
+        '<div class="preview-tw-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3"/></svg> RT</div>' +
+        '<div class="preview-tw-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>' +
+      '</div>' +
+      '<div class="preview-tw-char-row">' +
+        charLabel +
+        '<div class="tw-ring-wrap">' +
+          '<svg width="24" height="24" viewBox="0 0 24 24">' +
+            '<circle class="tw-ring-bg" cx="12" cy="12" r="9" stroke-dasharray="' + circumference + '" stroke-dashoffset="0"/>' +
+            '<circle class="tw-ring-fg' + (over ? ' over' : warn ? ' warn' : '') + '" cx="12" cy="12" r="9"' +
+              ' stroke="' + ringColor + '"' +
+              ' stroke-dasharray="' + circumference + '"' +
+              ' stroke-dashoffset="' + offset + '"/>' +
+          '</svg>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function buildTiktokPreview(d) {
+    const caption = d.caption || d.text;
+    const media = d.mediaUrl
+      ? (d.isVideo
+          ? '<video src="' + escHtml(d.mediaUrl) + '" muted playsinline loop style="width:100%;height:100%;object-fit:cover"></video>'
+          : '<img src="' + escHtml(d.mediaUrl) + '" alt="" style="width:100%;height:100%;object-fit:cover">')
+      : '<div class="preview-tiktok-placeholder-bg"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>';
+
+    const lines = caption
+      ? escHtml(caption).replace(/\n/g, ' ')
+      : '<span style="opacity:.5">Your caption here…</span>';
+
+    return '<div class="preview-tiktok-wrap">' +
+      '<div class="preview-tiktok-phone">' +
+        '<div class="preview-tiktok-video-area">' + media + '</div>' +
+        '<div class="preview-tiktok-overlay">' +
+          '<div class="preview-tiktok-user">@you <span class="tiktok-follow-btn">Follow</span></div>' +
+          '<div class="preview-tiktok-caption">' + lines + '</div>' +
+          '<div class="preview-tiktok-sound">♪ Original sound - you</div>' +
+        '</div>' +
+        '<div class="preview-tiktok-sidebar">' +
+          '<div class="tiktok-sidebar-item"><svg viewBox="0 0 24 24" fill="white"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>89K</div>' +
+          '<div class="tiktok-sidebar-item"><svg viewBox="0 0 24 24" fill="white"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>4.2K</div>' +
+          '<div class="tiktok-sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function buildYoutubePreview(d) {
+    const titleText = d.title || (d.text.substring(0, 100)) || 'Your video title';
+    const media = d.mediaUrl
+      ? (d.isVideo
+          ? '<video src="' + escHtml(d.mediaUrl) + '" muted playsinline style="width:100%;height:100%;object-fit:cover"></video>'
+          : '<img src="' + escHtml(d.mediaUrl) + '" alt="" style="width:100%;height:100%;object-fit:cover">')
+      : '<div class="preview-yt-placeholder-bg"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>';
+
+    return '<div class="post-preview-card">' +
+      '<div class="preview-yt-thumbnail">' +
+        media +
+        '<div class="preview-yt-play-btn"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>' +
+        '<span class="preview-yt-duration-badge">0:00</span>' +
+      '</div>' +
+      '<div class="preview-yt-info">' +
+        '<div class="preview-yt-channel-avatar">Y</div>' +
+        '<div class="preview-yt-meta">' +
+          '<div class="preview-yt-title">' + escHtml(titleText) + '</div>' +
+          '<div class="preview-yt-channel-name">Your Channel</div>' +
+          '<div class="preview-yt-stats">0 views · Just now</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function switchPreviewPlatform(platform) {
+    activePreviewPlatform = platform;
+    document.querySelectorAll('.preview-tab').forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-preview-platform') === platform);
+    });
+    updatePreview();
+  }
+
+  function updatePreview() {
+    const container = document.getElementById('previewContent');
+    const charInfo = document.getElementById('previewCharInfo');
+    if (!container) return;
+    const d = getPreviewData();
+    let html = '';
+    switch (activePreviewPlatform) {
+      case 'instagram': html = buildInstagramPreview(d); break;
+      case 'facebook':  html = buildFacebookPreview(d);  break;
+      case 'twitter':   html = buildTwitterPreview(d);   break;
+      case 'tiktok':    html = buildTiktokPreview(d);    break;
+      case 'youtube':   html = buildYoutubePreview(d);   break;
+      default:          html = buildInstagramPreview(d);
+    }
+    container.innerHTML = html;
+    if (charInfo) {
+      const limit = PLATFORM_LIMITS[activePreviewPlatform] || 0;
+      const len = activePreviewPlatform === 'youtube' ? d.title.length : d.text.length;
+      if (limit) {
+        const left = limit - len;
+        const cls = left < 0 ? 'over' : '';
+        charInfo.className = 'preview-char-info ' + cls;
+        charInfo.textContent = left < 0
+          ? (Math.abs(left) + ' characters over the ' + limit + ' limit')
+          : (left + ' characters remaining');
+      } else {
+        charInfo.className = 'preview-char-info';
+        charInfo.textContent = '';
+      }
+    }
+  }
+
+  /* ── End preview engine ─────────────────────────────────── */
 
   function bindComposerLive() {
     const ta = document.getElementById('pmContent');
     const cap = document.getElementById('pmCaption');
-    ta?.addEventListener('input', function () {
-      document.getElementById('pmCharContent').textContent = ta.value.length + ' / 500';
+    const title = document.getElementById('pmTitle');
+
+    function onInput() {
+      updateCharCounters();
+      updatePreview();
+    }
+
+    ta?.addEventListener('input', onInput);
+    cap?.addEventListener('input', onInput);
+    title?.addEventListener('input', onInput);
+
+    document.querySelectorAll('input[name="pm_platform"]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        updateCharCounters();
+        updatePreview();
+      });
     });
-    cap?.addEventListener('input', function () {
-      document.getElementById('pmCharCaption').textContent = cap.value.length + ' / 2000';
-    });
+
     document.querySelectorAll('input[name="pm_status"]').forEach(function (r) {
       r.addEventListener('change', function () {
         const v = document.querySelector('input[name="pm_status"]:checked')?.value;
@@ -500,6 +811,12 @@
           mime: f.mime_type,
         });
         renderComposerMedia();
+      });
+    });
+
+    document.querySelectorAll('.preview-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        switchPreviewPlatform(btn.getAttribute('data-preview-platform') || 'instagram');
       });
     });
 
@@ -568,20 +885,24 @@
         '<div id="postComposerMount"><p class="text-muted" style="padding:12px">Loading form…</p></div>',
         '<button type="button" class="btn btn-primary" id="pmSave">Save Post</button><button type="button" class="btn btn-ghost" id="pmCancel">Cancel</button>',
       );
+      document.getElementById('modal')?.classList.add('modal--composer');
       document.getElementById('pmSave').addEventListener('click', submitPostForm);
       document.getElementById('pmCancel').addEventListener('click', function () {
         window.Modal.close();
+        document.getElementById('modal')?.classList.remove('modal--composer');
       });
+      document.getElementById('modalClose')?.addEventListener('click', function () {
+        document.getElementById('modal')?.classList.remove('modal--composer');
+      }, { once: true });
       fetch(assetPath('frontend/pages/planner/post-create.html'))
-        .then(function (r) {
-          return r.text();
-        })
+        .then(function (r) { return r.text(); })
         .then(function (html) {
           document.getElementById('postComposerMount').innerHTML = html;
           bindComposerLive();
           resetComposer();
           renderComposerMedia();
           renderComposerTags();
+          updatePreview();
           if (dateStr) {
             const sr = document.querySelector('input[name="pm_status"][value="scheduled"]');
             if (sr) sr.checked = true;
@@ -607,10 +928,15 @@
           '<div id="postComposerMount"><p class="text-muted" style="padding:12px">Loading form…</p></div>',
           '<button type="button" class="btn btn-primary" id="pmSave">Save Post</button><button type="button" class="btn btn-ghost" id="pmCancel">Cancel</button>',
         );
+        document.getElementById('modal')?.classList.add('modal--composer');
         document.getElementById('pmSave').addEventListener('click', submitPostForm);
         document.getElementById('pmCancel').addEventListener('click', function () {
           window.Modal.close();
+          document.getElementById('modal')?.classList.remove('modal--composer');
         });
+        document.getElementById('modalClose')?.addEventListener('click', function () {
+          document.getElementById('modal')?.classList.remove('modal--composer');
+        }, { once: true });
         return fetch(assetPath('frontend/pages/planner/post-create.html')).then(function (r) {
           return r.text().then(function (html) {
             return { p: p, html: html };
@@ -630,26 +956,31 @@
           if (cb) cb.checked = true;
         });
 
-        const statusWrap = document.querySelector('#postComposerForm .quick-post-status');
-        if (statusWrap && p.status === 'published') {
-          const lab = document.createElement('label');
-          lab.innerHTML =
-            '<input type="radio" name="pm_status" value="published" data-edit-extra="1"> Published';
-          statusWrap.appendChild(lab);
-        }
         if (p.status === 'published') {
-          document.querySelector('input[name="pm_status"][value="published"]').checked = true;
+          const statusRow = document.querySelector('.status-toggle-row');
+          if (statusRow) {
+            const lab = document.createElement('label');
+            lab.className = 'status-toggle-opt';
+            lab.innerHTML =
+              '<input type="radio" name="pm_status" value="published" data-edit-extra="1">' +
+              '<span class="status-toggle-lbl">Published</span>';
+            statusRow.appendChild(lab);
+            lab.querySelector('input').checked = true;
+          }
         } else if (p.status === 'scheduled') {
-          document.querySelector('input[name="pm_status"][value="scheduled"]').checked = true;
+          const sr = document.querySelector('input[name="pm_status"][value="scheduled"]');
+          if (sr) sr.checked = true;
         } else {
-          document.querySelector('input[name="pm_status"][value="draft"]').checked = true;
+          const dr = document.querySelector('input[name="pm_status"][value="draft"]');
+          if (dr) dr.checked = true;
         }
+
         const showSched = p.status === 'scheduled';
         document.getElementById('pmScheduleRow').style.display = showSched ? 'block' : 'none';
         if (p.scheduled_at) {
-          const d = new Date(p.scheduled_at);
-          if (!Number.isNaN(d.getTime())) {
-            document.getElementById('pmScheduledAt').value = d.toISOString().slice(0, 16);
+          const dt = new Date(p.scheduled_at);
+          if (!Number.isNaN(dt.getTime())) {
+            document.getElementById('pmScheduledAt').value = dt.toISOString().slice(0, 16);
           }
         }
         composerMedia.length = 0;
@@ -667,7 +998,8 @@
         });
         renderComposerMedia();
         renderComposerTags();
-        document.getElementById('pmCharContent').textContent = (p.content || '').length + ' / 500';
+        updateCharCounters();
+        updatePreview();
       })
       .catch(function (e) {
         window.Toast.error(e.message || 'Could not load post');
