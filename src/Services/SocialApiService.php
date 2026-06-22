@@ -177,7 +177,7 @@ final class SocialApiService
         
             $create = social_api_service_http_request(
                 'POST',
-                'https://graph.facebook.com/v20.0/' . rawurlencode($businessId) . '/media',
+                'https://graph.facebook.com/v25.0/' . rawurlencode($businessId) . '/media',
                 ['Authorization: Bearer ' . $token],
                 ['image_url' => $imageUrl, 'caption' => $caption]
             );
@@ -192,7 +192,7 @@ final class SocialApiService
             for ($attempt = 0; $attempt < 5; $attempt++) {
                 $statusRes = social_api_service_http_request(
                     'GET',
-                    'https://graph.facebook.com/v20.0/' . rawurlencode($containerId) . '?fields=status_code&access_token=' . rawurlencode($token)
+                    'https://graph.facebook.com/v25.0/' . rawurlencode($containerId) . '?fields=status_code&access_token=' . rawurlencode($token)
                 );
                 $statusCode = (string) ($statusRes['data']['status_code'] ?? 'IN_PROGRESS');
                 if ($statusCode === 'FINISHED') {
@@ -208,7 +208,7 @@ final class SocialApiService
 
             $publish = social_api_service_http_request(
                 'POST',
-                'https://graph.facebook.com/v20.0/' . rawurlencode($businessId) . '/media_publish',
+                'https://graph.facebook.com/v25.0/' . rawurlencode($businessId) . '/media_publish',
                 ['Authorization: Bearer ' . $token],
                 ['creation_id' => $containerId]
             );
@@ -311,7 +311,7 @@ final class SocialApiService
             $message = (string) ($post['caption'] ?? $post['content'] ?? $post['title'] ?? '');
             $res = social_api_service_http_request(
                 'POST',
-                'https://graph.facebook.com/v20.0/' . rawurlencode($pageId) . '/feed',
+                'https://graph.facebook.com/v25.0/' . rawurlencode($pageId) . '/feed',
                 ['Authorization: Bearer ' . $token],
                 ['message' => $message]
             );
@@ -401,7 +401,7 @@ final class SocialApiService
                 if ($id !== '') {
                     $profileRes = social_api_service_http_request(
                         'GET',
-                        'https://graph.facebook.com/v20.0/' . rawurlencode($id) . '?fields=followers_count&access_token=' . rawurlencode($token)
+                        'https://graph.facebook.com/v25.0/' . rawurlencode($id) . '?fields=followers_count&access_token=' . rawurlencode($token)
                     );
                     if ($profileRes['ok']) {
                         $followers = (int) ($profileRes['data']['followers_count'] ?? $followers);
@@ -412,7 +412,7 @@ final class SocialApiService
                         $until = $since + 86400;
                         $insightsRes = social_api_service_http_request(
                             'GET',
-                            'https://graph.facebook.com/v20.0/' . rawurlencode($id) . '/insights?' . http_build_query([
+                            'https://graph.facebook.com/v25.0/' . rawurlencode($id) . '/insights?' . http_build_query([
                                 'metric' => 'impressions,reach',
                                 'period' => 'day',
                                 'since' => $since,
@@ -503,7 +503,7 @@ final class SocialApiService
                 }
                 $res = social_api_service_http_request(
                     'GET',
-                    'https://graph.facebook.com/v20.0/oauth/access_token?' . http_build_query([
+                    'https://graph.facebook.com/v25.0/oauth/access_token?' . http_build_query([
                         'grant_type' => 'fb_exchange_token',
                         'client_id' => $appId,
                         'client_secret' => $secret,

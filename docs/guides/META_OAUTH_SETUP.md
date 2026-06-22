@@ -2,7 +2,7 @@
 
 Covers every step to connect CreatorzHive to the Meta Graph API so users can publish to Facebook Pages and Instagram Business accounts.
 
-**Meta Graph API version used:** v20.0  
+**Meta Graph API version used:** v25.0  
 **Instagram method used:** Instagram API with Facebook Login (requires a Facebook Page linked to an Instagram Business account)
 
 ---

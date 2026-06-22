@@ -123,7 +123,7 @@ final class AdminService
                 'instagram' => [
                     'label' => 'Instagram',
                     'token_env' => 'INSTAGRAM_ACCESS_TOKEN',
-                    'test_url' => 'https://graph.facebook.com/v20.0/me?fields=id',
+                    'test_url' => 'https://graph.facebook.com/v25.0/me?fields=id',
                 ],
                 'tiktok' => [
                     'label' => 'TikTok',
@@ -143,7 +143,7 @@ final class AdminService
                 'facebook' => [
                     'label' => 'Facebook',
                     'token_env' => 'FACEBOOK_ACCESS_TOKEN',
-                    'test_url' => 'https://graph.facebook.com/v20.0/me?fields=id',
+                    'test_url' => 'https://graph.facebook.com/v25.0/me?fields=id',
                 ],
             ];
     }

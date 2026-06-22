@@ -80,7 +80,7 @@ final class MetaOAuthService
                 'response_type' => 'code',
             ];
         
-            return 'https://www.facebook.com/v20.0/dialog/oauth?' . http_build_query($params);
+            return 'https://www.facebook.com/v25.0/dialog/oauth?' . http_build_query($params);
     }
 
     public function exchangeCode(string $code)
@@ -89,7 +89,7 @@ final class MetaOAuthService
             $secret = platform_api_secrets_resolve('meta_app_secret');
             $redirect = meta_oauth_redirect_uri();
         
-            $url = 'https://graph.facebook.com/v20.0/oauth/access_token?' . http_build_query([
+            $url = 'https://graph.facebook.com/v25.0/oauth/access_token?' . http_build_query([
                 'client_id' => $appId,
                 'client_secret' => $secret,
                 'redirect_uri' => $redirect,
@@ -118,7 +118,7 @@ final class MetaOAuthService
         $appId = platform_api_secrets_resolve('meta_app_id');
             $secret = platform_api_secrets_resolve('meta_app_secret');
         
-            $url = 'https://graph.facebook.com/v20.0/oauth/access_token?' . http_build_query([
+            $url = 'https://graph.facebook.com/v25.0/oauth/access_token?' . http_build_query([
                 'grant_type' => 'fb_exchange_token',
                 'client_id' => $appId,
                 'client_secret' => $secret,
@@ -140,7 +140,7 @@ final class MetaOAuthService
 
     public function fetchPages(string $userAccessToken)
     {
-        $url = 'https://graph.facebook.com/v20.0/me/accounts?' . http_build_query([
+        $url = 'https://graph.facebook.com/v25.0/me/accounts?' . http_build_query([
                 'fields' => 'id,name,username,access_token,instagram_business_account{id,username,name}',
                 'access_token' => $userAccessToken,
                 'limit' => 50,
