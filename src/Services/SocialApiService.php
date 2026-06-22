@@ -35,7 +35,7 @@ final class SocialApiService
 
     public function mockEnabled()
     {
-        return (bool) env('SOCIAL_API_MOCK_FALLBACK', true);
+        return (bool) env('SOCIAL_API_MOCK_FALLBACK', false);
     }
 
     public function mockPublishResult()
@@ -188,7 +188,24 @@ final class SocialApiService
             if ($containerId === '') {
                 return ['success' => false, 'error' => 'Instagram container id missing'];
             }
-        
+
+            for ($attempt = 0; $attempt < 5; $attempt++) {
+                $statusRes = social_api_service_http_request(
+                    'GET',
+                    'https://graph.facebook.com/v20.0/' . rawurlencode($containerId) . '?fields=status_code&access_token=' . rawurlencode($token)
+                );
+                $statusCode = (string) ($statusRes['data']['status_code'] ?? 'IN_PROGRESS');
+                if ($statusCode === 'FINISHED') {
+                    break;
+                }
+                if ($statusCode === 'ERROR' || $statusCode === 'EXPIRED') {
+                    return ['success' => false, 'error' => 'Instagram container processing failed: ' . $statusCode];
+                }
+                if ($attempt < 4) {
+                    sleep(2);
+                }
+            }
+
             $publish = social_api_service_http_request(
                 'POST',
                 'https://graph.facebook.com/v20.0/' . rawurlencode($businessId) . '/media_publish',
@@ -382,12 +399,38 @@ final class SocialApiService
             if ($platform === 'instagram' || $platform === 'facebook') {
                 $id = trim((string) ($account['platform_user_id'] ?? ''));
                 if ($id !== '') {
-                    $res = social_api_service_http_request(
+                    $profileRes = social_api_service_http_request(
                         'GET',
                         'https://graph.facebook.com/v20.0/' . rawurlencode($id) . '?fields=followers_count&access_token=' . rawurlencode($token)
                     );
-                    if ($res['ok']) {
-                        $followers = (int) ($res['data']['followers_count'] ?? $followers);
+                    if ($profileRes['ok']) {
+                        $followers = (int) ($profileRes['data']['followers_count'] ?? $followers);
+                    }
+
+                    if ($platform === 'instagram') {
+                        $since = strtotime($date);
+                        $until = $since + 86400;
+                        $insightsRes = social_api_service_http_request(
+                            'GET',
+                            'https://graph.facebook.com/v20.0/' . rawurlencode($id) . '/insights?' . http_build_query([
+                                'metric' => 'impressions,reach',
+                                'period' => 'day',
+                                'since' => $since,
+                                'until' => $until,
+                                'access_token' => $token,
+                            ])
+                        );
+                        if ($insightsRes['ok']) {
+                            foreach (($insightsRes['data']['data'] ?? []) as $metric) {
+                                $values = $metric['values'] ?? [];
+                                $value = (int) ($values[0]['value'] ?? 0);
+                                if ((string) ($metric['name'] ?? '') === 'impressions') {
+                                    $impressions = $value;
+                                } elseif ((string) ($metric['name'] ?? '') === 'reach') {
+                                    $reach = $value;
+                                }
+                            }
+                        }
                     }
                 }
             } elseif ($platform === 'youtube') {
@@ -450,11 +493,34 @@ final class SocialApiService
     public function refreshToken(array $account)
     {
         $platform = strtolower((string) ($account['platform'] ?? ''));
+
+            if ($platform === 'instagram' || $platform === 'facebook') {
+                $appId = platform_api_secrets_resolve('meta_app_id');
+                $secret = platform_api_secrets_resolve('meta_app_secret');
+                $token = social_api_service_bearer($account);
+                if ($appId === '' || $secret === '' || $token === '') {
+                    return ['success' => false, 'error' => 'Meta app credentials not configured for token refresh'];
+                }
+                $res = social_api_service_http_request(
+                    'GET',
+                    'https://graph.facebook.com/v20.0/oauth/access_token?' . http_build_query([
+                        'grant_type' => 'fb_exchange_token',
+                        'client_id' => $appId,
+                        'client_secret' => $secret,
+                        'fb_exchange_token' => $token,
+                    ])
+                );
+                if ($res['ok'] && isset($res['data']['access_token'])) {
+                    return ['success' => true, 'access_token' => (string) $res['data']['access_token']];
+                }
+                return ['success' => false, 'error' => 'Meta token refresh failed (HTTP ' . (int) ($res['status'] ?? 0) . ')'];
+            }
+
             $refreshToken = trim((string) ($account['refresh_token'] ?? ''));
             if ($refreshToken === '') {
                 return ['success' => false, 'error' => 'No refresh token available'];
             }
-        
+
             if ($platform === 'youtube') {
                 $clientId = social_api_service_env_token('GOOGLE_CLIENT_ID');
                 $clientSecret = social_api_service_env_token('GOOGLE_CLIENT_SECRET');

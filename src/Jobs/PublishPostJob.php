@@ -86,6 +86,27 @@ final class PublishPostJob implements JobHandlerInterface
 
             $account = $this->accounts->accountFetch($userId, $platform, true);
 
+            if ($account !== null && in_array($platform, ['instagram', 'facebook'], true)) {
+                $expiresAt = (string) ($account['token_expires_at'] ?? '');
+                if ($expiresAt !== '' && strtotime($expiresAt) < strtotime('+7 days')) {
+                    $refreshed = $this->socialApi->refreshToken($account);
+                    if (!empty($refreshed['success']) && ($refreshed['access_token'] ?? '') !== '') {
+                        $this->accounts->accountUpsert($userId, [
+                            'platform' => (string) $account['platform'],
+                            'platform_user_id' => (string) ($account['platform_user_id'] ?? ''),
+                            'username' => (string) ($account['username'] ?? ''),
+                            'display_name' => (string) ($account['display_name'] ?? ''),
+                            'avatar_url' => $account['avatar_url'] ?? null,
+                            'access_token' => (string) $refreshed['access_token'],
+                            'refresh_token' => (string) ($account['refresh_token'] ?? ''),
+                            'token_expires_at' => date('Y-m-d H:i:s', strtotime('+55 days')),
+                            'follower_count' => (int) ($account['follower_count'] ?? 0),
+                        ]);
+                        $account = $this->accounts->accountFetch($userId, $platform, true) ?? $account;
+                    }
+                }
+            }
+
             if ($account === null) {
                 $this->db->insert('platform_post_results', [
                     'post_id' => $postId,

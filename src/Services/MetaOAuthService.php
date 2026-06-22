@@ -63,7 +63,7 @@ final class MetaOAuthService
             $base = 'pages_show_list,pages_read_engagement';
         
             if ($platform === 'instagram') {
-                return 'instagram_basic,instagram_content_publish,business_management,' . $base;
+                return 'instagram_basic,instagram_content_publish,instagram_manage_insights,business_management,' . $base;
             }
         
             return 'pages_manage_posts,pages_read_engagement,' . $base;
