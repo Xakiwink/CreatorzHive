@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <!-- Background -->
+  <rect width="256" height="256" fill="#1877f2" rx="60"/>
+
+  <!-- Creative Elements -->
+  <!-- Left hexagon (creativity/design) -->
+  <path d="M60 128L80 80L120 60L140 108L120 156L80 176Z" fill="#ffffff" opacity="0.9"/>
+
+  <!-- Right hexagon (community/hive) -->
+  <path d="M196 128L176 80L136 60L116 108L136 156L176 176Z" fill="#ffffff" opacity="0.7"/>
+
+  <!-- Center circle (hub/connection) -->
+  <circle cx="128" cy="128" r="28" fill="#ffffff" opacity="0.95"/>
+
+  <!-- Inner circle detail -->
+  <circle cx="128" cy="128" r="18" fill="none" stroke="#1877f2" stroke-width="2"/>
+
+  <!-- Connecting lines (network/community) -->
+  <line x1="90" y1="120" x2="110" y2="125" stroke="#ffffff" stroke-width="2" opacity="0.8"/>
+  <line x1="166" y1="120" x2="146" y2="125" stroke="#ffffff" stroke-width="2" opacity="0.8"/>
+  <line x1="100" y1="155" x2="115" y2="140" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+  <line x1="156" y1="155" x2="141" y2="140" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+
+  <!-- Accent dots -->
+  <circle cx="85" cy="105" r="3" fill="#ffffff" opacity="0.6"/>
+  <circle cx="171" cy="105" r="3" fill="#ffffff" opacity="0.6"/>
+  <circle cx="128" cy="85" r="3" fill="#ffffff" opacity="0.7"/>
+</svg>
