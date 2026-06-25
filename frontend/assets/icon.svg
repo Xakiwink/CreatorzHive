@@ -1,28 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
-  <!-- Background -->
-  <rect width="256" height="256" fill="#1877f2" rx="60"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" style="display:block;border-radius:22.5%;" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#141A3F"/>
+      <stop offset="1" stop-color="#1E1240"/>
+    </linearGradient>
+    <radialGradient id="hexglow" cx="0.5" cy="0.42" r="0.65">
+      <stop offset="0" stop-color="#8B5CF6" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="dotglow" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
 
-  <!-- Creative Elements -->
-  <!-- Left hexagon (creativity/design) -->
-  <path d="M60 128L80 80L120 60L140 108L120 156L80 176Z" fill="#ffffff" opacity="0.9"/>
+  <rect x="0" y="0" width="512" height="512" rx="115" ry="115" fill="url(#bg-gradient)"/>
 
-  <!-- Right hexagon (community/hive) -->
-  <path d="M196 128L176 80L136 60L116 108L136 156L176 176Z" fill="#ffffff" opacity="0.7"/>
+  <path d="M256 77 Q283.5 65 311 77 Q338.5 89 343 117.5 L343 394.5 Q338.5 423 311 435 Q283.5 447 256 435 Q228.5 423 224 394.5 L224 117.5 Q228.5 89 256 77 Z" fill="#191545" stroke="#8B5CF6" stroke-width="11" stroke-linejoin="round"/>
+  <path d="M256 77 Q283.5 65 311 77 Q338.5 89 343 117.5 L343 394.5 Q338.5 423 311 435 Q283.5 447 256 435 Q228.5 423 224 394.5 L224 117.5 Q228.5 89 256 77 Z" fill="url(#hexglow)" stroke="none"/>
 
-  <!-- Center circle (hub/connection) -->
-  <circle cx="128" cy="128" r="28" fill="#ffffff" opacity="0.95"/>
+  <polyline points="152,300 196,312 240,264 284,282 328,216 364,184" fill="none" stroke="#FFFFFF" stroke-width="21" stroke-linecap="round" stroke-linejoin="round"/>
 
-  <!-- Inner circle detail -->
-  <circle cx="128" cy="128" r="18" fill="none" stroke="#1877f2" stroke-width="2"/>
-
-  <!-- Connecting lines (network/community) -->
-  <line x1="90" y1="120" x2="110" y2="125" stroke="#ffffff" stroke-width="2" opacity="0.8"/>
-  <line x1="166" y1="120" x2="146" y2="125" stroke="#ffffff" stroke-width="2" opacity="0.8"/>
-  <line x1="100" y1="155" x2="115" y2="140" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
-  <line x1="156" y1="155" x2="141" y2="140" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
-
-  <!-- Accent dots -->
-  <circle cx="85" cy="105" r="3" fill="#ffffff" opacity="0.6"/>
-  <circle cx="171" cy="105" r="3" fill="#ffffff" opacity="0.6"/>
-  <circle cx="128" cy="85" r="3" fill="#ffffff" opacity="0.7"/>
+  <circle cx="364" cy="184" r="17" fill="#A78BFA" filter="url(#dotglow)"/>
+  <circle cx="364" cy="184" r="11" fill="#FFFFFF"/>
 </svg>
