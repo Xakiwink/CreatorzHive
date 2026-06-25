@@ -100,10 +100,6 @@ function meta_oauth_save_facebook_page(int $userId, array $page)
     return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->saveFacebookPage(...func_get_args());
 }
 
-function meta_oauth_save_instagram_account(int $userId, array $page, array $ig)
-{
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->saveInstagramAccount(...func_get_args());
-}
 
 function meta_oauth_upsert_social_account(int $userId, array $data)
 {

@@ -177,7 +177,7 @@ final class SocialApiService
         
             $create = social_api_service_http_request(
                 'POST',
-                'https://graph.facebook.com/v25.0/' . rawurlencode($businessId) . '/media',
+                'https://graph.instagram.com/v21.0/' . rawurlencode($businessId) . '/media',
                 ['Authorization: Bearer ' . $token],
                 ['image_url' => $imageUrl, 'caption' => $caption]
             );
@@ -192,7 +192,7 @@ final class SocialApiService
             for ($attempt = 0; $attempt < 5; $attempt++) {
                 $statusRes = social_api_service_http_request(
                     'GET',
-                    'https://graph.facebook.com/v25.0/' . rawurlencode($containerId) . '?fields=status_code&access_token=' . rawurlencode($token)
+                    'https://graph.instagram.com/v21.0/' . rawurlencode($containerId) . '?fields=status_code&access_token=' . rawurlencode($token)
                 );
                 $statusCode = (string) ($statusRes['data']['status_code'] ?? 'IN_PROGRESS');
                 if ($statusCode === 'FINISHED') {
@@ -208,7 +208,7 @@ final class SocialApiService
 
             $publish = social_api_service_http_request(
                 'POST',
-                'https://graph.facebook.com/v25.0/' . rawurlencode($businessId) . '/media_publish',
+                'https://graph.instagram.com/v21.0/' . rawurlencode($businessId) . '/media_publish',
                 ['Authorization: Bearer ' . $token],
                 ['creation_id' => $containerId]
             );
@@ -494,7 +494,26 @@ final class SocialApiService
     {
         $platform = strtolower((string) ($account['platform'] ?? ''));
 
-            if ($platform === 'instagram' || $platform === 'facebook') {
+            if ($platform === 'instagram') {
+                $secret = platform_api_secrets_resolve('meta_app_secret');
+                $token = social_api_service_bearer($account);
+                if ($secret === '' || $token === '') {
+                    return ['success' => false, 'error' => 'Meta app credentials not configured for token refresh'];
+                }
+                $res = social_api_service_http_request(
+                    'GET',
+                    'https://graph.instagram.com/refresh_access_token?' . http_build_query([
+                        'grant_type' => 'ig_refresh_token',
+                        'access_token' => $token,
+                    ])
+                );
+                if ($res['ok'] && isset($res['data']['access_token'])) {
+                    return ['success' => true, 'access_token' => (string) $res['data']['access_token']];
+                }
+                return ['success' => false, 'error' => 'Instagram token refresh failed (HTTP ' . (int) ($res['status'] ?? 0) . ')'];
+            }
+
+            if ($platform === 'facebook') {
                 $appId = platform_api_secrets_resolve('meta_app_id');
                 $secret = platform_api_secrets_resolve('meta_app_secret');
                 $token = social_api_service_bearer($account);
@@ -513,7 +532,7 @@ final class SocialApiService
                 if ($res['ok'] && isset($res['data']['access_token'])) {
                     return ['success' => true, 'access_token' => (string) $res['data']['access_token']];
                 }
-                return ['success' => false, 'error' => 'Meta token refresh failed (HTTP ' . (int) ($res['status'] ?? 0) . ')'];
+                return ['success' => false, 'error' => 'Facebook token refresh failed (HTTP ' . (int) ($res['status'] ?? 0) . ')'];
             }
 
             $refreshToken = trim((string) ($account['refresh_token'] ?? ''));

@@ -9,15 +9,9 @@ namespace CreatorzHive\Services;
 use function base_url_path;
 use function env;
 use function job_runner_dispatch;
-use function meta_oauth_allowed_platforms;
-use function meta_oauth_exchange_code;
 use function meta_oauth_fetch_pages;
-use function meta_oauth_long_lived_token;
-use function meta_oauth_redirect_uri;
 use function meta_oauth_save_facebook_page;
-use function meta_oauth_save_instagram_account;
-use function meta_oauth_scopes;
-use function meta_oauth_upsert_social_account;
+use function meta_oauth_redirect_uri;
 use function platform_api_secrets_resolve;
 use function social_account_upsert;
 use function social_api_service_http_request;
@@ -45,10 +39,10 @@ final class MetaOAuthService
             if ($override !== '') {
                 return $override;
             }
-        
+
             $base = rtrim((string) env('APP_URL', 'http://localhost'), '/');
             $path = base_url_path();
-        
+
             return $base . ($path === '' ? '' : $path) . '/?route=oauth-callback';
     }
 
@@ -59,100 +53,147 @@ final class MetaOAuthService
 
     public function scopes(string $platform)
     {
-        $platform = strtolower(trim($platform));
-            $base = 'pages_show_list,pages_read_engagement';
-        
-            if ($platform === 'instagram') {
-                return 'instagram_basic,instagram_content_publish,instagram_manage_insights,business_management,' . $base;
-            }
-        
-            return 'pages_manage_posts,pages_read_engagement,' . $base;
+        if ($platform === 'instagram') {
+            return 'instagram_business_basic,instagram_business_content_publish,instagram_business_manage_insights';
+        }
+
+        return 'pages_manage_posts,pages_read_engagement,pages_show_list';
     }
 
     public function authorizeUrl(string $platform, string $state)
     {
         $appId = platform_api_secrets_resolve('meta_app_id');
-            $params = [
-                'client_id' => $appId,
-                'redirect_uri' => meta_oauth_redirect_uri(),
-                'state' => $state,
-                'scope' => meta_oauth_scopes($platform),
-                'response_type' => 'code',
-            ];
-        
-            return 'https://www.facebook.com/v25.0/dialog/oauth?' . http_build_query($params);
+        $params = [
+            'client_id' => $appId,
+            'redirect_uri' => meta_oauth_redirect_uri(),
+            'state' => $state,
+            'scope' => $this->scopes($platform),
+            'response_type' => 'code',
+        ];
+
+        if ($platform === 'instagram') {
+            return 'https://api.instagram.com/oauth/authorize?' . http_build_query($params);
+        }
+
+        return 'https://www.facebook.com/v25.0/dialog/oauth?' . http_build_query($params);
     }
 
-    public function exchangeCode(string $code)
+    public function exchangeCode(string $code, string $platform = 'facebook')
     {
         $appId = platform_api_secrets_resolve('meta_app_id');
-            $secret = platform_api_secrets_resolve('meta_app_secret');
-            $redirect = meta_oauth_redirect_uri();
-        
-            $url = 'https://graph.facebook.com/v25.0/oauth/access_token?' . http_build_query([
-                'client_id' => $appId,
-                'client_secret' => $secret,
-                'redirect_uri' => $redirect,
-                'code' => $code,
-            ]);
-        
-            $res = social_api_service_http_request('GET', $url);
-            if (!$res['ok']) {
-                return ['success' => false, 'error' => 'Could not exchange authorization code (HTTP ' . (int) ($res['status'] ?? 0) . ').'];
-            }
-        
-            $token = trim((string) ($res['data']['access_token'] ?? ''));
-            if ($token === '') {
-                return ['success' => false, 'error' => 'Meta did not return an access token.'];
-            }
-        
-            return [
-                'success' => true,
-                'access_token' => $token,
-                'expires_in' => (int) ($res['data']['expires_in'] ?? 0),
-            ];
+        $secret = platform_api_secrets_resolve('meta_app_secret');
+        $redirect = meta_oauth_redirect_uri();
+
+        if ($platform === 'instagram') {
+            $res = social_api_service_http_request(
+                'POST',
+                'https://api.instagram.com/oauth/access_token',
+                [],
+                [
+                    'client_id' => $appId,
+                    'client_secret' => $secret,
+                    'grant_type' => 'authorization_code',
+                    'redirect_uri' => $redirect,
+                    'code' => $code,
+                ]
+            );
+        } else {
+            $res = social_api_service_http_request(
+                'GET',
+                'https://graph.facebook.com/v25.0/oauth/access_token?' . http_build_query([
+                    'client_id' => $appId,
+                    'client_secret' => $secret,
+                    'redirect_uri' => $redirect,
+                    'code' => $code,
+                ])
+            );
+        }
+
+        if (!$res['ok']) {
+            return ['success' => false, 'error' => 'Could not exchange authorization code (HTTP ' . (int) ($res['status'] ?? 0) . ').'];
+        }
+
+        $token = trim((string) ($res['data']['access_token'] ?? ''));
+        if ($token === '') {
+            return ['success' => false, 'error' => 'Meta did not return an access token.'];
+        }
+
+        return [
+            'success' => true,
+            'access_token' => $token,
+            'expires_in' => (int) ($res['data']['expires_in'] ?? 0),
+            'user_id' => (string) ($res['data']['user_id'] ?? ''),
+        ];
     }
 
-    public function longLivedToken(string $shortToken)
+    public function longLivedToken(string $shortToken, string $platform = 'facebook')
     {
-        $appId = platform_api_secrets_resolve('meta_app_id');
-            $secret = platform_api_secrets_resolve('meta_app_secret');
-        
-            $url = 'https://graph.facebook.com/v25.0/oauth/access_token?' . http_build_query([
-                'grant_type' => 'fb_exchange_token',
-                'client_id' => $appId,
-                'client_secret' => $secret,
-                'fb_exchange_token' => $shortToken,
-            ]);
-        
-            $res = social_api_service_http_request('GET', $url);
-            if (!$res['ok']) {
-                return ['success' => false, 'error' => 'Could not obtain long-lived token.'];
-            }
-        
-            $token = trim((string) ($res['data']['access_token'] ?? ''));
-            if ($token === '') {
-                return ['success' => false, 'error' => 'Long-lived token missing from Meta response.'];
-            }
-        
-            return ['success' => true, 'access_token' => $token];
+        $secret = platform_api_secrets_resolve('meta_app_secret');
+
+        if ($platform === 'instagram') {
+            $res = social_api_service_http_request(
+                'GET',
+                'https://graph.instagram.com/access_token?' . http_build_query([
+                    'grant_type' => 'ig_exchange_token',
+                    'client_secret' => $secret,
+                    'access_token' => $shortToken,
+                ])
+            );
+        } else {
+            $appId = platform_api_secrets_resolve('meta_app_id');
+            $res = social_api_service_http_request(
+                'GET',
+                'https://graph.facebook.com/v25.0/oauth/access_token?' . http_build_query([
+                    'grant_type' => 'fb_exchange_token',
+                    'client_id' => $appId,
+                    'client_secret' => $secret,
+                    'fb_exchange_token' => $shortToken,
+                ])
+            );
+        }
+
+        if (!$res['ok']) {
+            return ['success' => false, 'error' => 'Could not obtain long-lived token.'];
+        }
+
+        $token = trim((string) ($res['data']['access_token'] ?? ''));
+        if ($token === '') {
+            return ['success' => false, 'error' => 'Long-lived token missing from Meta response.'];
+        }
+
+        return ['success' => true, 'access_token' => $token];
+    }
+
+    public function fetchInstagramUser(string $accessToken)
+    {
+        $url = 'https://graph.instagram.com/v21.0/me?' . http_build_query([
+            'fields' => 'id,username,name',
+            'access_token' => $accessToken,
+        ]);
+
+        $res = social_api_service_http_request('GET', $url);
+        if (!$res['ok']) {
+            return [];
+        }
+
+        return is_array($res['data']) ? $res['data'] : [];
     }
 
     public function fetchPages(string $userAccessToken)
     {
         $url = 'https://graph.facebook.com/v25.0/me/accounts?' . http_build_query([
-                'fields' => 'id,name,username,access_token,instagram_business_account{id,username,name}',
+                'fields' => 'id,name,username,access_token',
                 'access_token' => $userAccessToken,
                 'limit' => 50,
             ]);
-        
+
             $res = social_api_service_http_request('GET', $url);
             if (!$res['ok']) {
                 return [];
             }
-        
+
             $data = $res['data']['data'] ?? [];
-        
+
             return is_array($data) ? $data : [];
     }
 
@@ -163,13 +204,13 @@ final class MetaOAuthService
             if ($pageId === '' || $token === '') {
                 return false;
             }
-        
+
             $username = trim((string) ($page['username'] ?? ''));
             if ($username === '') {
                 $username = 'page_' . $pageId;
             }
-        
-            meta_oauth_upsert_social_account($userId, [
+
+            $this->upsertSocialAccount($userId, [
                 'platform' => 'facebook',
                 'platform_user_id' => $pageId,
                 'username' => $username,
@@ -178,40 +219,14 @@ final class MetaOAuthService
                 'refresh_token' => '',
                 'token_expires_at' => date('Y-m-d H:i:s', strtotime('+55 days')),
             ]);
-        
-            return true;
-    }
 
-    public function saveInstagramAccount(int $userId, array $page, array $ig)
-    {
-        $igId = trim((string) ($ig['id'] ?? ''));
-            $token = trim((string) ($page['access_token'] ?? ''));
-            if ($igId === '' || $token === '') {
-                return false;
-            }
-        
-            $username = trim((string) ($ig['username'] ?? ''));
-            if ($username === '') {
-                $username = 'ig_' . $igId;
-            }
-        
-            meta_oauth_upsert_social_account($userId, [
-                'platform' => 'instagram',
-                'platform_user_id' => $igId,
-                'username' => $username,
-                'display_name' => (string) ($ig['name'] ?? 'Instagram'),
-                'access_token' => $token,
-                'refresh_token' => '',
-                'token_expires_at' => date('Y-m-d H:i:s', strtotime('+55 days')),
-            ]);
-        
             return true;
     }
 
     public function upsertSocialAccount(int $userId, array $data)
     {
         social_account_upsert($userId, $data);
-        
+
             $account = $this->db->fetchOne(
                 'SELECT id FROM social_accounts WHERE user_id = :uid AND platform = :p LIMIT 1',
                 ['uid' => $userId, 'p' => (string) $data['platform']]
@@ -227,60 +242,82 @@ final class MetaOAuthService
     public function completeConnection(int $userId, string $platform, string $code)
     {
         $platform = strtolower(trim($platform));
-            if (!in_array($platform, meta_oauth_allowed_platforms(), true)) {
-                return ['success' => false, 'message' => 'Unsupported platform for Meta OAuth.'];
-            }
-        
-            $exchange = meta_oauth_exchange_code($code);
-            if (!$exchange['success']) {
-                return ['success' => false, 'message' => (string) ($exchange['error'] ?? 'Token exchange failed.')];
-            }
-        
-            $userToken = (string) $exchange['access_token'];
-            $long = meta_oauth_long_lived_token($userToken);
-            if ($long['success']) {
-                $userToken = (string) $long['access_token'];
-            }
-        
-            $pages = meta_oauth_fetch_pages($userToken);
-            if ($pages === []) {
-                return ['success' => false, 'message' => 'No Facebook Pages found. Link a Page to your Meta app and try again.'];
-            }
-        
-            $saved = false;
-            if ($platform === 'facebook') {
-                foreach ($pages as $page) {
-                    if (meta_oauth_save_facebook_page($userId, $page)) {
-                        $saved = true;
-                        break;
-                    }
-                }
-                if (!$saved) {
-                    return ['success' => false, 'message' => 'Could not save Facebook Page connection.'];
-                }
-        
-                return ['success' => true, 'message' => 'Facebook connected successfully.'];
-            }
-        
-            foreach ($pages as $page) {
-                $ig = $page['instagram_business_account'] ?? null;
-                if (!is_array($ig)) {
-                    continue;
-                }
-                if (meta_oauth_save_instagram_account($userId, $page, $ig)) {
-                    $saved = true;
-                    break;
-                }
-            }
-        
-            if (!$saved) {
-                return [
-                    'success' => false,
-                    'message' => 'No Instagram Business account found on your Pages. Connect IG to a Facebook Page in Meta Business Suite.',
-                ];
-            }
-        
-            return ['success' => true, 'message' => 'Instagram connected successfully.'];
+        if (!in_array($platform, $this->allowedPlatforms(), true)) {
+            return ['success' => false, 'message' => 'Unsupported platform for Meta OAuth.'];
+        }
+
+        if ($platform === 'instagram') {
+            return $this->completeInstagramConnection($userId, $code);
+        }
+
+        return $this->completeFacebookConnection($userId, $code);
     }
 
+    private function completeInstagramConnection(int $userId, string $code)
+    {
+        $exchange = $this->exchangeCode($code, 'instagram');
+        if (!$exchange['success']) {
+            return ['success' => false, 'message' => (string) ($exchange['error'] ?? 'Token exchange failed.')];
+        }
+
+        $shortToken = (string) $exchange['access_token'];
+        $long = $this->longLivedToken($shortToken, 'instagram');
+        $userToken = $long['success'] ? (string) $long['access_token'] : $shortToken;
+
+        $igUser = $this->fetchInstagramUser($userToken);
+        if ($igUser === []) {
+            return ['success' => false, 'message' => 'Could not retrieve Instagram account info.'];
+        }
+
+        $igId = trim((string) ($igUser['id'] ?? ''));
+        $username = trim((string) ($igUser['username'] ?? ''));
+        if ($username === '') {
+            $username = 'ig_' . $igId;
+        }
+
+        $this->upsertSocialAccount($userId, [
+            'platform' => 'instagram',
+            'platform_user_id' => $igId,
+            'username' => $username,
+            'display_name' => (string) ($igUser['name'] ?? $username),
+            'access_token' => $userToken,
+            'refresh_token' => '',
+            'token_expires_at' => date('Y-m-d H:i:s', strtotime('+55 days')),
+        ]);
+
+        return ['success' => true, 'message' => 'Instagram connected successfully.'];
+    }
+
+    private function completeFacebookConnection(int $userId, string $code)
+    {
+        $exchange = $this->exchangeCode($code, 'facebook');
+        if (!$exchange['success']) {
+            return ['success' => false, 'message' => (string) ($exchange['error'] ?? 'Token exchange failed.')];
+        }
+
+        $userToken = (string) $exchange['access_token'];
+        $long = $this->longLivedToken($userToken, 'facebook');
+        if ($long['success']) {
+            $userToken = (string) $long['access_token'];
+        }
+
+        $pages = meta_oauth_fetch_pages($userToken);
+        if ($pages === []) {
+            return ['success' => false, 'message' => 'No Facebook Pages found. Link a Page to your Meta app and try again.'];
+        }
+
+        $saved = false;
+        foreach ($pages as $page) {
+            if (meta_oauth_save_facebook_page($userId, $page)) {
+                $saved = true;
+                break;
+            }
+        }
+
+        if (!$saved) {
+            return ['success' => false, 'message' => 'Could not save Facebook Page connection.'];
+        }
+
+        return ['success' => true, 'message' => 'Facebook connected successfully.'];
+    }
 }
