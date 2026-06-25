@@ -17,6 +17,7 @@ use CreatorzHive\Controllers\MediaController;
 use CreatorzHive\Controllers\NotificationController;
 use CreatorzHive\Controllers\OauthController;
 use CreatorzHive\Controllers\PostController;
+use CreatorzHive\Controllers\YoutubeOAuthController;
 use CreatorzHive\Controllers\SettingsController;
 use CreatorzHive\Controllers\Support\AbstractController;
 use CreatorzHive\Controllers\SystemController;
@@ -53,6 +54,7 @@ use CreatorzHive\Services\AuthService;
 use CreatorzHive\Services\DashboardService;
 use CreatorzHive\Services\GoogleAuthService;
 use CreatorzHive\Services\MetaOAuthService;
+use CreatorzHive\Services\YoutubeOAuthService;
 use CreatorzHive\Services\NotificationService;
 use CreatorzHive\Services\PlatformApiSecretsService;
 use CreatorzHive\Services\SocialApiService;
@@ -77,6 +79,9 @@ final class AppServiceProvider
         $container->set(TokenCrypto::class, new TokenCrypto());
         $container->set(UserPayloadFormatter::class, new UserPayloadFormatter());
         $container->set(GoogleAuthService::class, new GoogleAuthService());
+        $container->factory(YoutubeOAuthService::class, static function (Container $c): YoutubeOAuthService {
+            return new YoutubeOAuthService($c->get(Connection::class));
+        });
 
         self::registerRepositories($container);
         self::registerServices($container);
@@ -152,8 +157,10 @@ final class AppServiceProvider
             SocialApiService::class,
         ];
 
+        $container->set(SocialApiService::class, new SocialApiService());
+
         foreach ($services as $class) {
-            if ($class === PlatformApiSecretsService::class) {
+            if ($class === PlatformApiSecretsService::class || $class === SocialApiService::class) {
                 continue;
             }
             $container->factory($class, static function (Container $c) use ($class): object {
@@ -257,6 +264,7 @@ final class AppServiceProvider
             TagController::class,
             OauthController::class,
             GoogleAuthController::class,
+            YoutubeOAuthController::class,
             ApiMetaController::class,
         ];
 
@@ -400,6 +408,16 @@ final class AppServiceProvider
             );
         });
 
+        $container->factory(YoutubeOAuthController::class, static function (Container $c): YoutubeOAuthController {
+            return new YoutubeOAuthController(
+                $c->get(ViewRenderer::class),
+                $c->get(JsonResponder::class),
+                $c->get(Connection::class),
+                $c->get(YoutubeOAuthService::class),
+                $c->get(AdminService::class)
+            );
+        });
+
         $container->factory(GoogleAuthController::class, static function (Container $c): GoogleAuthController {
             return new GoogleAuthController(
                 $c->get(ViewRenderer::class),
@@ -437,6 +455,7 @@ final class AppServiceProvider
                 AdminUserController::class,
                 OauthController::class,
                 GoogleAuthController::class,
+                YoutubeOAuthController::class,
                 ApiMetaController::class,
             ], true)) {
                 continue;

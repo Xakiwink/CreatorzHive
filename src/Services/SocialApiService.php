@@ -21,18 +21,9 @@ use function social_api_service_publish_to_tiktok;
 use function social_api_service_publish_to_twitter;
 use function social_api_service_publish_to_youtube;
 use function social_api_service_token_or_fallback;
-use CreatorzHive\Core\Database\Connection;
 
 final class SocialApiService
 {
-    /** @var Connection */
-    private $db;
-
-    public function __construct(Connection $db)
-    {
-        $this->db = $db;
-    }
-
     public function mockEnabled()
     {
         return (bool) env('SOCIAL_API_MOCK_FALLBACK', false);
@@ -87,7 +78,6 @@ final class SocialApiService
             $raw = curl_exec($ch);
             $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
             $err = curl_error($ch);
-            curl_close($ch);
         
             if ($raw === false) {
                 return ['ok' => false, 'status' => $status, 'data' => null, 'error' => $err !== '' ? $err : 'HTTP request failed'];
@@ -264,35 +254,91 @@ final class SocialApiService
     public function publishToYoutube(array $account, array $post)
     {
         $token = social_api_service_token_or_fallback($account, 'YOUTUBE_ACCESS_TOKEN');
-            if ($token === '') {
-                return social_api_service_mock_enabled()
-                    ? social_api_service_mock_publish_result()
-                    : ['success' => false, 'error' => 'YouTube token missing'];
-            }
-        
-            $payload = [
-                'snippet' => [
-                    'title' => (string) ($post['title'] ?? 'CreatorzHive Upload'),
-                    'description' => (string) ($post['caption'] ?? $post['content'] ?? ''),
-                ],
-                'status' => ['privacyStatus' => (string) (platform_api_secrets_resolve('youtube_privacy_status') ?: 'private')],
-            ];
-            $res = social_api_service_http_request(
-                'POST',
-                'https://www.googleapis.com/youtube/v3/videos?part=snippet,status',
-                ['Authorization: Bearer ' . $token],
-                $payload
-            );
-            if (!$res['ok']) {
-                return ['success' => false, 'error' => 'YouTube publish failed'];
-            }
-            $videoId = (string) ($res['data']['id'] ?? 'yt_' . uniqid('', true));
-        
-            return [
-                'success' => true,
-                'platform_post_id' => $videoId,
-                'platform_url' => 'https://www.youtube.com/watch?v=' . $videoId,
-            ];
+        if ($token === '') {
+            return social_api_service_mock_enabled()
+                ? social_api_service_mock_publish_result()
+                : ['success' => false, 'error' => 'YouTube token missing'];
+        }
+
+        $videoUrl = trim((string) ($post['video_url'] ?? $post['cover_url'] ?? ''));
+        if ($videoUrl === '') {
+            return ['success' => false, 'error' => 'YouTube publish requires a video_url'];
+        }
+
+        $title = trim((string) ($post['title'] ?? $post['caption'] ?? 'CreatorzHive Upload'));
+        if ($title === '') {
+            $title = 'CreatorzHive Upload';
+        }
+        $description = trim((string) ($post['caption'] ?? $post['content'] ?? ''));
+        $privacy = (string) (platform_api_secrets_resolve('youtube_privacy_status') ?: 'private');
+
+        $metadata = json_encode([
+            'snippet' => ['title' => $title, 'description' => $description],
+            'status' => ['privacyStatus' => $privacy],
+        ]);
+
+        // Initiate a resumable upload session
+        $initRes = social_api_service_http_request(
+            'POST',
+            'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',
+            [
+                'Authorization: Bearer ' . $token,
+                'Content-Type: application/json',
+                'X-Upload-Content-Type: video/mp4',
+            ],
+            $metadata,
+            true
+        );
+
+        $uploadUrl = trim((string) ($initRes['headers']['location'] ?? $initRes['headers']['Location'] ?? ''));
+        if ($uploadUrl === '') {
+            return ['success' => false, 'error' => 'YouTube did not return a resumable upload URL'];
+        }
+
+        // Download video and stream to YouTube
+        if (!\function_exists('curl_init')) {
+            return ['success' => false, 'error' => 'cURL not available for YouTube upload'];
+        }
+
+        $videoData = @file_get_contents($videoUrl);
+        if ($videoData === false || $videoData === '') {
+            return ['success' => false, 'error' => 'Could not download video from provided URL'];
+        }
+
+        $ch = curl_init($uploadUrl);
+        if ($ch === false) {
+            return ['success' => false, 'error' => 'Could not initialize YouTube upload'];
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST => 'PUT',
+            CURLOPT_POSTFIELDS => $videoData,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $token,
+                'Content-Type: video/mp4',
+                'Content-Length: ' . strlen($videoData),
+            ],
+            CURLOPT_CONNECTTIMEOUT => 30,
+            CURLOPT_TIMEOUT => 300,
+        ]);
+
+        $raw = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+
+        if ($raw === false || ($status < 200 || $status >= 300)) {
+            return ['success' => false, 'error' => 'YouTube video upload failed (HTTP ' . $status . ')'];
+        }
+
+        $data = json_decode((string) $raw, true);
+        $videoId = (string) ($data['id'] ?? 'yt_' . uniqid('', true));
+
+        return [
+            'success' => true,
+            'platform_post_id' => $videoId,
+            'platform_url' => 'https://www.youtube.com/watch?v=' . $videoId,
+        ];
     }
 
     public function publishToFacebook(array $account, array $post)

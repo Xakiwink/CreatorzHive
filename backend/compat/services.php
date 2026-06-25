@@ -111,6 +111,21 @@ function meta_oauth_complete_connection(int $userId, string $platform, string $c
     return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->completeConnection(...func_get_args());
 }
 
+function youtube_oauth_is_configured()
+{
+    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\YoutubeOAuthService::class)->isConfigured(...func_get_args());
+}
+
+function youtube_oauth_redirect_uri()
+{
+    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\YoutubeOAuthService::class)->redirectUri(...func_get_args());
+}
+
+function youtube_oauth_complete_connection(int $userId, string $code)
+{
+    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\YoutubeOAuthService::class)->completeConnection(...func_get_args());
+}
+
 function platform_api_secrets_storage_path()
 {
     return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\PlatformApiSecretsService::class)->storagePath(...func_get_args());

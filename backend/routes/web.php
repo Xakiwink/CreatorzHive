@@ -30,5 +30,8 @@ router_get_action('google-callback', CreatorzHive\Controllers\GoogleAuthControll
 router_get_action('oauth-connect', CreatorzHive\Controllers\OauthController::class, 'connectStart', ['auth']);
 router_get_action('oauth-callback', CreatorzHive\Controllers\OauthController::class, 'callbackHandler');
 
+router_get_action('youtube-connect', CreatorzHive\Controllers\YoutubeOAuthController::class, 'connectStart', ['auth']);
+router_get_action('youtube-callback', CreatorzHive\Controllers\YoutubeOAuthController::class, 'callbackHandler');
+
 router_get_action('privacy-policy', CreatorzHive\Controllers\SystemController::class, 'privacyPolicy');
 router_get_action('terms-of-service', CreatorzHive\Controllers\SystemController::class, 'termsOfService');
