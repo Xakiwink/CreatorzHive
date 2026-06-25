@@ -35,4 +35,14 @@ final class SystemController extends AbstractController
             }
     }
 
+    public function privacyPolicy(): void
+    {
+        require_once base_path('frontend/pages/privacy-policy.php');
+    }
+
+    public function termsOfService(): void
+    {
+        require_once base_path('frontend/pages/terms-of-service.php');
+    }
+
 }
