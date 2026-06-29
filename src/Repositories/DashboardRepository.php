@@ -25,7 +25,28 @@ final class DashboardRepository
     public function findCreatorSummary(int $userId): array
     {
         $summary = $this->db->fetchOne(
-            'SELECT * FROM v_creator_summary WHERE user_id = :uid LIMIT 1',
+            'SELECT
+                u.id AS user_id, u.name, u.username, u.avatar_url, u.role,
+                COALESCE(a.total_posts, 0)         AS total_posts,
+                COALESCE(a.published_posts, 0)     AS published_posts,
+                COALESCE(a.total_followers, 0)     AS total_followers,
+                COALESCE(a.avg_engagement_rate, 0) AS avg_engagement_rate,
+                COALESCE(a.total_revenue, 0)       AS total_revenue,
+                (SELECT COUNT(*) FROM deals d
+                    WHERE d.user_id = u.id
+                      AND d.status NOT IN (\'cancelled\',\'completed\')
+                      AND d.is_deleted = 0)        AS active_deals,
+                (SELECT COUNT(*) FROM posts p
+                    WHERE p.user_id = u.id
+                      AND p.status = \'scheduled\'
+                      AND p.is_deleted = 0)        AS scheduled_posts,
+                (SELECT COUNT(*) FROM notifications n
+                    WHERE n.user_id = u.id
+                      AND n.is_read = 0)           AS unread_notifications
+            FROM users u
+            LEFT JOIN analytics a ON a.user_id = u.id
+            WHERE u.is_active = 1 AND u.id = :uid
+            LIMIT 1',
             ['uid' => $userId]
         );
 

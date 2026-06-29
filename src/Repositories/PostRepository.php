@@ -50,7 +50,18 @@ final class PostRepository
     public function getUpcoming(int $userId, int $limit = 5)
     {
         $params = $this->db->bindLimit(['uid' => $userId], $limit, 50);
-                $sql = 'SELECT * FROM v_upcoming_posts WHERE user_id = :uid ORDER BY scheduled_at ASC LIMIT :limit';
+                $sql = 'SELECT p.id, p.user_id, p.title, p.caption, p.platforms, p.scheduled_at,
+                            m.cdn_url AS cover_url, m.thumbnail_url AS cover_thumb,
+                            u.name AS creator_name, u.username AS creator_username
+                        FROM posts p
+                        JOIN users u ON u.id = p.user_id
+                        LEFT JOIN media_files m ON m.id = p.cover_media_id
+                        WHERE p.status = \'scheduled\'
+                          AND p.is_deleted = 0
+                          AND p.scheduled_at BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 14 DAY)
+                          AND p.user_id = :uid
+                        ORDER BY p.scheduled_at ASC
+                        LIMIT :limit';
                 $rows = $this->db->fetchAll($sql, $params);
         
                 return array_map([$this, 'normalizeRow'], $rows);
