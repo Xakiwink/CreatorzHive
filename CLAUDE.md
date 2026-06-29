@@ -125,9 +125,9 @@ Fix: Brief description (under 50 chars)
 
 Longer explanation of what was broken, why, and how it's fixed.
 Include technical details and rationale.
-
-Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>
 ```
+
+**Do NOT include Co-Authored-By lines.** Claude authorship must not appear in commit history.
 
 **Commit prefixes:**
 - `Fix:` - Bug fixes
