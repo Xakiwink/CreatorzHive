@@ -57,20 +57,30 @@ At the top of the dashboard you will see your **App ID** (a long number like `12
 
 ---
 
-## Step 4: Set the Callback URL
+## Step 4: Set the OAuth Redirect URI
 
-This is the URL Meta will redirect to after the user approves the connection.
+This is the URL Meta redirects to after the user approves the connection.
 
-1. On the Instagram product page, look for **Instagram Business Login Settings** in the left sidebar (or scroll down to find it)
-2. Click **Instagram Business Login Settings**
-3. Find the **Valid OAuth Redirect URIs** field
-4. Click **Add URI** and enter exactly:
+> **Note**: On the Instagram API Setup page you will also see a **"Configure webhooks"** section with a "Callback URL" field — that is for Meta server-to-server push notifications and is **not** what you need here. Ignore it.
+
+The OAuth redirect URI is set in a separate location:
+
+1. In the left sidebar under **Instagram**, click **API integration helper**
+   — or look for **Instagram Business Login Settings** if visible in the sidebar
+2. Find the **Valid OAuth Redirect URIs** field
+3. Click **Add URI** and enter exactly:
    ```
    https://creatorzhive.infinityfree.io/?route=instagram-callback
    ```
-5. Click **Save Changes**
+4. Click **Save Changes**
 
-**Important**: The URI must match character-for-character including the `?route=instagram-callback` part. Any mismatch will cause a `redirect_uri_mismatch` error when users try to connect.
+If you cannot find this field, go to: **App Settings → Basic** and scroll down to the **Instagram** section, or check under **Instagram → Business Login Settings**.
+
+**Important**: The URI must match exactly including `?route=instagram-callback`. Any difference — extra slash, different domain, missing query string — will cause a `redirect_uri_mismatch` error.
+
+Also while on **App Settings → Basic**, update:
+- **App domains**: change `creatorz.freedev.app` → `creatorzhive.infinityfree.io`
+- **Privacy policy URL** and **Terms of Service URL**: update both to use `creatorzhive.infinityfree.io`
 
 ---
 
@@ -95,13 +105,25 @@ Permissions (called "scopes") control what data your app can access.
 
 ---
 
-## Step 6: Get Your App ID and App Secret
+## Step 6: Get Your Instagram App ID and App Secret
 
-1. In the left sidebar, click **App Settings** → **Basic**
-2. You will see:
-   - **App ID** — visible immediately (e.g. `1234567890123456`)
-   - **App Secret** — hidden by default, click **Show** and re-enter your Facebook password to reveal it
-3. Copy both values — you will need them in the next step
+In your Meta app there are **two different App IDs** — make sure you use the right one:
+
+| ID | Where it appears | Use for CreatorzHive? |
+|----|-----------------|----------------------|
+| **Meta App ID** (e.g. `2024150598198508`) | App Settings → Basic, top of dashboard | ❌ No |
+| **Instagram App ID** (e.g. `1710012066701003`) | Instagram → API setup with Instagram login | ✅ Yes |
+
+To get the correct values:
+
+1. In the left sidebar, click **Instagram** → **API setup with Instagram login**
+2. You will see a panel titled **"API setup with Instagram business login"** showing:
+   - **Instagram app name** — your app name
+   - **Instagram app ID** — copy this number
+   - **Instagram app secret** — click **Show**, re-enter your Facebook password, copy the value
+3. These are the two values you need — `INSTAGRAM_APP_ID` and `INSTAGRAM_APP_SECRET`
+
+**Do not use** the App ID from App Settings → Basic — that is the parent Meta app identifier and will not work for Instagram OAuth.
 
 **Keep the App Secret private.** Never share it or commit it to git.
 
@@ -115,8 +137,8 @@ Permissions (called "scopes") control what data your app can access.
 2. Go to **Settings** → **Integrations**
 3. Find the **Instagram Business Login** section
 4. Enter:
-   - **Instagram App ID** — the number from Step 6
-   - **Instagram App Secret** — the secret from Step 6
+   - **Instagram App ID** — the **Instagram app ID** from Step 6 (the one on the Instagram API Setup page, not the Meta App ID)
+   - **Instagram App Secret** — the **Instagram app secret** from Step 6 (click Show on that same page)
 5. Click **Save**
 
 CreatorzHive encrypts the secret with AES-256 before storing it.
