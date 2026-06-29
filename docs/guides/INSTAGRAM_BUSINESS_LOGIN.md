@@ -26,7 +26,7 @@ This guide covers configuring Instagram Business Login (Meta Graph API v25) for 
 2. Under **Instagram** → **API setup with Instagram login**
 3. Set the **Valid OAuth Redirect URIs** to:
    ```
-   https://creatorz.freedev.app/?route=instagram-callback
+   https://creatorzhive.infinityfree.io/?route=instagram-callback
    ```
    Adjust the domain for your deployment.
 

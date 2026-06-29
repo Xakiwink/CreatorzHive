@@ -1,6 +1,6 @@
 # CreatorzHive InfinityFree Deployment Guide
 
-**Target**: https://creatorz.freedev.app/  
+**Target**: https://creatorzhive.infinityfree.io/  
 **Platform**: InfinityFree Free Hosting  
 **Date**: 2026-06-11
 
@@ -104,7 +104,7 @@ After upload completes:
 
 ```env
 APP_NAME=CreatorzHive
-APP_URL=https://creatorz.freedev.app
+APP_URL=https://creatorzhive.infinityfree.io
 APP_ENV=production
 APP_DEBUG=false
 
@@ -143,7 +143,7 @@ GOOGLE_CLIENT_SECRET=
 
 ## Step 3: Run Setup Wizard
 
-1. Open browser: `https://creatorz.freedev.app/setup.php`
+1. Open browser: `https://creatorzhive.infinityfree.io/setup.php`
 2. Follow the form:
    - ✓ Run database migrations (required)
    - ☐ Seed demo data (optional)
@@ -169,7 +169,7 @@ CreatorzHive needs background jobs for:
 4. Choose: **Cron Job**
 5. Fill in:
    - **Cron Expression**: `*/1 * * * *` (every minute)
-   - **URL**: `https://creatorz.freedev.app/webhook/process-jobs.php?secret=<YOUR_WEBHOOK_SECRET>`
+   - **URL**: `https://creatorzhive.infinityfree.io/webhook/process-jobs.php?secret=<YOUR_WEBHOOK_SECRET>`
    - Replace `<YOUR_WEBHOOK_SECRET>` with the value from your .env
 6. Click "Create"
 7. UptimeRobot will call your webhook every minute
@@ -190,7 +190,7 @@ InfinityFree may offer cron functionality in the control panel. If available, po
 
 ### Basic Checks
 
-1. **Homepage**: https://creatorz.freedev.app/ loads without errors ✓
+1. **Homepage**: https://creatorzhive.infinityfree.io/ loads without errors ✓
 2. **Login**: Email/password login works ✓
 3. **Dashboard**: Shows with some data ✓
 4. **Google OAuth** (if configured): Sign-in redirects work ✓
@@ -240,7 +240,7 @@ Requires Meta Developer app (free tier):
 2. Create project
 3. Enable: YouTube Data API, Google+ API
 4. Create OAuth 2.0 credentials (Web application)
-5. Add redirect URI: `https://creatorz.freedev.app/?route=google-callback`
+5. Add redirect URI: `https://creatorzhive.infinityfree.io/?route=google-callback`
 6. Copy Client ID + Client Secret
 7. Add to CreatorzHive Admin → Integrations
 
@@ -331,7 +331,7 @@ For issues:
    - Watch for any errors
 
 4. **Invite Users**
-   - Users can register at https://creatorz.freedev.app
+   - Users can register at https://creatorzhive.infinityfree.io
    - Or admin can create users manually
 
 ---

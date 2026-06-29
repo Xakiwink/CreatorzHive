@@ -18,7 +18,7 @@ This document contains project-specific guidelines for Claude Code when working 
 
 ### Live Environment
 - **Platform**: InfinityFree Free Hosting
-- **Domain**: https://creatorz.freedev.app
+- **Domain**: https://creatorzhive.infinityfree.io
 - **Document Root**: `/htdocs/` (entire project at root, NOT in subdirectory)
 - **Database Host**: `sql211.infinityfree.com` (remote server)
 - **Database Name**: `if0_42095116_creatorz_hive`
@@ -65,7 +65,7 @@ This document contains project-specific guidelines for Claude Code when working 
 4. **Provide testing instructions**
    ```
    🧪 Test:
-   1. Visit: https://creatorz.freedev.app/[PAGE]
+   1. Visit: https://creatorzhive.infinityfree.io/[PAGE]
    2. Action: [USER_ACTION]
    3. Expected: [EXPECTED_RESULT]
    ```

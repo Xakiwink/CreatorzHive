@@ -14,7 +14,7 @@ declare(strict_types=1);
  *   3. Click "Add New Monitor"
  *   4. Select "Cron Job"
  *   5. Cron Expression: 0 * * * * (every minute)
- *   6. URL: https://creatorz.freedev.app/webhook/process-jobs.php?secret=YOUR_SECRET_KEY
+ *   6. URL: https://creatorzhive.infinityfree.io/webhook/process-jobs.php?secret=YOUR_SECRET_KEY
  *   7. Replace YOUR_SECRET_KEY with a random value from your .env (WEBHOOK_SECRET)
  *   8. Save and test
  *

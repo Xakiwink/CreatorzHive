@@ -1,7 +1,7 @@
 <?php
 /**
  * Comprehensive Deployment Verification
- * Visit: https://creatorz.freedev.app/verify-deployment.php
+ * Visit: https://creatorzhive.infinityfree.io/verify-deployment.php
  *
  * Checks all critical systems needed for production deployment.
  */
@@ -222,7 +222,7 @@ if ($failed > 0) {
 } else {
     echo "<p><strong>✅ System Ready for Deployment</strong></p>\n";
     echo "<ul>\n";
-    echo "<li>Visit <a href='https://creatorz.freedev.app/'>https://creatorz.freedev.app/</a> to test the application</li>\n";
+    echo "<li>Visit <a href='https://creatorzhive.infinityfree.io/'>https://creatorzhive.infinityfree.io/</a> to test the application</li>\n";
     echo "<li>Test login with demo account (if seeded)</li>\n";
     echo "<li>Monitor background jobs via job queue</li>\n";
     echo "<li>Delete this verification file after confirming status</li>\n";

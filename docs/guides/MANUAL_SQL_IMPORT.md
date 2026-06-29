@@ -282,14 +282,14 @@ VALUES (
 
 After all imports complete:
 
-1. **Go to**: https://creatorz.freedev.app/verify-deployment.php
+1. **Go to**: https://creatorzhive.infinityfree.io/verify-deployment.php
 2. **Check all boxes are green** ✅
 3. **Verify**:
    - ✅ Database connection works
    - ✅ All tables exist
    - ✅ Row counts are > 0 for users, posts, etc.
 4. **Test login**:
-   - Go to: https://creatorz.freedev.app/
+   - Go to: https://creatorzhive.infinityfree.io/
    - Login with admin account (email/password you created)
    - Dashboard should load with stats and posts
 
@@ -336,7 +336,7 @@ After manual SQL import completes:
 
 1. **Verify**: Visit verify-deployment.php
 2. **Create admin user**: Use Option B (hash password locally)
-3. **Test login**: Try logging in at https://creatorz.freedev.app/
+3. **Test login**: Try logging in at https://creatorzhive.infinityfree.io/
 4. **Tell me**: "Database initialized successfully" with screenshot
 
 Then I'll execute Phases 2-8 (feature testing, security hardening, documentation, etc.)

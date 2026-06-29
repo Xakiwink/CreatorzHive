@@ -245,7 +245,7 @@ CreatorzHive has been successfully prepared for production deployment to Infinit
 
 - [ ] Upload entire project via FTP (including vendor/)
 - [ ] Create .env file with InfinityFree credentials
-- [ ] Visit `https://creatorz.freedev.app/setup.php`
+- [ ] Visit `https://creatorzhive.infinityfree.io/setup.php`
 - [ ] Run migrations via setup form
 - [ ] Create admin user
 - [ ] Delete `public/setup.php` for security
@@ -254,7 +254,7 @@ CreatorzHive has been successfully prepared for production deployment to Infinit
 
 - [ ] Create UptimeRobot account (free tier)
 - [ ] Add Cron Job monitor
-- [ ] Set URL: `https://creatorz.freedev.app/webhook/process-jobs.php?secret=YOUR_SECRET`
+- [ ] Set URL: `https://creatorzhive.infinityfree.io/webhook/process-jobs.php?secret=YOUR_SECRET`
 - [ ] Set frequency: every 1 minute
 
 ### Post-Deployment Verification

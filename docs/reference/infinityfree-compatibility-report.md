@@ -2,7 +2,7 @@
 
 **Date**: 2026-06-11  
 **Status**: ✅ FULLY COMPATIBLE  
-**Deployment Target**: https://creatorz.freedev.app/
+**Deployment Target**: https://creatorzhive.infinityfree.io/
 
 ---
 
@@ -41,7 +41,7 @@ CreatorzHive is **fully compatible** with InfinityFree shared hosting. No core f
 - Pre-install Composer locally: `composer install --no-dev --optimize-autoloader`
 - Upload entire `vendor/` folder via FTP (~3MB)
 - Create web-based setup endpoint: `public/setup.php`
-- Run migrations via HTTP: `https://creatorz.freedev.app/setup.php`
+- Run migrations via HTTP: `https://creatorzhive.infinityfree.io/setup.php`
 
 **Status**: ✅ Implemented in `public/setup.php`
 

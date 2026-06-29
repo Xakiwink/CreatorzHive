@@ -182,7 +182,7 @@ Document every modification.
 
 Target URL:
 
-https://creatorz.freedev.app/
+https://creatorzhive.infinityfree.io/
 
 Target Hosting:
 
@@ -484,6 +484,6 @@ Requirements:
 * Preserves the EXISTING workflows.
 * Runs on InfinityFree.
 * Requires minimal setup.
-* Ready for upload to creatorz.freedev.app.
+* Ready for upload to creatorzhive.infinityfree.io.
 
 The highest priority is preservation of the current Creatorz Hive experience. Any change that alters the existing visual identity, user experience, architecture, or workflows must be avoided unless absolutely required for successful deployment.

@@ -9,7 +9,7 @@ declare(strict_types=1);
  *   1. Upload project to InfinityFree via FTP
  *   2. Create MySQL database via InfinityFree control panel
  *   3. Copy .env.example to .env and edit database credentials
- *   4. Visit: https://creatorz.freedev.app/setup.php
+ *   4. Visit: https://creatorzhive.infinityfree.io/setup.php
  *   5. Follow the form to:
  *      - Run database migrations
  *      - Seed demo data (optional)
@@ -484,7 +484,7 @@ $dbHost = getenv('DB_HOST') ?: '127.0.0.1';
                 The application is ready to use. Please:
                 <ol style="margin-left: 20px; margin-top: 10px;">
                     <li>Delete this file (setup.php) from your server</li>
-                    <li>Go to: <a href="/" style="color: inherit; text-decoration: underline;">https://creatorz.freedev.app/</a></li>
+                    <li>Go to: <a href="/" style="color: inherit; text-decoration: underline;">https://creatorzhive.infinityfree.io/</a></li>
                     <li>Log in with your admin credentials</li>
                 </ol>
             </div>
