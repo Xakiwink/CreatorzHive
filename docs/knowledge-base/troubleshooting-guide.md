@@ -98,20 +98,19 @@ DELETE FROM rate_limits WHERE `key` LIKE 'ip:%:login';
 ## 4. Publishing Problems
 
 ### Problem: Post stays "scheduled" and never publishes
-**Cause:** Cron job not running, or job_queue not being processed.
+**Cause:** Webhook not being called, or job_queue not being processed.
 **Fix:**
-1. Check cron is installed: `crontab -l`
-2. Run manually: `php scripts/cron.php`
-3. Check job_queue: `SELECT * FROM job_queue WHERE status='pending' ORDER BY created_at DESC LIMIT 10;`
-4. Check logs: `cat /tmp/creatorzhive-cron.log`
-5. If status is 'failed': `SELECT error_message FROM job_queue WHERE status='failed';`
+1. Verify UptimeRobot is calling the webhook URL with the correct `WEBHOOK_SECRET`
+2. Check job_queue: `SELECT * FROM job_queue WHERE status='pending' ORDER BY created_at DESC LIMIT 10;`
+3. If status is 'failed': `SELECT error_message FROM job_queue WHERE status='failed';`
+4. Check logs in `backend/storage/logs/`
 
 ### Problem: "Instagram token/business id missing"
 **Cause:** No Instagram account connected, or token expired.
 **Fix:**
 1. Go to Settings → Integrations
 2. Disconnect and reconnect Instagram
-3. Ensure `META_APP_ID` and `META_APP_SECRET` are configured
+3. Ensure `INSTAGRAM_APP_ID` and `INSTAGRAM_APP_SECRET` are configured in Admin → Integrations
 
 ### Problem: Posts publish with `mock_XXXXXX` platform IDs
 **Cause:** `SOCIAL_API_MOCK_FALLBACK=true` is set.
@@ -225,7 +224,6 @@ Logout and log back in.
 ```bash
 mysql -u root -p -e "DROP DATABASE creatorz_hive; CREATE DATABASE creatorz_hive CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 php scripts/migrate.php
-php scripts/seed.php
 ```
 
 ### View job queue
@@ -236,11 +234,9 @@ ORDER BY created_at DESC
 LIMIT 20;
 ```
 
-### Manually run a job queue
+### Trigger the job webhook manually
 ```bash
-php scripts/cron.php --queue=default
-php scripts/cron.php --queue=analytics
-php scripts/cron.php --queue=cleanup
+curl "https://creatorzhive.infinityfree.io/webhook/process-jobs.php?secret=YOUR_WEBHOOK_SECRET"
 ```
 
 ### Check error logs

@@ -63,7 +63,7 @@
 - **Controller:** `DashboardController::index()`, `DashboardController::data()`
 - **Service:** `DashboardService`
 - **Repository:** `DashboardRepository`
-- **DB Views:** `v_creator_summary`, `v_upcoming_posts`
+- **DB Tables:** `users`, `analytics`, `deals`, `posts`, `notifications`
 - **Frontend:** `frontend/pages/dashboard/index.php`, `frontend/js/dashboard.js`
 
 **Data displayed:**
@@ -112,10 +112,10 @@
 - **Controller:** `PostController::bulk()`
 
 ### 3.7 Background Publish
-- **Triggered by:** cron.php every minute
+- **Triggered by:** UptimeRobot → `webhook/process-jobs.php`
 - **Job:** `PublishPostJob`
 - **Service:** `SocialApiService::publish()`
-- **Platforms:** Instagram (2-step), Facebook, TikTok, YouTube, Twitter
+- **Platforms:** Instagram (2-step via graph.instagram.com/v25.0), TikTok, YouTube, Twitter
 - **DB Tables:** `platform_post_results`, updates `posts.status`
 
 ---
@@ -127,7 +127,7 @@
 - **Controller:** `AnalyticsController::index()`, `data()`
 - **Repository:** `AnalyticsRepository`
 - **Support:** `AnalyticsReportHelper`
-- **DB Views:** `v_deal_revenue`, `v_post_performance`
+- **DB Tables:** `analytics_snapshots`, `deals`, `platform_post_results`
 - **Frontend:** `frontend/pages/analytics/index.php`, `frontend/js/analytics.js`
 - **Charts:** Chart.js (self-hosted)
 
@@ -139,7 +139,7 @@
 - Post performance per platform
 
 ### 4.2 Analytics Sync (Background)
-- **Triggered by:** cron.php every 60 minutes
+- **Triggered by:** UptimeRobot → `webhook/process-jobs.php`
 - **Job:** `FetchAnalyticsJob`
 - **Service:** `SocialApiService::getAnalytics()`
 - **DB Tables:** `analytics_snapshots`, `analytics`
@@ -249,7 +249,7 @@
 - **Route:** `GET ?route=settings-integrations`
 - **Data:** `GET ?route=integrations_data`
 - **Actions:** `connect_platform`, `disconnect_platform`
-- **OAuth:** `?route=oauth-connect?platform=instagram`
+- **OAuth:** `?route=instagram-connect` (Instagram), `?route=google-auth` (YouTube)
 
 ### 9.4 Notification Preferences
 - **Route:** `GET ?route=settings-notifications`

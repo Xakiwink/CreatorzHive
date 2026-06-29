@@ -1,258 +1,169 @@
-# CreatorzHive Codebase Organization Guide
+# CreatorzHive — Codebase Organization
 
-This guide explains how the CreatorzHive codebase is organized and where to find different types of files.
+How the project is structured and where to find things.
 
 ---
 
-## 📂 Directory Structure
-
-### Root Level (`/creatorzhive/`)
+## Directory Structure
 
 ```
 creatorzhive/
-├── src/                          # OOP business logic (production code)
-├── backend/                       # Procedural legacy compatibility layer
-├── frontend/                      # JavaScript modules and UI
-├── public/                        # Web-accessible files (entry point)
-├── database/                      # Schema and migrations
-├── scripts/                       # CLI commands
-├── tests/                         # Test suite
-├── vendor/                        # Composer dependencies
-├── docs/                          # All documentation
-├── config/                        # Configuration files
-├── .env.example                   # Environment template
-├── composer.json                  # PHP dependencies
-├── phpunit.xml                    # Test configuration
-└── [deployment files]             # See below
+├── src/                    OOP business logic (production code)
+├── backend/                Procedural compatibility layer
+├── frontend/               CSS, JS, HTML templates, fonts, assets
+├── public/                 Web entry point (index.php, setup.php, webhook, uploads)
+├── database/               schema.sql (live DB dump)
+├── scripts/                CLI utilities
+├── tests/                  PHPUnit test suite
+├── vendor/                 Composer dependencies
+├── docs/                   Documentation
+├── .env                    Runtime config (not committed)
+├── .env.example            Config template
+├── composer.json
+└── .htaccess               URL routing
 ```
 
 ---
 
-## 📚 Documentation Organization
-
-### Deployment & Operations (Root Level)
-
-These critical deployment files stay at the project root:
-
-| File | Purpose |
-|------|---------|
-| **[INFINITYFREE_SETUP.md](INFINITYFREE_SETUP.md)** | 🚀 Step-by-step InfinityFree deployment guide |
-| **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** | 🌐 Multi-platform deployment (local, shared hosting, VPS) |
-| **[FINAL_DEPLOYMENT_AUDIT.md](FINAL_DEPLOYMENT_AUDIT.md)** | ✅ Phase 1 completion checklist |
-
-### Complete Documentation (`/docs/`)
-
-#### Code Explanations ([docs/code-explanations/](docs/code-explanations/))
-
-**124 detailed explanations of every major code file** — Organized by component type:
-
-- `backend/` — 27 files covering bootstrap, routing, middleware
-- `frontend/` — 17 files covering JavaScript modules
-- `scripts/` — 9 files covering CLI utilities
-- `src/` — 66 files covering controllers, services, repositories
-- `tests/` — 5 files covering test infrastructure
-
-👉 **Start here**: [docs/code-explanations/INDEX.md](docs/code-explanations/INDEX.md)
-
-#### System Documentation
-
-- **[docs/DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md)** — Master index of all docs
-- **[docs/MASTER_PROJECT_GUIDE.md](docs/MASTER_PROJECT_GUIDE.md)** — Complete project reference
-- **[docs/system-analysis.md](docs/system-analysis.md)** — Architecture, features, design
-- **[docs/infinityfree-compatibility-report.md](docs/infinityfree-compatibility-report.md)** — Shared hosting compatibility
-
-#### Knowledge Base ([docs/knowledge-base/](docs/knowledge-base/))
-
-Quick guides for developers:
-
-- `deployment-guide.md` — How to deploy
-- `feature-map.md` — Features by module
-- `integration-map.md` — External APIs
-- `workflow-map.md` — User workflows
-- `glossary.md` — Terminology
-- `troubleshooting-guide.md` — Debugging
-
-#### Analysis & Architecture ([docs/](docs/))
-
-Deep technical analysis:
-
-- `architecture/` — Project structure and dependency maps
-- `database/` — Schema analysis and ER diagrams
-- `apis/` — API endpoint analysis
-- `business/` — Business logic analysis
-- `code-quality/` — Code review findings
-- `security/` — Security audit
-- `roadmap/` — Feature roadmap
-
----
-
-## 🏗️ Codebase Structure
-
-### Source Code (`/src/`)
+## Source Code (`src/`)
 
 ```
 src/
-├── Controllers/         (10+ files) - HTTP request handlers
-├── Services/            (10+ files) - Business logic
-├── Repositories/        (15+ files) - Database access
-├── Middleware/          (4 files)   - Request middleware
-├── Jobs/                (4 files)   - Background jobs
-├── Core/                (6+ files)  - Core utilities
-├── Support/             (8+ files)  - Helper classes
-└── Providers/           (2 files)   - Service provider
+├── Config/         AppConfig — loads .env, exposes config values
+├── Contracts/      Interfaces (SocialProviderInterface)
+├── Controllers/    HTTP request handlers — one class per route group
+├── Core/           Application bootstrap, DI container, Router, DB connection, TokenCrypto
+├── Helpers/        PlatformHelper — canonical platform slug list
+├── Jobs/           Background jobs: PublishPostJob, FetchAnalyticsJob, etc.
+├── Middleware/     AuthMiddleware, CsrfMiddleware, RoleMiddleware
+├── Providers/      AppServiceProvider — DI wiring
+├── Repositories/   Database queries — one class per table
+├── Services/       Business logic — OAuth, social APIs, admin settings, etc.
+└── Support/        Helper classes: MediaUploadHelper, PostInputNormalizer, etc.
 ```
 
-**Each folder has a README.md** explaining its purpose.
+Each folder has a `README.md` with a file-by-file summary.
 
-### Legacy Layer (`/backend/`)
+---
+
+## Backend Layer (`backend/`)
+
+Procedural compatibility bridge used by route handlers and legacy code.
 
 ```
 backend/
-├── index.php                      - Entry point with APP_SECRET enforcement
-├── bootstrap-oop.php              - OOP dependency injection setup
-├── bootstrap-procedural.php       - Legacy compatibility setup
-├── http.php                       - HTTP abstraction
-├── middleware/                    - Middleware classes
-├── routes/                        - Web & API routes
-├── compat/                        - Compatibility bridges
-├── core/                          - Core utilities
-└── storage/                       - Logs, cache, sessions
+├── index.php               Entry point — APP_SECRET check, bootstrap
+├── bootstrap-oop.php       Boots DI container (AppServiceProvider)
+├── bootstrap-procedural.php  Legacy compat setup
+├── routes/
+│   ├── web.php             Page and form routes
+│   └── api.php             JSON API routes
+├── compat/
+│   ├── models.php          ~60 global functions wrapping Repositories
+│   ├── services.php        ~20 global functions wrapping Services
+│   └── auth.php            9 global functions wrapping AuthService
+├── core/                   Procedural utilities (mailer, validator, session, etc.)
+├── helpers/                Helper functions (platforms, functions, api_cors)
+├── middleware/             Procedural middleware wrappers
+└── storage/
+    ├── email-templates/    HTML email templates
+    ├── logs/               Error and mail logs (gitignored)
+    └── uploads/            Gitkeep placeholder
 ```
 
-### Frontend (`/frontend/`)
+---
+
+## Frontend (`frontend/`)
 
 ```
 frontend/
-├── js/                   - JavaScript modules
-│   ├── app.js           - Main app entry
-│   ├── dashboard.js     - Dashboard logic
-│   ├── planner.js       - Post planner
-│   ├── analytics.js     - Analytics viewer
-│   ├── media.js         - Media upload
-│   ├── settings.js      - Settings UI
-│   └── [more modules]
-├── pages/                - HTML templates
-├── css/                  - Stylesheets
-└── assets/               - Images, icons
+├── js/             JavaScript modules (one per page)
+├── css/            Stylesheets
+├── pages/          PHP + HTML page templates
+│   ├── auth/       Login, register, password reset, verify
+│   ├── dashboard/  Dashboard (index.php includes dashboard.html)
+│   ├── planner/    Content planner (index.php includes planner.html)
+│   ├── analytics/  Analytics (index.php includes analytics.html)
+│   ├── monetization/ Deals and invoices
+│   ├── media/      Media library
+│   ├── settings/   Profile, integrations, admin
+│   ├── notifications/
+│   ├── errors/     404.html, 500.html (included by error_handler.php)
+│   └── partials/   Shared PHP partials (app_script_globals.php)
+├── components/     Shared HTML fragments (navbar, sidebar, modal, toast)
+├── fonts/          Self-hosted Inter, JetBrains Mono, Playfair Display
+└── assets/         icon.svg, Chart.js bundle
 ```
 
-### Database (`/database/`)
+Note: `.html` files inside `pages/` are loaded by their sibling `index.php` or `.php` file via `file_get_contents()` — they are not standalone pages.
+
+---
+
+## Database (`database/`)
 
 ```
 database/
-├── schema.sql           - Complete schema definition
-├── migrations/          - Schema change scripts
-└── seeders/             - Demo data
+├── schema.sql          Full live database dump — import this into phpMyAdmin
+├── migrations/         (empty — future schema changes go here)
+└── seeds/              (empty — demo data is included in schema.sql)
 ```
 
-### Entry Point (`/public/`)
+---
+
+## Scripts (`scripts/`)
+
+CLI utilities for local development and server diagnostics:
+
+| Script | Purpose |
+|--------|---------|
+| `migrate.php` | Runs schema.sql against a local database |
+| `hash-password.php` | Generates a bcrypt hash for manual user creation |
+| `encrypt-social-tokens.php` | Re-encrypts stored OAuth tokens after key rotation |
+| `verify-server.php` | Checks PHP extensions and server config |
+| `download-frontend-vendor.sh` | Downloads Chart.js bundle |
+
+---
+
+## Public Entry Point (`public/`)
 
 ```
 public/
-├── index.php            - Web server entry point
-├── setup.php            - One-time deployment setup
+├── index.php           Front controller — routes all requests
+├── setup.php           One-time setup wizard (delete after use)
+├── verify-deployment.php  Deployment health checker
 ├── webhook/
-│   └── process-jobs.php - Background job webhook
-├── uploads/             - User-uploaded files
-└── .htaccess            - URL rewriting & security
-```
-
-### CLI Scripts (`/scripts/`)
-
-```
-scripts/
-├── migrate.php          - Database migration runner
-├── seed.php             - Demo data seeder
-├── cron.php             - Background job processor
-└── [utility scripts]
+│   └── process-jobs.php  Background job trigger (called by UptimeRobot)
+├── uploads/            User-uploaded media files
+└── .htaccess           Blocks PHP execution in uploads/
 ```
 
 ---
 
-## 📝 File Naming Conventions
+## Documentation (`docs/`)
 
-### Production Code Files
-- No special suffix
-- Example: `PostController.php`, `UserRepository.php`, `UserService.php`
-
-### AI-Generated Code Explanations
-- Suffix: `.explained.md`
-- Location: `docs/code-explanations/[category]/`
-- Example: `docs/code-explanations/src/PostController.explained.md`
-
-### Configuration Files
-- Prefix/suffix: `.example` or `.local`
-- Example: `.env.example`, `.env.local`
-
-### Migration Files
-- Format: `YYYYMMDD_description.sql`
-- Example: `20260101_add_users_table.sql`
-
----
-
-## 🔍 Where to Find What
-
-| Need | Location | File |
-|------|----------|------|
-| **How to deploy?** | Root | [INFINITYFREE_SETUP.md](INFINITYFREE_SETUP.md) |
-| **Want deployment checklist?** | Root | [FINAL_DEPLOYMENT_AUDIT.md](FINAL_DEPLOYMENT_AUDIT.md) |
-| **Multi-platform deploy?** | Root | [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) |
-| **Understand a feature?** | docs/code-explanations | Find the controller/service |
-| **Learn architecture?** | Root + docs/ | [SYSTEM_OVERVIEW.md](SYSTEM_OVERVIEW.md) |
-| **API documentation?** | Root + docs/ | [OOP.md](OOP.md) or [docs/apis/](docs/apis/) |
-| **See all code explanations?** | docs/ | [docs/code-explanations/INDEX.md](docs/code-explanations/INDEX.md) |
-| **Browse all documentation?** | docs/ | [docs/DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md) |
-| **Troubleshoot a problem?** | docs/ | [docs/knowledge-base/troubleshooting-guide.md](docs/knowledge-base/troubleshooting-guide.md) |
-| **Check security?** | docs/ | [docs/security/security-audit.md](docs/security/security-audit.md) |
-| **See the roadmap?** | docs/ | [docs/roadmap/project-roadmap.md](docs/roadmap/project-roadmap.md) |
+```
+docs/
+├── guides/
+│   ├── INFINITYFREE_SETUP.md       Deployment guide
+│   ├── INSTAGRAM_BUSINESS_LOGIN.md Instagram OAuth setup
+│   ├── MANUAL_SQL_IMPORT.md        phpMyAdmin import guide
+│   └── CODEBASE_ORGANIZATION.md   This file
+├── knowledge-base/
+│   ├── feature-map.md              Features → code mapping
+│   └── troubleshooting-guide.md   Common problems and fixes
+├── reference/
+│   ├── FINAL_DEPLOYMENT_AUDIT.md  Phase 1 checklist
+│   └── infinityfree-compatibility-report.md  Hosting constraints
+├── business/
+│   └── business-analysis.md
+└── roadmap/
+    └── project-roadmap.md
+```
 
 ---
 
-## 📋 Quick Navigation
+## Supported Platforms
 
-### For Project Managers
-- Start: [FINAL_DEPLOYMENT_AUDIT.md](FINAL_DEPLOYMENT_AUDIT.md)
-- Then: [docs/knowledge-base/feature-map.md](docs/knowledge-base/feature-map.md)
-- Then: [docs/roadmap/project-roadmap.md](docs/roadmap/project-roadmap.md)
+Instagram, TikTok, YouTube, X/Twitter. Facebook has been removed.
 
-### For Developers
-- Start: [SYSTEM_OVERVIEW.md](SYSTEM_OVERVIEW.md)
-- Then: [docs/code-explanations/INDEX.md](docs/code-explanations/INDEX.md)
-- Then: Read explanations for the module you're working on
-
-### For DevOps
-- Start: [INFINITYFREE_SETUP.md](INFINITYFREE_SETUP.md) or [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
-- Then: [docs/knowledge-base/troubleshooting-guide.md](docs/knowledge-base/troubleshooting-guide.md)
-- Then: [docs/knowledge-base/deployment-guide.md](docs/knowledge-base/deployment-guide.md)
-
-### For Security Review
-- Start: [docs/security/security-audit.md](docs/security/security-audit.md)
-- Then: [FINAL_DEPLOYMENT_AUDIT.md](FINAL_DEPLOYMENT_AUDIT.md) (security section)
-- Then: Search `docs/code-explanations/` for specific modules
-
----
-
-## ✅ Organization Checklist
-
-- ✅ All code explanations (124 files) moved to `docs/code-explanations/`
-- ✅ Code explanations organized by type: backend, frontend, scripts, src, tests
-- ✅ Code explanations have comprehensive INDEX.md
-- ✅ Deployment guides at root level for easy access
-- ✅ System analysis and audits in `docs/`
-- ✅ Knowledge base guides for operations
-- ✅ Architecture and API analysis in `docs/`
-- ✅ Clear navigation and organization guide (this file)
-
----
-
-## 🚀 Clean Codebase Status
-
-**Production Code**: Clean, no AI-generated content  
-**Documentation**: All AI-generated explanations organized in `docs/code-explanations/`  
-**Deployment Info**: Easy-to-find at root level  
-**Knowledge Base**: Comprehensive in `docs/knowledge-base/`
-
----
-
-**Last Updated**: 2026-06-12  
-**Status**: ✅ Complete and organized
+Instagram uses **Meta Graph API v25 Business Login** — see [INSTAGRAM_BUSINESS_LOGIN.md](INSTAGRAM_BUSINESS_LOGIN.md).

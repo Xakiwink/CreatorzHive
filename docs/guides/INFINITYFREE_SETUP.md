@@ -1,18 +1,19 @@
-# CreatorzHive InfinityFree Deployment Guide
+# CreatorzHive — InfinityFree Deployment Guide
 
-**Target**: https://creatorzhive.infinityfree.io/  
+**Domain**: https://creatorzhive.infinityfree.io  
 **Platform**: InfinityFree Free Hosting  
-**Date**: 2026-06-11
+**Document root**: `/htdocs/` (project files go directly here, not in a subdirectory)
 
 ---
 
 ## Quick Summary
 
-This guide covers deploying CreatorzHive to InfinityFree shared hosting. The application is fully compatible with shared hosting — it requires only:
+CreatorzHive requires only:
 - PHP 7.4+
 - MySQL database
-- Apache web server (pre-configured)
-- No SSH, no custom cron, no special permissions needed
+- Apache (pre-configured on InfinityFree)
+
+No SSH, no cron daemon, no special server permissions needed.
 
 **Total setup time**: ~30 minutes
 
@@ -20,87 +21,68 @@ This guide covers deploying CreatorzHive to InfinityFree shared hosting. The app
 
 ## Pre-Deployment Checklist
 
-Before uploading, prepare these on your local machine:
-
-### 1. Install PHP Dependencies
+### 1. Install PHP Dependencies (locally)
 
 ```bash
-cd /path/to/creatorzhive
 composer install --no-dev --optimize-autoloader
 ```
 
-This creates the `vendor/` folder (~3MB) and registers autoloaders.
+This generates the `vendor/` folder. Upload it with the rest of the project.
 
-### 2. Verify Database Schema
-
-```bash
-php scripts/migrate.php          # Test locally first
-php scripts/seed.php --fresh    # Optional: load demo data
-```
-
-This ensures your local schema is up-to-date.
-
-### 3. Generate Secrets
+### 2. Generate Secrets (locally)
 
 ```bash
-# Generate APP_SECRET (encryption key for OAuth tokens, admin credentials)
 php -r 'echo "APP_SECRET=" . bin2hex(random_bytes(32)) . "\n";'
-
-# Generate WEBHOOK_SECRET (for background job processing)
 php -r 'echo "WEBHOOK_SECRET=" . bin2hex(random_bytes(32)) . "\n";'
 ```
 
-Save these values — you'll need them on InfinityFree.
+Save both values — you will paste them into `.env` on the server.
 
 ---
 
-## Step 1: Create InfinityFree Account & Database
+## Step 1: Create Database in InfinityFree
 
-1. Go to [InfinityFree.net](https://infinityfree.net) and create account
-2. In control panel, go to **MySQL Manager**
-3. Click **New Database** and create a database (note the name, typically `username_dbname`)
-4. Note the MySQL credentials displayed
+1. Log in to InfinityFree control panel
+2. Go to **MySQL Manager** → **New Database**
+3. Note the database name, username, and password (auto-generated)
+4. Note the **DB Host** — it will be something like `sql211.infinityfree.com`
 
 ---
 
-## Step 2: Upload Project via FTP
+## Step 2: Upload Files via FTP
 
 ### Get FTP Credentials
 
-From InfinityFree control panel:
-- Go to **FTP Manager**
-- Click **New Account** and create FTP access
-- Note: FTP Host, Username, Password
- 
-### Upload Files
+In InfinityFree control panel → **FTP Manager** → **New Account**. Note the host, username, and password.
 
-Use an FTP client (FileZilla, Cyberduck, etc.):
+### Upload Structure
 
-1. Connect with FTP credentials
-2. Navigate to the `public_html` directory
-3. Upload entire CreatorzHive folder including `vendor/`:
-   ```
-   public_html/
-   ├── creatorzhive/              (entire project)
-   │   ├── public/
-   │   ├── src/
-   │   ├── backend/
-   │   ├── frontend/
-   │   ├── vendor/                ← MUST include this
-   │   ├── database/
-   │   ├── .env                   ← Create this next
-   │   └── ...
-   ```
+Connect with FileZilla (or similar) and upload the entire project **directly into `/htdocs/`**:
 
-**Important**: Upload is slow (~500MB for vendor/). This can take 10-30 minutes. Do NOT interrupt.
+```
+/htdocs/
+├── backend/
+├── database/
+├── frontend/
+├── public/
+├── scripts/
+├── src/
+├── tests/
+├── vendor/          ← must include this
+├── .htaccess
+├── index.php
+├── setup.php
+├── webhook/
+└── ...
+```
 
-### Create .env File on Server
+Do **not** create a `creatorzhive/` subfolder inside `/htdocs/`. Files go directly at the root.
 
-After upload completes:
+**Note**: The `vendor/` folder is large (~50–200MB). The upload may take 10–30 minutes — do not interrupt it.
 
-1. In FTP, navigate to `public_html/creatorzhive/`
-2. Open `.env.example` (read-only copy)
-3. Create NEW file: `.env` with these contents (replace with YOUR values):
+### Create the `.env` File
+
+After uploading, create a file named `.env` in `/htdocs/` (copy `.env.example` and fill in your values):
 
 ```env
 APP_NAME=CreatorzHive
@@ -108,28 +90,24 @@ APP_URL=https://creatorzhive.infinityfree.io
 APP_ENV=production
 APP_DEBUG=false
 
-# Database credentials from InfinityFree MySQL Manager
-DB_HOST=localhost          # usually "localhost"
+DB_HOST=sql211.infinityfree.com
 DB_PORT=3306
-DB_DATABASE=username_dbname  # from InfinityFree MySQL
-DB_USERNAME=username_dbuser  # from InfinityFree MySQL
-DB_PASSWORD=your_db_password # from InfinityFree MySQL
+DB_DATABASE=if0_42295215_your_db_name
+DB_USERNAME=if0_42295215
+DB_PASSWORD=your_db_password
 
-# Email (Gmail recommended - use an App Password, not your real password)
 MAIL_DRIVER=smtp
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USERNAME=your@gmail.com
-MAIL_PASSWORD=your_16_char_app_password    # NOT your Gmail password!
+MAIL_PASSWORD=your_app_password
 MAIL_FROM_ADDRESS=your@gmail.com
 MAIL_FROM_NAME=CreatorzHive
- 
-# Security (from Step 1 pre-deployment)
-APP_SECRET=<paste_generated_secret>
-SESSION_SECURE=true
-WEBHOOK_SECRET=<paste_generated_webhook_secret>
 
-# Optional: Social integrations (fill in later if needed)
+APP_SECRET=paste_generated_secret_here
+SESSION_SECURE=true
+WEBHOOK_SECRET=paste_generated_webhook_secret_here
+
 SOCIAL_API_MOCK_FALLBACK=true
 INSTAGRAM_APP_ID=
 INSTAGRAM_APP_SECRET=
@@ -137,203 +115,91 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 ```
 
-**Save and upload the .env file.**
+---
+
+## Step 3: Import the Database
+
+1. In InfinityFree control panel → **MySQL Manager** → **phpMyAdmin**
+2. Select your database in the left sidebar
+3. Click the **Import** tab
+4. Choose file: `database/schema.sql`
+5. Click **Go**
+
+The schema.sql contains all tables, indexes, triggers, and initial data. One import — no separate seed files.
+
+**If you get a `CREATE VIEW` error**: InfinityFree does not grant VIEW privileges on free plans. The current schema.sql has no views — if you see this error, you are using an outdated file. Re-download `database/schema.sql` from the repo.
 
 ---
 
-## Step 3: Run Setup Wizard
+## Step 4: Run the Setup Wizard
 
-1. Open browser: `https://creatorzhive.infinityfree.io/setup.php`
-2. Follow the form:
-   - ✓ Run database migrations (required)
-   - ☐ Seed demo data (optional)
-   - Enter admin email, name, password
-3. Click "Complete Setup"
-4. **After setup completes**, delete `public/setup.php` via FTP for security
+1. Visit: `https://creatorzhive.infinityfree.io/setup.php`
+2. Fill in: admin email, name, and password
+3. Click **Complete Setup**
+4. After setup completes, **delete `public/setup.php`** via FTP for security
 
 ---
 
-## Step 4: Set Up Background Job Processing
+## Step 5: Configure Background Jobs (UptimeRobot)
 
-CreatorzHive needs background jobs for:
-- Publishing posts to social platforms
-- Fetching analytics
-- Sending notifications
-- Cleaning up orphaned files
+InfinityFree has no reliable cron. Use UptimeRobot (free) to call the webhook every minute:
 
-### Option A: UptimeRobot (Free, Recommended)
+1. Go to [uptimerobot.com](https://uptimerobot.com) → create free account
+2. **Add New Monitor** → type: **HTTP(s)**
+3. URL: `https://creatorzhive.infinityfree.io/webhook/process-jobs.php?secret=YOUR_WEBHOOK_SECRET`
+4. Monitoring interval: **5 minutes** (free tier minimum)
 
-1. Go to [UptimeRobot.com](https://uptimerobot.com)
-2. Create account (free tier included)
-3. Click "Add New Monitor"
-4. Choose: **Cron Job**
-5. Fill in:
-   - **Cron Expression**: `*/1 * * * *` (every minute)
-   - **URL**: `https://creatorzhive.infinityfree.io/webhook/process-jobs.php?secret=<YOUR_WEBHOOK_SECRET>`
-   - Replace `<YOUR_WEBHOOK_SECRET>` with the value from your .env
-6. Click "Create"
-7. UptimeRobot will call your webhook every minute
-
-### Option B: EasyCron.com (Alternative)
-
-Similar setup at [EasyCron.com](https://www.easycron.com) with same webhook URL.
-
-### Option C: InfinityFree Built-in Cron
-
-InfinityFree may offer cron functionality in the control panel. If available, point it to the webhook URL.
-
-**Test**: After 1 minute, check if jobs process by going to Settings → and confirming integrations work.
+This triggers background jobs: scheduled post publishing, analytics sync, notification delivery.
 
 ---
 
-## Step 5: Verify Installation
+## Step 6: Verify the Installation
 
-### Basic Checks
-
-1. **Homepage**: https://creatorzhive.infinityfree.io/ loads without errors ✓
-2. **Login**: Email/password login works ✓
-3. **Dashboard**: Shows with some data ✓
-4. **Google OAuth** (if configured): Sign-in redirects work ✓
-
-### Test Content Creation
-
-1. Log in as admin
-2. Go to Planner
-3. Create a post (title + content)
-4. Add a media file (upload an image)
-5. Publish to Drafts
-6. Verify post appears in Planner
-
-### Test Social Integration
-
-1. Go to Settings → Integrations
-2. Click "Connect Meta/Instagram" or "Connect Google"
-3. Follow OAuth flow
-4. Verify account connects
-
-### Test Background Jobs
-
-1. Go to Settings → Integrations
-2. Status should show green checkmarks (jobs are running)
-3. If red, check webhook setup
+1. Visit `https://creatorzhive.infinityfree.io/` — homepage loads without errors
+2. Log in with the admin account you created in setup
+3. Dashboard shows stats and navigation
+4. Go to **Settings → Integrations** — integration status visible
 
 ---
 
 ## Optional: Configure Social Integrations
 
-### Meta/Instagram OAuth
+### Instagram Business Login
 
-Requires Meta Developer app (free tier):
+See [INSTAGRAM_BUSINESS_LOGIN.md](INSTAGRAM_BUSINESS_LOGIN.md) for the full setup guide.
 
-1. Go to [Meta Developers](https://developers.facebook.com/)
-2. Create app → Business type
-3. Add product: "Facebook Login"
-4. In Settings → Basic: copy App ID and App Secret
-5. Add to CreatorzHive:
-   - Admin → Integrations
-   - Enter Meta App ID + Secret
-   - Save
+Summary:
+1. Create a Meta Developer app (Business type) at developers.facebook.com
+2. Add **Instagram** product → API setup with Instagram login
+3. Set callback URI: `https://creatorzhive.infinityfree.io/?route=instagram-callback`
+4. Copy App ID and App Secret into Admin → Integrations → Instagram Business Login
 
-### Google OAuth
+### YouTube / Google OAuth
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create project
-3. Enable: YouTube Data API, Google+ API
-4. Create OAuth 2.0 credentials (Web application)
-5. Add redirect URI: `https://creatorzhive.infinityfree.io/?route=google-callback`
-6. Copy Client ID + Client Secret
-7. Add to CreatorzHive Admin → Integrations
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create project → enable YouTube Data API v3
+3. Create OAuth 2.0 credentials (Web application)
+4. Add redirect URI: `https://creatorzhive.infinityfree.io/?route=google-callback`
+5. Paste Client ID and Client Secret into Admin → Integrations → YouTube
 
 ---
 
 ## Troubleshooting
 
-### Application shows: "APP_SECRET is not configured"
-
-- Edit `.env` file
-- Add: `APP_SECRET=<value_from_step_2>`
-- Save and reload browser
-
-### Database connection error
-
-- Verify .env has correct credentials (copy/paste from InfinityFree)
-- Check MySQL Manager shows database created
-- Try again (InfinityFree MySQL sometimes takes 10 minutes to activate)
-
-### Email not sending
-
-- Use Gmail with an App Password (not your real password)
-- Generate at: https://myaccount.google.com/apppasswords
-- Add to MAIL_PASSWORD in .env
-
-### Background jobs not running
-
-- Check UptimeRobot status (verify webhook is being called)
-- If not running, regenerate WEBHOOK_SECRET and update UptimeRobot
-- Check admin panel → Integrations (should show green status)
-
-### File upload fails
-
-- Verify `public/uploads/.htaccess` exists
-- InfinityFree should auto-create `public/uploads/` as writable
-
-### Login redirects to Google instead of showing login form
-
-- If Google OAuth not configured, disable it:
-  - Edit `.env`: `GOOGLE_CLIENT_ID=` (empty)
-  - Reload
+| Symptom | Fix |
+|---------|-----|
+| `APP_SECRET is not configured` | Add `APP_SECRET=...` to `.env` |
+| Database connection error | Verify `DB_HOST=sql211.infinityfree.com` and credentials from InfinityFree |
+| `CREATE VIEW command denied` | Use the current `database/schema.sql` — it contains no views |
+| 404 on all pages | Check `.htaccess` uploaded correctly and mod_rewrite is on |
+| Emails not sending | Use Gmail App Password (not account password) |
+| Background jobs not running | Verify UptimeRobot is calling the webhook URL with the correct secret |
+| File upload fails | Verify `public/uploads/.htaccess` is present |
 
 ---
 
 ## Maintenance
 
-### Daily
-
-- Check admin panel → Integration status (should be green)
-- If red, check webhook (UptimeRobot)
-
-### Weekly
-
-- Verify email notifications arrive
-- Monitor dashboard → check job queue
-
-### Monthly
-
-- Generate new APP_SECRET (rotate encryption key)
-- Update social platform tokens if expired
-
----
-
-## Support & Troubleshooting
-
-For issues:
-1. Check `.env` file (most issues are configuration)
-2. Review error logs in browser console (F12 → Console tab)
-3. Check InfinityFree MySQL Manager (database exists?)
-4. Verify FTP upload completed (vendor/ folder exists?)
-
----
-
-## Next Steps After Deployment
-
-1. **Customize Settings**
-   - Admin → Settings
-   - Update app name, contact email, etc.
-
-2. **Add Content**
-   - Create first posts
-   - Connect social accounts
-   - Schedule posts
-
-3. **Monitor Usage**
-   - Check analytics dashboard
-   - Monitor job queue
-   - Watch for any errors
-
-4. **Invite Users**
-   - Users can register at https://creatorzhive.infinityfree.io
-   - Or admin can create users manually
-
----
-
-**Deployment successful!** 🎉
+- **Check weekly**: Admin → Integrations (all statuses green)
+- **Token refresh**: Instagram tokens expire after ~60 days — reconnect via Settings → Integrations
+- **Logs**: Admin → System (or check `backend/storage/logs/` via FTP)
