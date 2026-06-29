@@ -20,7 +20,7 @@ final class DashboardService
     private $repository;
 
     /** @var list<string> */
-    private const PLATFORM_SLUGS = ['instagram', 'tiktok', 'youtube', 'facebook', 'twitter'];
+    private const PLATFORM_SLUGS = ['instagram', 'tiktok', 'youtube', 'twitter'];
 
     public function __construct(DashboardRepository $repository)
     {

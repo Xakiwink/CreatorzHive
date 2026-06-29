@@ -37,49 +37,35 @@ final class PlatformApiSecretsService
     public function credentialGroups()
     {
         return [
-                'meta' => [
-                    'label' => 'Meta (Instagram & Facebook)',
-                    'description' => 'Graph API credentials for Instagram Business and Facebook Pages.',
+                'instagram' => [
+                    'label' => 'Instagram Business Login',
+                    'description' => 'Meta Graph API v25 credentials for Instagram Business Login.',
                     'fields' => [
-                        'meta_app_id' => [
-                            'label' => 'Meta App ID',
-                            'env' => 'META_APP_ID',
+                        'instagram_app_id' => [
+                            'label' => 'Instagram App ID',
+                            'env' => 'INSTAGRAM_APP_ID',
                             'secret' => false,
-                            'help' => 'From Meta Developer Console → App settings → Basic.',
+                            'help' => 'From Meta Developer Console → App settings → Basic. Used for Instagram Business Login OAuth.',
                         ],
-                        'meta_app_secret' => [
-                            'label' => 'Meta App Secret',
-                            'env' => 'META_APP_SECRET',
+                        'instagram_app_secret' => [
+                            'label' => 'Instagram App Secret',
+                            'env' => 'INSTAGRAM_APP_SECRET',
                             'secret' => true,
-                            'help' => 'Used for server-side OAuth and token exchange (future).',
+                            'help' => 'Used for server-side authorization code exchange (Graph API v25).',
                         ],
                         'instagram_access_token' => [
                             'label' => 'Instagram access token',
                             'env' => 'INSTAGRAM_ACCESS_TOKEN',
                             'secret' => true,
                             'platform' => 'instagram',
-                            'help' => 'Long-lived user or system user token with instagram_basic, pages_show_list, etc.',
+                            'help' => 'Long-lived token from Instagram Business Login with instagram_business_basic scope.',
                         ],
                         'instagram_business_id' => [
                             'label' => 'Instagram Business account ID',
                             'env' => 'INSTAGRAM_BUSINESS_ID',
                             'secret' => false,
                             'platform' => 'instagram',
-                            'help' => 'IG User ID for the Business/Creator account (Graph API).',
-                        ],
-                        'facebook_access_token' => [
-                            'label' => 'Facebook Page access token',
-                            'env' => 'FACEBOOK_ACCESS_TOKEN',
-                            'secret' => true,
-                            'platform' => 'facebook',
-                            'help' => 'Page access token from Meta Business Suite or Graph API Explorer.',
-                        ],
-                        'facebook_page_id' => [
-                            'label' => 'Facebook Page ID',
-                            'env' => 'FACEBOOK_PAGE_ID',
-                            'secret' => false,
-                            'platform' => 'facebook',
-                            'help' => 'Numeric Page ID used when publishing to Facebook.',
+                            'help' => 'IG User ID for the Business/Creator account (Graph API v25).',
                         ],
                     ],
                 ],
@@ -353,10 +339,9 @@ final class PlatformApiSecretsService
     {
         $map = [
                 'instagram' => 'instagram_access_token',
-                'facebook' => 'facebook_access_token',
-                'tiktok' => 'tiktok_access_token',
-                'youtube' => 'youtube_access_token',
-                'twitter' => 'twitter_bearer_token',
+                'tiktok'    => 'tiktok_access_token',
+                'youtube'   => 'youtube_access_token',
+                'twitter'   => 'twitter_bearer_token',
             ];
         
             $platform = strtolower(trim($platform));
@@ -409,10 +394,9 @@ final class PlatformApiSecretsService
         
             $envMap = [
                 'instagram' => 'INSTAGRAM_ACCESS_TOKEN',
-                'facebook' => 'FACEBOOK_ACCESS_TOKEN',
-                'tiktok' => 'TIKTOK_ACCESS_TOKEN',
-                'youtube' => 'YOUTUBE_ACCESS_TOKEN',
-                'twitter' => 'TWITTER_BEARER_TOKEN',
+                'tiktok'    => 'TIKTOK_ACCESS_TOKEN',
+                'youtube'   => 'YOUTUBE_ACCESS_TOKEN',
+                'twitter'   => 'TWITTER_BEARER_TOKEN',
             ];
             $envKey = $envMap[$platform] ?? '';
         

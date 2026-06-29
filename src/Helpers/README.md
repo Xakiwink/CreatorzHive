@@ -12,7 +12,7 @@ Lightweight utility classes used across the codebase that don't belong to a spec
 
 ## 3. Design Notes
 
-- `PlatformHelper::slugs()` returns the authoritative list of supported social platform identifiers: `instagram`, `tiktok`, `youtube`, `facebook`, `twitter`
+- `PlatformHelper::slugs()` returns the authoritative list of supported social platform identifiers: `instagram`, `tiktok`, `youtube`, `twitter`
 - `PlatformHelper::normalize(string $input)` lowercases and maps aliases (e.g. `x` → `twitter`) to canonical slugs
 - Exposed as procedural functions via `backend/helpers/platforms.php` for compat code
 

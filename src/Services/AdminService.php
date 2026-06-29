@@ -11,8 +11,8 @@ use function admin_service_integration_providers;
 use function admin_service_settings_defaults;
 use function admin_service_settings_get_all;
 use function admin_service_settings_path;
-use function meta_oauth_is_configured;
-use function meta_oauth_redirect_uri;
+use function instagram_oauth_is_configured;
+use function instagram_oauth_redirect_uri;
 use function platform_api_secrets_platform_token_configured;
 use function platform_api_secrets_resolve_env;
 use function platform_api_secrets_token_source_for_platform;
@@ -46,7 +46,6 @@ final class AdminService
                 'integration_enabled_tiktok' => true,
                 'integration_enabled_youtube' => true,
                 'integration_enabled_twitter' => true,
-                'integration_enabled_facebook' => true,
             ];
     }
 
@@ -123,7 +122,7 @@ final class AdminService
                 'instagram' => [
                     'label' => 'Instagram',
                     'token_env' => 'INSTAGRAM_ACCESS_TOKEN',
-                    'test_url' => 'https://graph.instagram.com/v21.0/me?fields=id',
+                    'test_url' => 'https://graph.instagram.com/v25.0/me?fields=id',
                 ],
                 'tiktok' => [
                     'label' => 'TikTok',
@@ -139,11 +138,6 @@ final class AdminService
                     'label' => 'X / Twitter',
                     'token_env' => 'TWITTER_BEARER_TOKEN',
                     'test_url' => 'https://api.twitter.com/2/users/me',
-                ],
-                'facebook' => [
-                    'label' => 'Facebook',
-                    'token_env' => 'FACEBOOK_ACCESS_TOKEN',
-                    'test_url' => 'https://graph.facebook.com/v25.0/me?fields=id',
                 ],
             ];
     }
@@ -195,7 +189,6 @@ final class AdminService
         
             $tokenFieldsToPlatform = [
                 'instagram_access_token' => 'instagram',
-                'facebook_access_token' => 'facebook',
                 'tiktok_access_token' => 'tiktok',
                 'youtube_access_token' => 'youtube',
                 'twitter_bearer_token' => 'twitter',
@@ -228,13 +221,13 @@ final class AdminService
                 }
             }
         
-            if ($group === 'meta' && in_array('meta_app_id', $savedFieldKeys, true) && meta_oauth_is_configured()) {
-                $redirect = meta_oauth_redirect_uri();
+            if ($group === 'instagram' && in_array('instagram_app_id', $savedFieldKeys, true) && instagram_oauth_is_configured()) {
+                $redirect = instagram_oauth_redirect_uri();
                 if ($redirect === '') {
-                    $warnings[] = 'Meta OAuth redirect URI could not be determined.';
+                    $warnings[] = 'Instagram OAuth redirect URI could not be determined.';
                 }
             }
-        
+
             return ['ok' => $warnings === [], 'warnings' => $warnings];
     }
 

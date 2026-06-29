@@ -35,7 +35,7 @@ Function names mirror repository/service method names with a prefix:
 | `post_` | `PostRepository` |
 | `deal_` | `DealRepository` |
 | `auth_service_` | `AuthService` |
-| `meta_oauth_` | `MetaOAuthService` |
+| `instagram_oauth_` | `InstagramOAuthService` |
 | etc. | |
 
 ## 5. Origin

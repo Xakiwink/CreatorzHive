@@ -135,7 +135,6 @@
       instagram: 'Instagram',
       tiktok: 'TikTok',
       youtube: 'YouTube',
-      facebook: 'Facebook',
       twitter: 'Twitter',
     };
     if (p === 'unknown') return 'Other';
@@ -443,7 +442,6 @@
       '<label><input type="checkbox" name="qp_platform" value="instagram"> Instagram</label>' +
       '<label><input type="checkbox" name="qp_platform" value="tiktok"> TikTok</label>' +
       '<label><input type="checkbox" name="qp_platform" value="youtube"> YouTube</label>' +
-      '<label><input type="checkbox" name="qp_platform" value="facebook"> Facebook</label>' +
       '</div></div>' +
       '<div class="quick-post-field">' +
       '<span style="font-size:var(--text-xs);font-weight:600;text-transform:uppercase;color:var(--color-text-muted)">Status</span>' +

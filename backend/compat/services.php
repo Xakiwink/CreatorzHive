@@ -55,60 +55,29 @@ function admin_service_validate_saved_credentials(string $group, array $savedFie
     return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\AdminService::class)->validateSavedCredentials(...func_get_args());
 }
 
-function meta_oauth_is_configured()
+function instagram_oauth_is_configured()
 {
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->isConfigured(...func_get_args());
+    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\InstagramOAuthService::class)->isConfigured(...func_get_args());
 }
 
-function meta_oauth_redirect_uri()
+function instagram_oauth_redirect_uri()
 {
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->redirectUri(...func_get_args());
+    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\InstagramOAuthService::class)->redirectUri(...func_get_args());
 }
 
-function meta_oauth_allowed_platforms()
+function instagram_oauth_authorize_url(string $state)
 {
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->allowedPlatforms(...func_get_args());
+    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\InstagramOAuthService::class)->authorizeUrl(...func_get_args());
 }
 
-function meta_oauth_scopes(string $platform)
+function instagram_oauth_complete_connection(int $userId, string $code)
 {
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->scopes(...func_get_args());
+    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\InstagramOAuthService::class)->completeConnection(...func_get_args());
 }
 
-function meta_oauth_authorize_url(string $platform, string $state)
+function instagram_oauth_refresh_token(array $account)
 {
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->authorizeUrl(...func_get_args());
-}
-
-function meta_oauth_exchange_code(string $code)
-{
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->exchangeCode(...func_get_args());
-}
-
-function meta_oauth_long_lived_token(string $shortToken)
-{
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->longLivedToken(...func_get_args());
-}
-
-function meta_oauth_fetch_pages(string $userAccessToken)
-{
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->fetchPages(...func_get_args());
-}
-
-function meta_oauth_save_facebook_page(int $userId, array $page)
-{
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->saveFacebookPage(...func_get_args());
-}
-
-
-function meta_oauth_upsert_social_account(int $userId, array $data)
-{
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->upsertSocialAccount(...func_get_args());
-}
-
-function meta_oauth_complete_connection(int $userId, string $platform, string $code)
-{
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\MetaOAuthService::class)->completeConnection(...func_get_args());
+    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\InstagramOAuthService::class)->refreshToken(...func_get_args());
 }
 
 function youtube_oauth_is_configured()

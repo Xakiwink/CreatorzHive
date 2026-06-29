@@ -86,7 +86,7 @@ final class PublishPostJob implements JobHandlerInterface
 
             $account = $this->accounts->accountFetch($userId, $platform, true);
 
-            if ($account !== null && in_array($platform, ['instagram', 'facebook'], true)) {
+            if ($account !== null && $platform === 'instagram') {
                 $expiresAt = (string) ($account['token_expires_at'] ?? '');
                 if ($expiresAt !== '' && strtotime($expiresAt) < strtotime('+7 days')) {
                     $refreshed = $this->socialApi->refreshToken($account);

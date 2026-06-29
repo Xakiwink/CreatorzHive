@@ -131,7 +131,8 @@ WEBHOOK_SECRET=<paste_generated_webhook_secret>
 
 # Optional: Social integrations (fill in later if needed)
 SOCIAL_API_MOCK_FALLBACK=true
-META_APP_ID=
+INSTAGRAM_APP_ID=
+INSTAGRAM_APP_SECRET=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 ```

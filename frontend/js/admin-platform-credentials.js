@@ -2,10 +2,7 @@
   'use strict';
 
   var GROUP_TESTS = {
-    meta: [
-      { platform: 'instagram', label: 'Test Instagram' },
-      { platform: 'facebook', label: 'Test Facebook' },
-    ],
+    instagram: [{ platform: 'instagram', label: 'Test Instagram' }],
     tiktok: [{ platform: 'tiktok', label: 'Test TikTok' }],
     youtube: [{ platform: 'youtube', label: 'Test YouTube' }],
     twitter: [{ platform: 'twitter', label: 'Test X' }],

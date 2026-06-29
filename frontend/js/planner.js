@@ -12,7 +12,6 @@
 
   const PLATFORM_LIMITS = {
     instagram: 2200,
-    facebook: 63206,
     twitter: 280,
     tiktok: 2200,
     youtube_title: 100,
@@ -577,40 +576,6 @@
     '</div>';
   }
 
-  function buildFacebookPreview(d) {
-    const body = d.text;
-    const media = d.mediaUrl
-      ? (d.isVideo
-          ? '<video src="' + escHtml(d.mediaUrl) + '" muted playsinline style="width:100%;height:100%;object-fit:cover"></video>'
-          : '<img src="' + escHtml(d.mediaUrl) + '" alt="" style="width:100%;height:100%;object-fit:cover">')
-      : '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-
-    const bodyHtml = body
-      ? '<div class="preview-fb-body">' + escHtml(body).replace(/\n/g, '<br>') + '</div>'
-      : '<div class="preview-fb-body" style="color:#aaa;font-style:italic">Your post text will appear here…</div>';
-
-    return '<div class="post-preview-card">' +
-      '<div class="preview-fb-header">' +
-        '<div class="preview-fb-avatar">Y</div>' +
-        '<div class="preview-fb-meta">' +
-          '<div class="preview-fb-name">Your Page</div>' +
-          '<div class="preview-fb-sub">Just now · 🌐</div>' +
-        '</div>' +
-      '</div>' +
-      bodyHtml +
-      '<div class="preview-fb-image">' + media + '</div>' +
-      '<div class="preview-fb-reactions">' +
-        '<div class="preview-fb-react-icons">👍 ❤️ 😮</div>' +
-        '<span>123 · 12 comments</span>' +
-      '</div>' +
-      '<div class="preview-fb-action-row">' +
-        '<div class="preview-fb-action"><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg> Like</div>' +
-        '<div class="preview-fb-action"><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Comment</div>' +
-        '<div class="preview-fb-action"><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share</div>' +
-      '</div>' +
-    '</div>';
-  }
-
   function buildTwitterPreview(d) {
     const body = d.text;
     const limit = PLATFORM_LIMITS.twitter;
@@ -737,7 +702,6 @@
     let html = '';
     switch (activePreviewPlatform) {
       case 'instagram': html = buildInstagramPreview(d); break;
-      case 'facebook':  html = buildFacebookPreview(d);  break;
       case 'twitter':   html = buildTwitterPreview(d);   break;
       case 'tiktok':    html = buildTiktokPreview(d);    break;
       case 'youtube':   html = buildYoutubePreview(d);   break;

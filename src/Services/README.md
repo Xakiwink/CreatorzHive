@@ -11,7 +11,7 @@ Encapsulates rules that should not live in controllers or SQL: authentication, O
 | `AuthService.php` | Password hash/verify, verification tokens |
 | `AuthRateLimitService.php` | Login throttling |
 | `GoogleAuthService.php` | Google OAuth2 URLs, token exchange, userinfo |
-| `MetaOAuthService.php` | Meta/Instagram OAuth for integrations |
+| `InstagramOAuthService.php` | Instagram Business Login (Meta Graph API v25) |
 | `SocialApiService.php` | Publish posts, fetch analytics per platform |
 | `PlatformApiSecretsService.php` | Admin-stored API credentials |
 | `NotificationService.php` | Create in-app notifications |

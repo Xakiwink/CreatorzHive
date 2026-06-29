@@ -10,7 +10,7 @@ Maps `?route=` keys to PHP classes. Each controller receives dependencies via co
 |------|---------|------------|
 | `AuthController.php` | Login, register, verify, password reset | `login`, `register`, API auth |
 | `GoogleAuthController.php` | Google OAuth sign-in/up | `google-auth`, `google-callback` |
-| `OauthController.php` | Meta platform connect | `oauth-connect`, `oauth-callback` |
+| `InstagramOAuthController.php` | Instagram Business Login OAuth | `instagram-connect`, `instagram-callback` |
 | `DashboardController.php` | Dashboard page + data | `dashboard`, `dashboard_data` |
 | `PostController.php` | Content planner | `planner`, `posts`, `create_post`, … |
 | `AnalyticsController.php` | Analytics views/API | `analytics`, `analytics_data` |

@@ -8,7 +8,6 @@
     instagram: '#E4405F',
     tiktok: '#000000',
     youtube: '#FF0000',
-    facebook: '#1877F2',
     twitter: '#1DA1F2',
     default: '#6366f1',
   };

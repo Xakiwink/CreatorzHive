@@ -1,29 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" style="display:block;border-radius:22.5%;" preserveAspectRatio="xMidYMid meet">
-  <defs>
-    <linearGradient id="bg-gradient" x1="0" y1="0" x2="0.35" y2="1">
-      <stop offset="0" stop-color="#141A3F"/>
-      <stop offset="1" stop-color="#1E1240"/>
-    </linearGradient>
-    <radialGradient id="hexglow" cx="0.5" cy="0.42" r="0.65">
-      <stop offset="0" stop-color="#8B5CF6" stop-opacity="0.16"/>
-      <stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/>
-    </radialGradient>
-    <filter id="dotglow" x="-120%" y="-120%" width="340%" height="340%">
-      <feGaussianBlur stdDeviation="14" result="b"/>
-      <feMerge>
-        <feMergeNode in="b"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-
-  <rect x="0" y="0" width="512" height="512" rx="115" ry="115" fill="url(#bg-gradient)"/>
-
-  <path d="M256 77 Q283.5 65 311 77 Q338.5 89 343 117.5 L343 394.5 Q338.5 423 311 435 Q283.5 447 256 435 Q228.5 423 224 394.5 L224 117.5 Q228.5 89 256 77 Z" fill="#191545" stroke="#8B5CF6" stroke-width="11" stroke-linejoin="round"/>
-  <path d="M256 77 Q283.5 65 311 77 Q338.5 89 343 117.5 L343 394.5 Q338.5 423 311 435 Q283.5 447 256 435 Q228.5 423 224 394.5 L224 117.5 Q228.5 89 256 77 Z" fill="url(#hexglow)" stroke="none"/>
-
-  <polyline points="152,300 196,312 240,264 284,282 328,216 364,184" fill="none" stroke="#FFFFFF" stroke-width="21" stroke-linecap="round" stroke-linejoin="round"/>
-
-  <circle cx="364" cy="184" r="17" fill="#A78BFA" filter="url(#dotglow)"/>
-  <circle cx="364" cy="184" r="11" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
+<stop offset="0" stop-color="#141A3F"></stop><stop offset="1" stop-color="#1E1240"></stop>
+</linearGradient>
+<radialGradient id="hexglow" cx="0.5" cy="0.42" r="0.65">
+<stop offset="0" stop-color="#8B5CF6" stop-opacity="0.16"></stop><stop offset="1" stop-color="#8B5CF6" stop-opacity="0"></stop>
+</radialGradient>
+<filter id="dotglow" x="-120%" y="-120%" width="340%" height="340%">
+<feGaussianBlur stdDeviation="14" result="b"></feGaussianBlur>
+<feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+</filter>
+<clipPath id="round"><rect x="0" y="0" width="512" height="512" rx="115" ry="115"></rect></clipPath>
+</defs>
+<g clip-path="url(#round)">
+<rect x="0" y="0" width="512" height="512" fill="url(#bg)"></rect>
+<path d="M 417.0 224.8 Q 435.0 256.0 417.0 287.2 L 363.5 379.8 Q 345.5 411.0 309.5 411.0 L 202.5 411.0 Q 166.5 411.0 148.5 379.8 L 95.0 287.2 Q 77.0 256.0 95.0 224.8 L 148.5 132.2 Q 166.5 101.0 202.5 101.0 L 309.5 101.0 Q 345.5 101.0 363.5 132.2 Z" fill="#191545" stroke="#8B5CF6" stroke-width="11" stroke-linejoin="round"></path>
+<path d="M 417.0 224.8 Q 435.0 256.0 417.0 287.2 L 363.5 379.8 Q 345.5 411.0 309.5 411.0 L 202.5 411.0 Q 166.5 411.0 148.5 379.8 L 95.0 287.2 Q 77.0 256.0 95.0 224.8 L 148.5 132.2 Q 166.5 101.0 202.5 101.0 L 309.5 101.0 Q 345.5 101.0 363.5 132.2 Z" fill="url(#hexglow)" stroke="none"></path>
+<polyline points="152,300 196,312 240,264 284,282 328,216 364,184" fill="none" stroke="#FFFFFF" stroke-width="21" stroke-linecap="round" stroke-linejoin="round"></polyline>
+<circle cx="364" cy="184" r="17" fill="#A78BFA" filter="url(#dotglow)"></circle>
+<circle cx="364" cy="184" r="11" fill="#FFFFFF"></circle>
+</g>
 </svg>

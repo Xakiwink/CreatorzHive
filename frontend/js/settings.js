@@ -16,7 +16,6 @@
     { id: 'tiktok', name: 'TikTok', emoji: '🎵' },
     { id: 'youtube', name: 'YouTube', emoji: '▶️' },
     { id: 'twitter', name: 'X / Twitter', emoji: '𝕏' },
-    { id: 'facebook', name: 'Facebook', emoji: '📘' },
   ];
 
   let oauthPlatforms = [];
@@ -400,10 +399,10 @@
               '<button type="button" class="btn btn-primary btn-sm integration-connect" data-platform="' +
               p.id +
               '">' +
-              (oauthReady ? 'Connect with Meta' : 'Connect ' + Utils.escapeHtml(p.name)) +
+              (oauthReady ? 'Connect Instagram' : 'Connect ' + Utils.escapeHtml(p.name)) +
               '</button>' +
               (oauthReady
-                ? '<p class="text-xs text-muted mt-2">Secure OAuth via Meta. Admin must configure App ID and Secret first.</p>'
+                ? '<p class="text-xs text-muted mt-2">Secure OAuth via Instagram Business Login. Admin must configure App ID and Secret first.</p>'
                 : '<p class="text-xs text-muted mt-2">Quick connect for development, or ask admin to enable OAuth.</p>')
             );
           })();
@@ -594,8 +593,8 @@
 
     if (oauthPlatforms.indexOf(slug) >= 0) {
       const target =
-        (typeof window.routeUrl === 'function' ? window.routeUrl('oauth-connect', { platform: slug }) : null) ||
-        (typeof window.routeQuery === 'function' ? window.routeQuery('oauth-connect', { platform: slug }) : null);
+        (typeof window.routeUrl === 'function' ? window.routeUrl('instagram-connect') : null) ||
+        (typeof window.routeQuery === 'function' ? window.routeQuery('instagram-connect') : null);
       if (target) {
         window.location.href = target;
         return;

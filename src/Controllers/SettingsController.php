@@ -16,7 +16,7 @@ use CreatorzHive\Repositories\UserRepository;
 use CreatorzHive\Repositories\UserSessionRepository;
 use CreatorzHive\Services\AdminService;
 use CreatorzHive\Services\AuthService;
-use CreatorzHive\Services\MetaOAuthService;
+use CreatorzHive\Services\InstagramOAuthService;
 use CreatorzHive\Support\SettingsPageHelper;
 use function request_all;
 use function request_file;
@@ -52,8 +52,8 @@ final class SettingsController extends AbstractController
     /** @var AdminService */
     private $admin;
 
-    /** @var MetaOAuthService */
-    private $metaOAuth;
+    /** @var InstagramOAuthService */
+    private $instagramOAuth;
 
     /** @var JobQueueRepository */
     private $jobs;
@@ -70,7 +70,7 @@ final class SettingsController extends AbstractController
         SocialAccountRepository $socialAccounts,
         AuthService $auth,
         AdminService $admin,
-        MetaOAuthService $metaOAuth,
+        InstagramOAuthService $instagramOAuth,
         JobQueueRepository $jobs
     ) {
         parent::__construct($views, $json, $db);
@@ -82,7 +82,7 @@ final class SettingsController extends AbstractController
         $this->socialAccounts = $socialAccounts;
         $this->auth = $auth;
         $this->admin = $admin;
-        $this->metaOAuth = $metaOAuth;
+        $this->instagramOAuth = $instagramOAuth;
         $this->jobs = $jobs;
     }
 
@@ -328,7 +328,7 @@ final class SettingsController extends AbstractController
 
         $this->json->success([
             'accounts' => $this->socialAccounts->listSummaryForUser($userId),
-            'oauth_platforms' => $this->metaOAuth->isConfigured() ? $this->metaOAuth->allowedPlatforms() : [],
+            'oauth_platforms' => $this->instagramOAuth->isConfigured() ? ['instagram'] : [],
         ], 'Integrations loaded');
     }
 
@@ -342,7 +342,7 @@ final class SettingsController extends AbstractController
         }
 
         $platform = strtolower(trim((string) request_post('platform', '')));
-        $allowed = ['instagram', 'tiktok', 'youtube', 'twitter', 'facebook'];
+        $allowed = ['instagram', 'tiktok', 'youtube', 'twitter'];
         if (!in_array($platform, $allowed, true)) {
             $this->json->error('Invalid platform', 422);
 
@@ -423,7 +423,7 @@ final class SettingsController extends AbstractController
         }
 
         $platform = (string) request_post('platform', '');
-        $allowed = ['instagram', 'tiktok', 'youtube', 'twitter', 'facebook'];
+        $allowed = ['instagram', 'tiktok', 'youtube', 'twitter'];
         if (!in_array($platform, $allowed, true)) {
             $this->json->error('Invalid platform', 422);
 

@@ -15,7 +15,7 @@ use CreatorzHive\Controllers\DealController;
 use CreatorzHive\Controllers\InvoiceController;
 use CreatorzHive\Controllers\MediaController;
 use CreatorzHive\Controllers\NotificationController;
-use CreatorzHive\Controllers\OauthController;
+use CreatorzHive\Controllers\InstagramOAuthController;
 use CreatorzHive\Controllers\PostController;
 use CreatorzHive\Controllers\YoutubeOAuthController;
 use CreatorzHive\Controllers\SettingsController;
@@ -53,7 +53,7 @@ use CreatorzHive\Services\AuthRateLimitService;
 use CreatorzHive\Services\AuthService;
 use CreatorzHive\Services\DashboardService;
 use CreatorzHive\Services\GoogleAuthService;
-use CreatorzHive\Services\MetaOAuthService;
+use CreatorzHive\Services\InstagramOAuthService;
 use CreatorzHive\Services\YoutubeOAuthService;
 use CreatorzHive\Services\NotificationService;
 use CreatorzHive\Services\PlatformApiSecretsService;
@@ -151,7 +151,7 @@ final class AppServiceProvider
             AnalyticsService::class,
             AuthService::class,
             AuthRateLimitService::class,
-            MetaOAuthService::class,
+            InstagramOAuthService::class,
             NotificationService::class,
             PlatformApiSecretsService::class,
             SocialApiService::class,
@@ -262,7 +262,7 @@ final class AppServiceProvider
             SettingsController::class,
             AdminUserController::class,
             TagController::class,
-            OauthController::class,
+            InstagramOAuthController::class,
             GoogleAuthController::class,
             YoutubeOAuthController::class,
             ApiMetaController::class,
@@ -317,7 +317,7 @@ final class AppServiceProvider
                 $c->get(SocialAccountRepository::class),
                 $c->get(AuthService::class),
                 $c->get(AdminService::class),
-                $c->get(MetaOAuthService::class),
+                $c->get(InstagramOAuthService::class),
                 $c->get(JobQueueRepository::class)
             );
         });
@@ -398,12 +398,12 @@ final class AppServiceProvider
             );
         });
 
-        $container->factory(OauthController::class, static function (Container $c): OauthController {
-            return new OauthController(
+        $container->factory(InstagramOAuthController::class, static function (Container $c): InstagramOAuthController {
+            return new InstagramOAuthController(
                 $c->get(ViewRenderer::class),
                 $c->get(JsonResponder::class),
                 $c->get(Connection::class),
-                $c->get(MetaOAuthService::class),
+                $c->get(InstagramOAuthService::class),
                 $c->get(AdminService::class)
             );
         });
@@ -453,7 +453,7 @@ final class AppServiceProvider
                 InvoiceController::class,
                 NotificationController::class,
                 AdminUserController::class,
-                OauthController::class,
+                InstagramOAuthController::class,
                 GoogleAuthController::class,
                 YoutubeOAuthController::class,
                 ApiMetaController::class,

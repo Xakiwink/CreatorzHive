@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS user_preferences (
 CREATE TABLE IF NOT EXISTS social_accounts (
     id                  INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
     user_id             INT UNSIGNED    NOT NULL,
-    platform            ENUM('instagram','tiktok','youtube','twitter','facebook') NOT NULL,
+    platform            ENUM('instagram','tiktok','youtube','twitter') NOT NULL,
     platform_user_id    VARCHAR(255)    NOT NULL,
     username            VARCHAR(255)    NOT NULL,
     display_name        VARCHAR(255)    NULL,

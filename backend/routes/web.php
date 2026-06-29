@@ -27,8 +27,8 @@ router_get_action('admin-users', CreatorzHive\Controllers\AdminUserController::c
 router_get_action('google-auth', CreatorzHive\Controllers\GoogleAuthController::class, 'start');
 router_get_action('google-callback', CreatorzHive\Controllers\GoogleAuthController::class, 'callback');
 
-router_get_action('oauth-connect', CreatorzHive\Controllers\OauthController::class, 'connectStart', ['auth']);
-router_get_action('oauth-callback', CreatorzHive\Controllers\OauthController::class, 'callbackHandler');
+router_get_action('instagram-connect', CreatorzHive\Controllers\InstagramOAuthController::class, 'connectStart', ['auth']);
+router_get_action('instagram-callback', CreatorzHive\Controllers\InstagramOAuthController::class, 'callbackHandler');
 
 router_get_action('youtube-connect', CreatorzHive\Controllers\YoutubeOAuthController::class, 'connectStart', ['auth']);
 router_get_action('youtube-callback', CreatorzHive\Controllers\YoutubeOAuthController::class, 'callbackHandler');

@@ -9,7 +9,7 @@ final class PlatformHelper
     /** @return list<string> */
     public static function slugs(): array
     {
-        return ['instagram', 'tiktok', 'youtube', 'facebook', 'twitter'];
+        return ['instagram', 'tiktok', 'youtube', 'twitter'];
     }
 
     public static function normalize(?string $platform): ?string
