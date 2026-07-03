@@ -84,14 +84,6 @@ final class InstagramOAuthController extends AbstractController
             response_redirect(route_url('settings-integrations'));
         }
 
-        $code = trim((string) ($_GET['code'] ?? ''));
-        if ($code === '') {
-            session_flash('oauth_error', 'Authorization code missing from Instagram response.');
-            response_redirect(route_url('settings-integrations'));
-        }
-
-        $result = $this->instagramOAuth->completeConnection($userId, $code);
-
         $user = $this->db->fetchOne(
             'SELECT id, name, username, email, role, is_active FROM users WHERE id = ? AND is_active = 1 LIMIT 1',
             [$userId]
@@ -99,6 +91,14 @@ final class InstagramOAuthController extends AbstractController
         if ($user !== null) {
             session_set_user($user);
         }
+
+        $code = trim((string) ($_GET['code'] ?? ''));
+        if ($code === '') {
+            session_flash('oauth_error', 'Authorization code missing from Instagram response.');
+            response_redirect(route_url('settings-integrations'));
+        }
+
+        $result = $this->instagramOAuth->completeConnection($userId, $code);
 
         if ($result['success']) {
             session_flash('oauth_success', (string) $result['message']);

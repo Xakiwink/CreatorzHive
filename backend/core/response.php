@@ -48,6 +48,10 @@ function response_redirect(string $url, int $status = 302): void
         throw new \Tests\Support\TestRedirectException($url, $status);
     }
 
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
+
     http_response_code($status);
     header('Location: ' . $url);
     exit;

@@ -24,7 +24,11 @@ function db_session_read(string $id): string
 function db_session_write(string $id, string $data): bool
 {
     try {
-        $expires = time() + (int) ini_get('session.gc_maxlifetime');
+        $lifetime = (int) ini_get('session.gc_maxlifetime');
+        if ($lifetime < 300) {
+            $lifetime = max(7200, (int) env('SESSION_LIFETIME', 120) * 60);
+        }
+        $expires = time() + $lifetime;
         $pdo     = db_get_pdo();
         $stmt    = $pdo->prepare(
             'INSERT INTO php_sessions (id, data, expires_at) VALUES (?, ?, ?)
