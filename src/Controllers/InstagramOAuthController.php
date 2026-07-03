@@ -16,7 +16,6 @@ use function route_url;
 use function session_flash;
 use function session_get_user;
 use function session_set_user;
-use function session_write_close;
 
 final class InstagramOAuthController extends AbstractController
 {
@@ -74,7 +73,6 @@ final class InstagramOAuthController extends AbstractController
         $error = trim((string) ($_GET['error_description'] ?? $_GET['error'] ?? ''));
         if ($error !== '') {
             session_flash('oauth_error', 'Instagram authorization was denied or failed.');
-            $this->callbackDebug('instagram_denied', ['instagram_error' => $error]);
             response_redirect(route_url('settings-integrations'));
         }
 
@@ -83,7 +81,6 @@ final class InstagramOAuthController extends AbstractController
 
         if ($userId === null) {
             session_flash('oauth_error', 'Invalid OAuth state. Please try connecting again.');
-            $this->callbackDebug('state_invalid', ['state_len' => strlen($state), 'state_prefix' => substr($state, 0, 20)]);
             response_redirect(route_url('settings-integrations'));
         }
 
@@ -98,7 +95,6 @@ final class InstagramOAuthController extends AbstractController
         $code = trim((string) ($_GET['code'] ?? ''));
         if ($code === '') {
             session_flash('oauth_error', 'Authorization code missing from Instagram response.');
-            $this->callbackDebug('no_code', ['userId' => $userId, 'user_in_db' => $user !== null]);
             response_redirect(route_url('settings-integrations'));
         }
 
@@ -110,68 +106,7 @@ final class InstagramOAuthController extends AbstractController
             session_flash('oauth_error', (string) $result['message']);
         }
 
-        $this->callbackDebug('complete', ['userId' => $userId, 'user_in_db' => $user !== null, 'result' => $result]);
         response_redirect(route_url('settings-integrations'));
-    }
-
-    private function callbackDebug(string $step, array $extra = []): void
-    {
-        if (!(bool) env('APP_DEBUG', false)) {
-            return;
-        }
-
-        $sid      = session_id();
-        $sessUser = session_get_user();
-        $flash    = $_SESSION['_flash'] ?? [];
-
-        try {
-            $dbRow = $this->db->fetchOne(
-                'SELECT LENGTH(data) AS dlen, (expires_at - UNIX_TIMESTAMP()) AS ttl FROM php_sessions WHERE id = ?',
-                [$sid]
-            );
-        } catch (\Throwable $e) {
-            $dbRow = ['err' => $e->getMessage()];
-        }
-
-        session_write_close();
-
-        $nextUrl = route_url('settings-integrations');
-
-        header('Content-Type: text/html; charset=utf-8');
-        echo '<pre style="font:14px monospace;padding:20px;background:#0d1117;color:#58a6ff;line-height:1.6">';
-        echo "<b style='color:#f0f6fc'>CreatorzHive — OAuth Callback Debug</b>\n\n";
-        echo "<b>Step        :</b> " . htmlspecialchars($step, ENT_QUOTES, 'UTF-8') . "\n";
-        echo "<b>Session ID  :</b> " . htmlspecialchars($sid, ENT_QUOTES, 'UTF-8') . "\n";
-        echo "<b>Session user:</b> " . ($sessUser !== null
-            ? '<span style="color:#3fb950">YES — id=' . (int) ($sessUser['id'] ?? 0)
-                . ', role=' . htmlspecialchars((string) ($sessUser['role'] ?? ''), ENT_QUOTES, 'UTF-8') . '</span>'
-            : '<span style="color:#f85149">NO — session has no user</span>') . "\n";
-
-        if ($dbRow !== null && !isset($dbRow['err'])) {
-            echo "<b>DB session  :</b> <span style='color:#3fb950'>FOUND — "
-                . (int) ($dbRow['dlen'] ?? 0) . "B, TTL=" . (int) ($dbRow['ttl'] ?? 0) . "s</span>\n";
-        } else {
-            $errMsg = isset($dbRow['err'])
-                ? htmlspecialchars((string) $dbRow['err'], ENT_QUOTES, 'UTF-8')
-                : 'row not found';
-            echo "<b>DB session  :</b> <span style='color:#f85149'>MISSING — " . $errMsg . "</span>\n";
-        }
-
-        echo "<b>Flash       :</b> " . htmlspecialchars((string) json_encode($flash), ENT_QUOTES, 'UTF-8') . "\n";
-
-        foreach ($extra as $key => $value) {
-            $label = str_pad(ucwords(str_replace('_', ' ', $key)), 12);
-            echo "<b>" . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . ":</b> "
-                . htmlspecialchars((string) json_encode($value), ENT_QUOTES, 'UTF-8') . "\n";
-        }
-
-        echo "\n<a href=\"" . htmlspecialchars($nextUrl, ENT_QUOTES, 'UTF-8') . "\" "
-            . "style=\"color:#e3b341;font-weight:bold;font-size:16px\">"
-            . "&#8594; Continue to Settings page</a>\n";
-        echo "<span style='color:#8b949e;font-size:12px'>"
-            . "If that link redirects to login, the session is being lost between requests.</span>";
-        echo '</pre>';
-        exit;
     }
 
     private function buildState(int $userId): string

@@ -2,15 +2,6 @@
 
 declare(strict_types=1);
 
-/**
- * Standalone Instagram OAuth callback handler.
- * Bypasses the router, middleware, and auth guards entirely.
- * Upload to /htdocs/ig-cb.php on InfinityFree.
- * Set INSTAGRAM_OAUTH_REDIRECT_URI=https://creatorzhive.infinityfree.io/ig-cb.php in .env
- * Add that same URL to Meta App → Valid OAuth Redirect URIs.
- * DELETE THIS FILE after the flow is confirmed working.
- */
-
 $rootDir    = __DIR__;
 $backendDir = $rootDir . '/backend';
 
@@ -52,10 +43,10 @@ $cbCode  = trim((string) ($_GET['code'] ?? ''));
 
 if ($cbError !== '') {
     session_flash('oauth_error', 'Instagram authorization was denied.');
-    igCbDebug('instagram_denied', ['error' => $cbError]);
-    session_write_close();
-    header('Location: ' . route_url('settings-integrations'));
-    exit;
+    if ($debug) {
+        igCbDebug('instagram_denied', ['error' => $cbError]);
+    }
+    response_redirect(route_url('settings-integrations'));
 }
 
 $appSecret = trim((string) env('APP_SECRET', ''));
@@ -72,15 +63,15 @@ if (count($parts) === 3) {
 
 if ($userId === null) {
     session_flash('oauth_error', 'Invalid OAuth state. Please try connecting again.');
-    igCbDebug('state_invalid', [
-        'state_len'      => strlen($cbState),
-        'parts'          => count($parts),
-        'secret_set'     => $appSecret !== '' ? 'YES (' . strlen($appSecret) . ' chars)' : 'NO',
-        'session_user'   => session_get_user() !== null ? 'YES' : 'NO',
-    ]);
-    session_write_close();
-    header('Location: ' . route_url('settings-integrations'));
-    exit;
+    if ($debug) {
+        igCbDebug('state_invalid', [
+            'state_len'    => strlen($cbState),
+            'parts'        => count($parts),
+            'secret_set'   => $appSecret !== '' ? 'YES (' . strlen($appSecret) . ' chars)' : 'NO',
+            'session_user' => session_get_user() !== null ? 'YES' : 'NO',
+        ]);
+    }
+    response_redirect(route_url('settings-integrations'));
 }
 
 try {
@@ -98,14 +89,14 @@ if ($user !== null) {
 
 if ($cbCode === '') {
     session_flash('oauth_error', 'Authorization code missing from Instagram response.');
-    igCbDebug('no_code', [
-        'userId'       => $userId,
-        'user_in_db'   => $user !== null ? 'YES' : 'NO',
-        'session_user' => session_get_user() !== null ? 'YES' : 'NO',
-    ]);
-    session_write_close();
-    header('Location: ' . route_url('settings-integrations'));
-    exit;
+    if ($debug) {
+        igCbDebug('no_code', [
+            'userId'       => $userId,
+            'user_in_db'   => $user !== null ? 'YES' : 'NO',
+            'session_user' => session_get_user() !== null ? 'YES' : 'NO',
+        ]);
+    }
+    response_redirect(route_url('settings-integrations'));
 }
 
 $result = ['success' => false, 'message' => 'Service unavailable'];
@@ -125,44 +116,35 @@ if ($result['success']) {
     session_flash('oauth_error', (string) $result['message']);
 }
 
-$finalSid  = session_id();
-$finalUser = session_get_user();
+if ($debug) {
+    $finalSid  = session_id();
+    $finalUser = session_get_user();
 
-session_write_close();
+    session_write_close();
 
-$dbRow = null;
-try {
-    $dbRow = db_fetch(
-        'SELECT LENGTH(data) AS dlen, (expires_at - UNIX_TIMESTAMP()) AS ttl FROM php_sessions WHERE id = ?',
-        [$finalSid]
-    );
-} catch (\Throwable $ignored) {
+    $dbRow = null;
+    try {
+        $dbRow = db_fetch(
+            'SELECT LENGTH(data) AS dlen, (expires_at - UNIX_TIMESTAMP()) AS ttl FROM php_sessions WHERE id = ?',
+            [$finalSid]
+        );
+    } catch (\Throwable $ignored) {
+    }
+
+    igCbDebug('complete', [
+        'session_id'   => $finalSid,
+        'session_user' => $finalUser !== null ? 'YES id=' . ($finalUser['id'] ?? '?') : 'NO',
+        'db_session'   => $dbRow !== null
+            ? 'FOUND ' . (int) ($dbRow['dlen'] ?? 0) . 'B TTL=' . (int) ($dbRow['ttl'] ?? 0) . 's'
+            : 'NOT FOUND — session was NOT written!',
+        'result'       => $result,
+    ]);
 }
 
-igCbDebug('complete', [
-    'session_id'   => $finalSid,
-    'session_user' => $finalUser !== null ? 'YES id=' . ($finalUser['id'] ?? '?') : 'NO',
-    'db_session'   => $dbRow !== null
-        ? 'FOUND ' . (int) ($dbRow['dlen'] ?? 0) . 'B TTL=' . (int) ($dbRow['ttl'] ?? 0) . 's'
-        : 'NOT FOUND — session was NOT written!',
-    'result'       => $result,
-]);
-
-header('Location: ' . route_url('settings-integrations'));
-exit;
+response_redirect(route_url('settings-integrations'));
 
 function igCbDebug(string $step, array $info): void
 {
-    global $debug;
-
-    if (!$debug && $step !== 'complete') {
-        return;
-    }
-
-    if (!$debug) {
-        return;
-    }
-
     header('Content-Type: text/html; charset=utf-8');
 
     echo '<pre style="font:14px monospace;padding:20px 24px;background:#0d1117;color:#58a6ff;line-height:1.7">';
@@ -186,8 +168,6 @@ function igCbDebug(string $step, array $info): void
     $nextUrl = route_url('settings-integrations');
     echo "\n<a href=\"" . htmlspecialchars($nextUrl, ENT_QUOTES, 'UTF-8') . "\" "
         . "style=\"color:#e3b341;font-weight:bold;font-size:16px\">&#8594; Continue to Settings</a>\n";
-    echo "<span style='color:#8b949e;font-size:12px'>"
-        . "(If that redirects to login, session is lost between requests — confirm session_id matches.)</span>";
     echo '</pre>';
 
     exit;
