@@ -10,13 +10,11 @@ use CreatorzHive\Core\Http\JsonResponder;
 use CreatorzHive\Core\Http\ViewRenderer;
 use CreatorzHive\Services\AdminService;
 use CreatorzHive\Services\InstagramOAuthService;
+use function env;
 use function response_redirect;
 use function route_url;
 use function session_flash;
-use function session_get;
 use function session_get_user;
-use function session_remove;
-use function session_set;
 
 final class InstagramOAuthController extends AbstractController
 {
@@ -63,9 +61,8 @@ final class InstagramOAuthController extends AbstractController
             response_redirect(route_url('settings-integrations'));
         }
 
-        $state = bin2hex(random_bytes(16));
-        session_set('oauth_state', $state);
-        session_set('oauth_user_id', (int) ($user['id'] ?? 0));
+        $userId = (int) ($user['id'] ?? 0);
+        $state  = $this->buildState($userId);
 
         response_redirect($this->instagramOAuth->authorizeUrl($state));
     }
@@ -78,19 +75,11 @@ final class InstagramOAuthController extends AbstractController
             response_redirect(route_url('settings-integrations'));
         }
 
-        $state    = trim((string) ($_GET['state'] ?? ''));
-        $expected = trim((string) session_get('oauth_state', ''));
-        if ($state === '' || $expected === '' || !hash_equals($expected, $state)) {
+        $state  = trim((string) ($_GET['state'] ?? ''));
+        $userId = $this->verifyState($state);
+
+        if ($userId === null) {
             session_flash('oauth_error', 'Invalid OAuth state. Please try connecting again.');
-            response_redirect(route_url('settings-integrations'));
-        }
-
-        $userId = (int) session_get('oauth_user_id', 0);
-        session_remove('oauth_state');
-        session_remove('oauth_user_id');
-
-        if ($userId < 1) {
-            session_flash('oauth_error', 'OAuth session expired. Please try again.');
             response_redirect(route_url('settings-integrations'));
         }
 
@@ -109,5 +98,34 @@ final class InstagramOAuthController extends AbstractController
         }
 
         response_redirect(route_url('settings-integrations'));
+    }
+
+    private function buildState(int $userId): string
+    {
+        $nonce   = bin2hex(random_bytes(16));
+        $payload = $userId . '.' . $nonce;
+        $sig     = hash_hmac('sha256', $payload, (string) env('APP_SECRET', ''));
+
+        return $payload . '.' . $sig;
+    }
+
+    private function verifyState(string $state): ?int
+    {
+        $parts = explode('.', $state, 3);
+        if (count($parts) !== 3) {
+            return null;
+        }
+
+        [$userIdStr, $nonce, $sig] = $parts;
+        $payload     = $userIdStr . '.' . $nonce;
+        $expectedSig = hash_hmac('sha256', $payload, (string) env('APP_SECRET', ''));
+
+        if (!hash_equals($expectedSig, $sig)) {
+            return null;
+        }
+
+        $userId = (int) $userIdStr;
+
+        return $userId > 0 ? $userId : null;
     }
 }

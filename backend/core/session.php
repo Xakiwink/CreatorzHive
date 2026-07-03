@@ -106,9 +106,8 @@ function session_user_is_admin(): bool
 function session_fingerprint_generate(): string
 {
     $ua = strtolower(trim(request_user_agent()));
-    $ipScope = session_ip_scope(request_ip());
 
-    return hash('sha256', $ua . '|' . $ipScope);
+    return hash('sha256', $ua);
 }
 
 function session_fingerprint_is_valid(): bool
