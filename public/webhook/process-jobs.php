@@ -1,91 +1,72 @@
 <?php
+
 declare(strict_types=1);
 
-define('ROOT', dirname(__DIR__, 2));
+$rootDir    = dirname(__DIR__, 2);
+$backendDir = $rootDir . '/backend';
 
-require ROOT . '/vendor/autoload.php';
+require_once $backendDir . '/helpers/functions.php';
+load_env($rootDir . '/.env');
 
-use App\Core\{Env, DB};
-use App\Models\{JobQueue, Post, SocialAccount};
-use App\Services\Instagram;
+header('Content-Type: application/json; charset=utf-8');
 
-Env::load(ROOT . '/.env');
+$provided = trim((string) ($_GET['secret'] ?? $_SERVER['HTTP_X_WEBHOOK_SECRET'] ?? ''));
+$expected = trim((string) env('WEBHOOK_SECRET', ''));
 
-header('Content-Type: application/json');
-
-$secret  = $_GET['secret'] ?? $_SERVER['HTTP_X_WEBHOOK_SECRET'] ?? '';
-$allowed = Env::get('WEBHOOK_SECRET', 'dev-secret-key');
-
-if ($secret !== $allowed) {
+if ($expected === '' || $provided !== $expected) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Forbidden']);
     exit;
 }
 
-$jobs      = JobQueue::pending(10);
-$processed = 0;
-$success   = 0;
-$failed    = 0;
-$errors    = [];
+require_once $backendDir . '/config/app.php';
 
-foreach ($jobs as $job) {
-    $id      = (int) $job['id'];
-    $payload = json_decode($job['payload'] ?? '{}', true) ?: [];
+$autoload = $rootDir . '/vendor/autoload.php';
+if (is_file($autoload)) {
+    require_once $autoload;
+}
 
-    JobQueue::markRunning($id);
-    $processed++;
+if (class_exists(\CreatorzHive\Core\Application::class)) {
+    \CreatorzHive\Core\Application::boot();
+}
 
-    try {
-        if ($job['job'] === 'publish_post') {
-            handlePublishPost($payload);
-        } else {
-            throw new RuntimeException('Unknown job: ' . $job['job']);
-        }
-        JobQueue::markDone($id);
-        $success++;
-    } catch (Throwable $e) {
-        JobQueue::markFailed($id, $e->getMessage());
-        $errors[] = 'Job #' . $id . ': ' . $e->getMessage();
-        $failed++;
-    }
+require_once $backendDir . '/compat/models.php';
+require_once $backendDir . '/compat/services.php';
+require_once $backendDir . '/compat/auth.php';
+require_once $backendDir . '/helpers/platforms.php';
+require_once $backendDir . '/core/database.php';
+require_once $backendDir . '/core/job_runner.php';
+
+$queue   = trim((string) ($_GET['queue'] ?? 'default'));
+$maxJobs = min(50, max(1, (int) ($_GET['limit'] ?? 10)));
+
+$before = [];
+try {
+    $before = job_runner_stats_by_status();
+} catch (\Throwable $ignored) {
+}
+
+try {
+    job_runner_run($queue, $maxJobs);
+} catch (\Throwable $e) {
+    echo json_encode([
+        'success' => false,
+        'error'   => $e->getMessage(),
+        'ts'      => date('c'),
+    ]);
+    exit;
+}
+
+$after = [];
+try {
+    $after = job_runner_stats_by_status();
+} catch (\Throwable $ignored) {
 }
 
 echo json_encode([
-    'success'   => true,
-    'processed' => $processed,
-    'ok'        => $success,
-    'failed'    => $failed,
-    'errors'    => $errors,
-    'ts'        => date('c'),
+    'success' => true,
+    'queue'   => $queue,
+    'before'  => $before,
+    'after'   => $after,
+    'ts'      => date('c'),
 ]);
-
-function handlePublishPost(array $payload): void
-{
-    $postId = (int) ($payload['post_id'] ?? 0);
-    if ($postId === 0) throw new RuntimeException('Missing post_id');
-
-    $post = DB::fetch('SELECT * FROM posts WHERE id = ?', [$postId]);
-    if (!$post) throw new RuntimeException('Post not found: ' . $postId);
-    if ($post['status'] !== 'scheduled') {
-        throw new RuntimeException('Post not in scheduled state: ' . $post['status']);
-    }
-
-    $platforms = json_decode($post['platforms'] ?? '[]', true) ?: [];
-
-    if (in_array('instagram', $platforms, true)) {
-        $userId  = (int) $post['user_id'];
-        $account = SocialAccount::find($userId, 'instagram');
-        if (!$account) throw new RuntimeException('No Instagram account for user ' . $userId);
-
-        $token    = (string) ($account['access_token'] ?? '');
-        $igUserId = (string) ($account['platform_user_id'] ?? '');
-        $imageUrl = (string) ($post['media_url'] ?? '');
-
-        if ($imageUrl === '') throw new RuntimeException('Post has no media_url for Instagram publish');
-
-        $result = Instagram::publish($token, $igUserId, $imageUrl, (string) $post['caption']);
-        if (!$result['ok']) throw new RuntimeException('Instagram publish failed: ' . $result['error']);
-    }
-
-    Post::markPublished($postId);
-}
