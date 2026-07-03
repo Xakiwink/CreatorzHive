@@ -46,12 +46,14 @@ if (is_file($envFile)) {
             [$key, $value] = explode('=', $line, 2);
             $key = trim($key);
             $value = trim($value, ' "\'');
-            putenv("{$key}={$value}");
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
+            @putenv("{$key}={$value}");
         }
     }
 }
 
-$webhookSecret = getenv('WEBHOOK_SECRET') ?: 'dev-secret-key';
+$webhookSecret = $_ENV['WEBHOOK_SECRET'] ?? getenv('WEBHOOK_SECRET') ?: 'dev-secret-key';
 $providedSecret = $_GET['secret'] ?? '';
 
 // Verify secret (constant-time comparison)
