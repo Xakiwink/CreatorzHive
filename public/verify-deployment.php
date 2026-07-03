@@ -70,10 +70,16 @@ echo "<h2>2. Database Connection</h2>\n";
 try {
     require_once dirname(__DIR__) . '/backend/index.php';
 
-    $pdo = $GLOBALS['_cz_pdo'] ?? null;
-    if (!$pdo) {
-        add_check('PDO initialized', false, 'Database not initialized in bootstrap');
-    } else {
+    $pdo = null;
+    if (function_exists('db_get_pdo')) {
+        try {
+            $pdo = db_get_pdo();
+            $GLOBALS['_cz_pdo'] = $pdo;
+        } catch (Throwable $dbEx) {
+            add_check('PDO initialized', false, $dbEx->getMessage());
+        }
+    }
+    if ($pdo) {
         add_check('PDO initialized', true);
 
         // Test connection

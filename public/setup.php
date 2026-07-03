@@ -26,7 +26,7 @@ declare(strict_types=1);
 // For InfinityFree: set SETUP_ALLOWED_IPS=* in .env to allow any IP (less secure but needed for shared hosting)
 $remoteIp = $_SERVER['REMOTE_ADDR'] ?? '';
 $allowedIps = ['127.0.0.1', '::1'];
-$setupAllowedIps = getenv('SETUP_ALLOWED_IPS');
+$setupAllowedIps = $_ENV['SETUP_ALLOWED_IPS'] ?? getenv('SETUP_ALLOWED_IPS');
 
 if ($setupAllowedIps === '*') {
     // Allow from any IP (use only during first setup, then delete this file!)
@@ -64,18 +64,20 @@ function loadEnv(): void
         [$key, $value] = explode('=', $line, 2);
         $key = trim($key);
         $value = trim($value, ' "\'');
-        putenv("{$key}={$value}");
+        $_ENV[$key] = $value;
+        $_SERVER[$key] = $value;
+        @putenv("{$key}={$value}");
     }
 }
 
 function testDatabaseConnection(): ?string
 {
     try {
-        $host = getenv('DB_HOST') ?: '127.0.0.1';
-        $port = getenv('DB_PORT') ?: '3306';
-        $database = getenv('DB_DATABASE');
-        $user = getenv('DB_USERNAME');
-        $pass = getenv('DB_PASSWORD');
+        $host = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: '127.0.0.1';
+        $port = $_ENV['DB_PORT'] ?? getenv('DB_PORT') ?: '3306';
+        $database = $_ENV['DB_DATABASE'] ?? getenv('DB_DATABASE');
+        $user = $_ENV['DB_USERNAME'] ?? getenv('DB_USERNAME');
+        $pass = $_ENV['DB_PASSWORD'] ?? getenv('DB_PASSWORD');
 
         if (!$database || !$user) {
             return 'Missing DB_DATABASE or DB_USERNAME in .env';
@@ -254,8 +256,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isAlreadySetup) {
 // === LOAD .ENV DEFAULTS ===
 
 loadEnv();
-$dbDatabase = getenv('DB_DATABASE') ?: '';
-$dbHost = getenv('DB_HOST') ?: '127.0.0.1';
+$dbDatabase = $_ENV['DB_DATABASE'] ?? getenv('DB_DATABASE') ?: '';
+$dbHost = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: '127.0.0.1';
 
 ?>
 <!DOCTYPE html>
