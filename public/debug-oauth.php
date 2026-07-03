@@ -2,49 +2,89 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/backend/index.php';
+/**
+ * OAuth / Session diagnostic — bypasses the router entirely.
+ * Requires APP_DEBUG=true in .env.
+ * DELETE THIS FILE after debugging is complete.
+ */
+
+$backendDir = dirname(__DIR__) . '/backend';
+$rootDir    = dirname(__DIR__);
+
+// Load env first so we can check APP_DEBUG before doing anything else
+require_once $backendDir . '/helpers/functions.php';
+load_env($rootDir . '/.env');
 
 if (!(bool) env('APP_DEBUG', false)) {
     http_response_code(403);
     header('Content-Type: text/plain');
-    exit("Set APP_DEBUG=true in .env to use this endpoint.\nDelete this file when debugging is complete.");
+    exit("Set APP_DEBUG=true in .env to use this endpoint.\nDelete this file when done.");
 }
+
+// Bootstrap without calling router_dispatch()
+require_once $backendDir . '/config/app.php';
+
+$autoload = $rootDir . '/vendor/autoload.php';
+if (is_file($autoload)) {
+    require_once $autoload;
+}
+
+// Boot OOP container (needed for DB, Instagram service, etc.)
+if (class_exists(\CreatorzHive\Core\Application::class)) {
+    \CreatorzHive\Core\Application::boot();
+}
+
+// Load procedural layer (database, session handler, etc.) - NOT router_dispatch
+require_once $backendDir . '/compat/models.php';
+require_once $backendDir . '/compat/services.php';
+require_once $backendDir . '/compat/auth.php';
+require_once $backendDir . '/helpers/platforms.php';
+require_once $backendDir . '/core/database.php';
+require_once $backendDir . '/core/db-session-handler.php';
+require_once $backendDir . '/core/session.php';
+require_once $backendDir . '/core/response.php';
+require_once $backendDir . '/core/request.php';
+
+session_start_safe();
 
 header('Content-Type: text/plain; charset=utf-8');
 
-$line = static function (string $label, string $value = ''): void {
-    echo str_pad($label, 28) . $value . "\n";
+$pad = static function (string $label, string $value = ''): void {
+    echo str_pad($label, 30) . $value . "\n";
 };
 
 echo "CreatorzHive — OAuth / Session Diagnostic\n";
-echo str_repeat('=', 48) . "\n\n";
+echo str_repeat('=', 50) . "\n\n";
 
+// ── SESSION ──────────────────────────────────────────
 echo "[ SESSION ]\n";
-$statusMap = [1 => 'NONE', 2 => 'ACTIVE', 3 => 'DISABLED'];
-$line('Status', $statusMap[session_status()] ?? '?');
-$line('Session ID', session_id() ?: '(none)');
-$line('gc_maxlifetime', ini_get('session.gc_maxlifetime'));
+$statusLabels = [1 => 'NONE', 2 => 'ACTIVE', 3 => 'DISABLED'];
+$pad('Status', $statusLabels[session_status()] ?? '?');
+$pad('Session ID', session_id() ?: '(none)');
+$pad('gc_maxlifetime (php.ini)', ini_get('session.gc_maxlifetime'));
 
 $sessionUser = session_get_user();
 if ($sessionUser !== null) {
-    $line('Has user', 'YES');
-    $line('  user.id', (string) ($sessionUser['id'] ?? ''));
-    $line('  user.email', (string) ($sessionUser['email'] ?? ''));
-    $line('  user.role', (string) ($sessionUser['role'] ?? ''));
+    $pad('Has user', 'YES');
+    $pad('  id',    (string) ($sessionUser['id']    ?? ''));
+    $pad('  email', (string) ($sessionUser['email'] ?? ''));
+    $pad('  role',  (string) ($sessionUser['role']  ?? ''));
 } else {
-    $line('Has user', 'NO  <-- logged out or session empty');
+    $pad('Has user', 'NO  <-- not logged in, or session data missing');
 }
-$line('Flash messages', json_encode($_SESSION['_flash'] ?? []));
+$pad('Flash data', json_encode($_SESSION['_flash'] ?? []));
 
+// ── PHP_SESSIONS TABLE ───────────────────────────────
 echo "\n[ PHP_SESSIONS TABLE ]\n";
 try {
     $pdo = db_get_pdo();
-    $line('DB connection', 'OK  host=' . (string) env('DB_HOST', '?'));
+    $pad('DB connection', 'OK  host=' . (string) env('DB_HOST', '?'));
 
-    $exists = $pdo->query("SHOW TABLES LIKE 'php_sessions'")->fetchAll();
-    if (count($exists) === 0) {
-        $line('php_sessions table', 'MISSING  <-- ROOT CAUSE');
-        echo "\nRun this in phpMyAdmin to fix:\n";
+    $tableCheck = $pdo->query("SHOW TABLES LIKE 'php_sessions'")->fetchAll();
+
+    if (count($tableCheck) === 0) {
+        $pad('Table php_sessions', 'MISSING  <-- THIS IS THE ROOT CAUSE');
+        echo "\nFix: run this SQL in phpMyAdmin:\n\n";
         echo "CREATE TABLE `php_sessions` (\n";
         echo "  `id`         VARCHAR(128) NOT NULL,\n";
         echo "  `data`       MEDIUMTEXT   NOT NULL,\n";
@@ -53,65 +93,72 @@ try {
         echo "  KEY `idx_expires` (`expires_at`)\n";
         echo ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;\n\n";
     } else {
+        $pad('Table php_sessions', 'EXISTS');
+
         $counts = $pdo->query(
-            "SELECT COUNT(*) AS total, SUM(expires_at > UNIX_TIMESTAMP()) AS active FROM php_sessions"
-        )->fetch();
-        $line('php_sessions table', 'EXISTS');
-        $line('  rows total', (string) ($counts['total'] ?? 0));
-        $line('  rows active', (string) ($counts['active'] ?? 0));
+            "SELECT COUNT(*) AS total,
+                    SUM(expires_at > UNIX_TIMESTAMP()) AS active
+             FROM php_sessions"
+        )->fetch(PDO::FETCH_ASSOC);
+        $pad('  rows total',  (string) ($counts['total']  ?? 0));
+        $pad('  rows active', (string) ($counts['active'] ?? 0));
 
         $sid = session_id();
         if ($sid !== '') {
             $stmt = $pdo->prepare(
-                'SELECT LENGTH(data) AS dlen, expires_at, (expires_at - UNIX_TIMESTAMP()) AS ttl
+                'SELECT LENGTH(data) AS dlen,
+                        expires_at,
+                        (expires_at - UNIX_TIMESTAMP()) AS ttl
                  FROM php_sessions WHERE id = ?'
             );
             $stmt->execute([$sid]);
-            $row = $stmt->fetch();
-            if ($row !== false && $row !== null) {
-                $line('  current session', 'FOUND');
-                $line('  data size', $row['dlen'] . ' bytes');
-                $line('  TTL', $row['ttl'] . 's');
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $pad('  current session row', 'FOUND');
+                $pad('  data size',           $row['dlen'] . ' bytes');
+                $pad('  TTL',                 $row['ttl']  . 's');
             } else {
-                $line('  current session', 'NOT IN DB  <-- session not yet written or expired');
+                $pad('  current session row', 'NOT FOUND  <-- write is failing or expired');
             }
         }
 
+        // Quick write/read test
         $testId = 'dbg_' . bin2hex(random_bytes(4));
-        $wStmt = $pdo->prepare(
-            'INSERT INTO php_sessions (id, data, expires_at) VALUES (?, ?, ?)
-             ON DUPLICATE KEY UPDATE data = VALUES(data)'
-        );
-        if ($wStmt->execute([$testId, 'test', time() + 60])) {
-            $line('Write test', 'OK');
+        $wOk = $pdo->prepare(
+            'INSERT INTO php_sessions (id, data, expires_at)
+             VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE data = VALUES(data)'
+        )->execute([$testId, 'test', time() + 60]);
+
+        $pad('Write test', $wOk ? 'OK' : 'FAILED  <-- DB user may lack INSERT permission');
+        if ($wOk) {
             $pdo->prepare('DELETE FROM php_sessions WHERE id = ?')->execute([$testId]);
-        } else {
-            $line('Write test', 'FAILED  <-- DB user may lack INSERT permission');
         }
     }
 } catch (Throwable $e) {
-    $line('DB error', $e->getMessage());
+    $pad('DB error', $e->getMessage());
 }
 
+// ── INSTAGRAM CONFIG ─────────────────────────────────
 echo "\n[ INSTAGRAM CONFIG ]\n";
 try {
     $app = \CreatorzHive\Core\Application::instance();
     if ($app !== null) {
         $ig = $app->get(\CreatorzHive\Services\InstagramOAuthService::class);
-        $line('Configured', $ig->isConfigured() ? 'YES' : 'NO  <-- App ID or Secret missing');
-        $line('Redirect URI', $ig->redirectUri());
+        $pad('Configured',   $ig->isConfigured() ? 'YES' : 'NO  <-- App ID or Secret missing');
+        $pad('Redirect URI', $ig->redirectUri());
     }
 } catch (Throwable $e) {
-    $line('Error', $e->getMessage());
+    $pad('Error', $e->getMessage());
 }
 
+// ── ENVIRONMENT ──────────────────────────────────────
 echo "\n[ ENVIRONMENT ]\n";
-$line('APP_URL', (string) env('APP_URL', '(not set)'));
-$line('APP_DEBUG', env('APP_DEBUG', false) ? 'true' : 'false');
-$line('APP_SECRET', env('APP_SECRET', '') !== '' ? '(set, ' . strlen((string) env('APP_SECRET')) . ' chars)' : 'NOT SET');
-$line('SESSION_SECURE', env('SESSION_SECURE', false) ? 'true' : 'false');
-$line('SESSION_LIFETIME', (string) env('SESSION_LIFETIME', '120 (default)'));
+$pad('APP_URL',         (string) env('APP_URL',         '(not set)'));
+$pad('APP_DEBUG',       env('APP_DEBUG', false) ? 'true' : 'false');
+$pad('APP_SECRET',      env('APP_SECRET', '') !== '' ? '(set, ' . strlen((string) env('APP_SECRET')) . ' chars)' : 'NOT SET');
+$pad('SESSION_SECURE',  env('SESSION_SECURE', false) ? 'true' : 'false');
+$pad('SESSION_LIFETIME', (string) env('SESSION_LIFETIME', '120 (default)'));
+$pad('INSTAGRAM_OAUTH_REDIRECT_URI', (string) env('INSTAGRAM_OAUTH_REDIRECT_URI', '(auto-built from APP_URL)'));
 
-echo "\n";
-echo str_repeat('=', 48) . "\n";
+echo "\n" . str_repeat('=', 50) . "\n";
 echo "DELETE public/debug-oauth.php when debugging is complete.\n";
