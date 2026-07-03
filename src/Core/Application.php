@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace CreatorzHive\Core;
 
-use CreatorzHive\Config\AppConfig;
-use CreatorzHive\Core\Database\Connection;
 use CreatorzHive\Providers\AppServiceProvider;
 
 /**
@@ -29,9 +27,6 @@ final class Application
         $app = new self($container);
         $GLOBALS['cz_container'] = $container;
         $GLOBALS['cz_app'] = $app;
-
-        $pdo = $container->get(Connection::class)->pdo();
-        $GLOBALS['_cz_pdo'] = $pdo;
 
         return $app;
     }
