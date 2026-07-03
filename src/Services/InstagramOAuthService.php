@@ -67,6 +67,15 @@ final class InstagramOAuthService implements SocialProviderInterface
 
     public function completeConnection(int $userId, string $code): array
     {
+        try {
+            return $this->doCompleteConnection($userId, $code);
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => 'Connection failed: ' . $e->getMessage()];
+        }
+    }
+
+    private function doCompleteConnection(int $userId, string $code): array
+    {
         $appId     = platform_api_secrets_resolve('instagram_app_id');
         $appSecret = platform_api_secrets_resolve('instagram_app_secret');
         $redirect  = $this->redirectUri();
@@ -344,10 +353,13 @@ final class InstagramOAuthService implements SocialProviderInterface
         );
 
         if ($account !== null) {
-            job_runner_dispatch('fetch_analytics', [
-                'user_id'           => $userId,
-                'social_account_id' => (int) ($account['id'] ?? 0),
-            ]);
+            try {
+                job_runner_dispatch('fetch_analytics', [
+                    'user_id'           => $userId,
+                    'social_account_id' => (int) ($account['id'] ?? 0),
+                ]);
+            } catch (\Throwable $ignored) {
+            }
         }
     }
 }

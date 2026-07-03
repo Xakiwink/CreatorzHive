@@ -4,13 +4,36 @@ declare(strict_types=1);
 function db_session_open(string $path, string $name): bool
 {
     try {
-        db_get_pdo()->exec(
+        $pdo = db_get_pdo();
+
+        $pdo->exec(
             'CREATE TABLE IF NOT EXISTS `php_sessions` (
                 `id`         VARCHAR(128)  NOT NULL,
                 `data`       MEDIUMTEXT    NOT NULL,
                 `expires_at` INT UNSIGNED  NOT NULL,
                 PRIMARY KEY (`id`),
                 KEY `idx_expires` (`expires_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+        );
+
+        $pdo->exec(
+            'CREATE TABLE IF NOT EXISTS `job_queue` (
+                `id`            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                `queue`         VARCHAR(100)    NOT NULL DEFAULT \'default\',
+                `job_class`     VARCHAR(255)    NOT NULL,
+                `payload`       JSON            NOT NULL,
+                `attempts`      TINYINT UNSIGNED NOT NULL DEFAULT 0,
+                `max_attempts`  TINYINT UNSIGNED NOT NULL DEFAULT 3,
+                `status`        ENUM(\'pending\',\'running\',\'completed\',\'failed\') NOT NULL DEFAULT \'pending\',
+                `available_at`  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `started_at`    TIMESTAMP       NULL DEFAULT NULL,
+                `completed_at`  TIMESTAMP       NULL DEFAULT NULL,
+                `failed_at`     TIMESTAMP       NULL DEFAULT NULL,
+                `error_message` TEXT            NULL,
+                `created_at`    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                KEY `idx_jq_status` (`status`, `available_at`),
+                KEY `idx_jq_queue`  (`queue`, `status`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
         );
     } catch (Throwable $ignored) {
