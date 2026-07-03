@@ -3,6 +3,18 @@ declare(strict_types=1);
 
 function db_session_open(string $path, string $name): bool
 {
+    try {
+        db_get_pdo()->exec(
+            'CREATE TABLE IF NOT EXISTS `php_sessions` (
+                `id`         VARCHAR(128)  NOT NULL,
+                `data`       MEDIUMTEXT    NOT NULL,
+                `expires_at` INT UNSIGNED  NOT NULL,
+                PRIMARY KEY (`id`),
+                KEY `idx_expires` (`expires_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+        );
+    } catch (Throwable $ignored) {
+    }
     return true;
 }
 
