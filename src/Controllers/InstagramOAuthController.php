@@ -15,6 +15,7 @@ use function response_redirect;
 use function route_url;
 use function session_flash;
 use function session_get_user;
+use function session_set_user;
 
 final class InstagramOAuthController extends AbstractController
 {
@@ -90,6 +91,14 @@ final class InstagramOAuthController extends AbstractController
         }
 
         $result = $this->instagramOAuth->completeConnection($userId, $code);
+
+        $user = $this->db->fetchOne(
+            'SELECT id, name, username, email, role, is_active FROM users WHERE id = ? AND is_active = 1 LIMIT 1',
+            [$userId]
+        );
+        if ($user !== null) {
+            session_set_user($user);
+        }
 
         if ($result['success']) {
             session_flash('oauth_success', (string) $result['message']);
