@@ -71,20 +71,20 @@ final class InstagramOAuthService implements SocialProviderInterface
         $appSecret = platform_api_secrets_resolve('instagram_app_secret');
         $redirect  = $this->redirectUri();
 
-        $exchange = social_api_service_http_request(
-            'POST',
-            self::TOKEN_BASE,
-            [],
-            [
-                'client_id'     => $appId,
-                'client_secret' => $appSecret,
-                'redirect_uri'  => $redirect,
-                'code'          => $code,
-            ]
-        );
+        $exchange = $this->postForm(self::TOKEN_BASE, [
+            'client_id'     => $appId,
+            'client_secret' => $appSecret,
+            'redirect_uri'  => $redirect,
+            'code'          => $code,
+            'grant_type'    => 'authorization_code',
+        ]);
 
         if (!$exchange['ok']) {
-            return ['success' => false, 'message' => 'Token exchange failed (HTTP ' . (int) ($exchange['status'] ?? 0) . ').'];
+            $detail = isset($exchange['data']['error_message'])
+                ? (string) $exchange['data']['error_message']
+                : 'HTTP ' . (int) ($exchange['status'] ?? 0);
+
+            return ['success' => false, 'message' => 'Token exchange failed: ' . $detail];
         }
 
         $accessToken = trim((string) ($exchange['data']['access_token'] ?? ''));
@@ -293,6 +293,45 @@ final class InstagramOAuthService implements SocialProviderInterface
         );
 
         return ($res['ok'] && is_array($res['data'])) ? $res['data'] : [];
+    }
+
+    private function postForm(string $url, array $fields): array
+    {
+        if (!function_exists('curl_init')) {
+            return ['ok' => false, 'status' => 0, 'data' => [], 'error' => 'cURL not available'];
+        }
+
+        $ch = curl_init($url);
+        if ($ch === false) {
+            return ['ok' => false, 'status' => 0, 'data' => [], 'error' => 'curl_init failed'];
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => http_build_query($fields),
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT        => 30,
+        ]);
+
+        $raw    = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $err    = curl_error($ch);
+        curl_close($ch);
+
+        if ($raw === false) {
+            return ['ok' => false, 'status' => $status, 'data' => [], 'error' => $err];
+        }
+
+        $data = json_decode((string) $raw, true);
+
+        return [
+            'ok'     => $status >= 200 && $status < 300,
+            'status' => $status,
+            'data'   => is_array($data) ? $data : ['raw' => (string) $raw],
+            'error'  => $status >= 200 && $status < 300 ? null : 'HTTP ' . $status,
+        ];
     }
 
     private function upsertAccount(int $userId, array $data): void
