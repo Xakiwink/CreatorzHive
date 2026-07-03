@@ -15,9 +15,10 @@ use function job_runner_dispatch;
 
 final class InstagramOAuthService implements SocialProviderInterface
 {
-    private const GRAPH_BASE   = 'https://graph.facebook.com/v25.0';
+    private const AUTHORIZE_BASE = 'https://www.instagram.com/oauth/authorize';
+    private const TOKEN_BASE     = 'https://api.instagram.com/oauth/access_token';
     private const INSTAGRAM_BASE = 'https://graph.instagram.com/v25.0';
-    private const SCOPES       = 'instagram_business_basic,instagram_business_content_publish,instagram_business_manage_insights';
+    private const SCOPES         = 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights';
 
     /** @var Connection */
     private $db;
@@ -61,7 +62,7 @@ final class InstagramOAuthService implements SocialProviderInterface
             'state'         => $state,
         ];
 
-        return self::GRAPH_BASE . '/dialog/oauth?' . http_build_query($params);
+        return self::AUTHORIZE_BASE . '?' . http_build_query($params);
     }
 
     public function completeConnection(int $userId, string $code): array
@@ -71,13 +72,15 @@ final class InstagramOAuthService implements SocialProviderInterface
         $redirect  = $this->redirectUri();
 
         $exchange = social_api_service_http_request(
-            'GET',
-            self::GRAPH_BASE . '/oauth/access_token?' . http_build_query([
+            'POST',
+            self::TOKEN_BASE,
+            [],
+            [
                 'client_id'     => $appId,
                 'client_secret' => $appSecret,
                 'redirect_uri'  => $redirect,
                 'code'          => $code,
-            ])
+            ]
         );
 
         if (!$exchange['ok']) {
