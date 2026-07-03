@@ -52,6 +52,45 @@ if (!empty($_GET['details'])) {
     exit;
 }
 
+if (!empty($_GET['diagnose'])) {
+    $out = ['php_now' => date('Y-m-d H:i:s'), 'php_tz' => date_default_timezone_get()];
+
+    try {
+        $out['mysql_now'] = db_fetch('SELECT NOW() AS n')['n'] ?? null;
+    } catch (\Throwable $e) {
+        $out['mysql_now_err'] = $e->getMessage();
+    }
+
+    try {
+        $out['select_with_params'] = db_fetchAll(
+            'SELECT id, queue, status, available_at FROM job_queue
+             WHERE queue = :q AND status = :s AND available_at <= NOW()',
+            ['q' => 'default', 's' => 'pending']
+        );
+    } catch (\Throwable $e) {
+        $out['select_with_params_err'] = $e->getMessage();
+    }
+
+    try {
+        $out['select_no_params'] = db_fetchAll(
+            "SELECT id, queue, status, available_at FROM job_queue
+             WHERE queue = 'default' AND status = 'pending' AND available_at <= NOW()"
+        );
+    } catch (\Throwable $e) {
+        $out['select_no_params_err'] = $e->getMessage();
+    }
+
+    try {
+        $out['container_ok'] = !empty($GLOBALS['cz_container'])
+            && $GLOBALS['cz_container'] instanceof \CreatorzHive\Core\Container;
+    } catch (\Throwable $e) {
+        $out['container_err'] = $e->getMessage();
+    }
+
+    echo json_encode($out);
+    exit;
+}
+
 $queue   = trim((string) ($_GET['queue'] ?? 'default'));
 $maxJobs = min(50, max(1, (int) ($_GET['limit'] ?? 10)));
 
