@@ -1,126 +1,91 @@
 <?php
-
 declare(strict_types=1);
 
-/**
- * Job Queue Webhook Trigger
- *
- * This endpoint is called by external cron service (UptimeRobot, EasyCron, etc.)
- * to process pending jobs from the queue.
- *
- * Setup (UptimeRobot Free Plan):
- *   1. Go to: https://uptimerobot.com
- *   2. Create account (free tier included)
- *   3. Click "Add New Monitor"
- *   4. Select "Cron Job"
- *   5. Cron Expression: 0 * * * * (every minute)
- *   6. URL: https://creatorzhive.infinityfree.io/webhook/process-jobs.php?secret=YOUR_SECRET_KEY
- *   7. Replace YOUR_SECRET_KEY with a random value from your .env (WEBHOOK_SECRET)
- *   8. Save and test
- *
- * Alternative: EasyCron.com, Cron-job.org, or any HTTP-based cron service
- *
- * Usage:
- *   GET /webhook/process-jobs.php?secret=WEBHOOK_SECRET
- *   Returns: JSON with job processing status
- */
+define('ROOT', dirname(__DIR__, 2));
+
+require ROOT . '/vendor/autoload.php';
+
+use App\Core\{Env, DB};
+use App\Models\{JobQueue, Post, SocialAccount};
+use App\Services\Instagram;
+
+Env::load(ROOT . '/.env');
 
 header('Content-Type: application/json');
 
-// === CONFIGURATION ===
+$secret  = $_GET['secret'] ?? $_SERVER['HTTP_X_WEBHOOK_SECRET'] ?? '';
+$allowed = Env::get('WEBHOOK_SECRET', 'dev-secret-key');
 
-$maxJobsPerCall = 3; // Process 2-3 jobs per webhook trigger to avoid timeout
-$timeout = 30; // PHP execution timeout (should be less than webhook timeout)
-
-// === SECURITY ===
-
-// Load environment
-$envFile = dirname(__DIR__, 2) . '/.env';
-if (is_file($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if ($lines) {
-        foreach ($lines as $line) {
-            if (strpos($line, '=') === false || strpos($line, '#') === 0) {
-                continue;
-            }
-            [$key, $value] = explode('=', $line, 2);
-            $key = trim($key);
-            $value = trim($value, ' "\'');
-            $_ENV[$key] = $value;
-            $_SERVER[$key] = $value;
-            @putenv("{$key}={$value}");
-        }
-    }
-}
-
-$webhookSecret = $_ENV['WEBHOOK_SECRET'] ?? getenv('WEBHOOK_SECRET') ?: 'dev-secret-key';
-$providedSecret = $_GET['secret'] ?? '';
-
-// Verify secret (constant-time comparison)
-if (!hash_equals($webhookSecret, $providedSecret)) {
+if ($secret !== $allowed) {
     http_response_code(403);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Invalid or missing secret parameter',
-        'timestamp' => date('Y-m-d H:i:s'),
-    ]);
+    echo json_encode(['success' => false, 'error' => 'Forbidden']);
     exit;
 }
 
-// === BOOTSTRAP ===
+$jobs      = JobQueue::pending(10);
+$processed = 0;
+$success   = 0;
+$failed    = 0;
+$errors    = [];
 
-try {
-    $root = dirname(__DIR__, 2);
-    require_once $root . '/backend/helpers/cli_bootstrap.php';
-    require_once $root . '/backend/bootstrap-oop.php';
-    require_once $root . '/backend/bootstrap-procedural.php';
+foreach ($jobs as $job) {
+    $id      = (int) $job['id'];
+    $payload = json_decode($job['payload'] ?? '{}', true) ?: [];
 
-    cli_load_env();
-} catch (Throwable $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Bootstrap failed: ' . $e->getMessage(),
-        'timestamp' => date('Y-m-d H:i:s'),
-    ]);
-    exit;
+    JobQueue::markRunning($id);
+    $processed++;
+
+    try {
+        if ($job['job'] === 'publish_post') {
+            handlePublishPost($payload);
+        } else {
+            throw new RuntimeException('Unknown job: ' . $job['job']);
+        }
+        JobQueue::markDone($id);
+        $success++;
+    } catch (Throwable $e) {
+        JobQueue::markFailed($id, $e->getMessage());
+        $errors[] = 'Job #' . $id . ': ' . $e->getMessage();
+        $failed++;
+    }
 }
 
-// === PROCESS JOBS ===
+echo json_encode([
+    'success'   => true,
+    'processed' => $processed,
+    'ok'        => $success,
+    'failed'    => $failed,
+    'errors'    => $errors,
+    'ts'        => date('c'),
+]);
 
-try {
-    set_time_limit($timeout);
+function handlePublishPost(array $payload): void
+{
+    $postId = (int) ($payload['post_id'] ?? 0);
+    if ($postId === 0) throw new RuntimeException('Missing post_id');
 
-    $statsBefore = job_runner_stats_by_status();
-    $pendingBefore = (int) ($statsBefore['pending'] ?? 0);
-
-    if ($pendingBefore === 0) {
-        echo json_encode([
-            'success' => true,
-            'message' => 'No pending jobs',
-            'jobs_processed' => 0,
-            'timestamp' => date('Y-m-d H:i:s'),
-        ]);
-        exit;
+    $post = DB::fetch('SELECT * FROM posts WHERE id = ?', [$postId]);
+    if (!$post) throw new RuntimeException('Post not found: ' . $postId);
+    if ($post['status'] !== 'scheduled') {
+        throw new RuntimeException('Post not in scheduled state: ' . $post['status']);
     }
 
-    job_runner_run('default', $maxJobsPerCall);
+    $platforms = json_decode($post['platforms'] ?? '[]', true) ?: [];
 
-    $statsAfter = job_runner_stats_by_status();
-    $pendingAfter = (int) ($statsAfter['pending'] ?? 0);
-    $processed = $pendingBefore - $pendingAfter;
+    if (in_array('instagram', $platforms, true)) {
+        $userId  = (int) $post['user_id'];
+        $account = SocialAccount::find($userId, 'instagram');
+        if (!$account) throw new RuntimeException('No Instagram account for user ' . $userId);
 
-    echo json_encode([
-        'success' => true,
-        'jobs_processed' => max(0, $processed),
-        'queue_stats' => $statsAfter,
-        'timestamp' => date('Y-m-d H:i:s'),
-    ]);
-} catch (Throwable $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => $e->getMessage(),
-        'timestamp' => date('Y-m-d H:i:s'),
-    ]);
+        $token    = (string) ($account['access_token'] ?? '');
+        $igUserId = (string) ($account['platform_user_id'] ?? '');
+        $imageUrl = (string) ($post['media_url'] ?? '');
+
+        if ($imageUrl === '') throw new RuntimeException('Post has no media_url for Instagram publish');
+
+        $result = Instagram::publish($token, $igUserId, $imageUrl, (string) $post['caption']);
+        if (!$result['ok']) throw new RuntimeException('Instagram publish failed: ' . $result['error']);
+    }
+
+    Post::markPublished($postId);
 }
