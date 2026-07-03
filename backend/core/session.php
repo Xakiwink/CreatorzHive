@@ -17,6 +17,8 @@ function session_start_safe(): void
         return;
     }
 
+    db_session_register();
+
     session_set_cookie_params([
         'lifetime' => (int) env('SESSION_LIFETIME', 120) * 60,
         'path' => '/',

@@ -16,6 +16,7 @@ require_once $backend . '/compat/auth.php';
 
 require_once $backend . '/helpers/platforms.php';
 require_once $backend . '/core/database.php';
+require_once $backend . '/core/db-session-handler.php';
 require_once $backend . '/core/session.php';
 require_once $backend . '/core/response.php';
 require_once $backend . '/helpers/api_cors.php';
