@@ -91,18 +91,10 @@ try {
 try {
     set_time_limit($timeout);
 
-    $jobsProcessed = 0;
-    $jobsSuccess = 0;
-    $jobsFailed = 0;
-    $errors = [];
+    $statsBefore = job_runner_stats_by_status();
+    $pendingBefore = (int) ($statsBefore['pending'] ?? 0);
 
-    // Get pending jobs
-    $jobs = db_fetch_all(
-        'SELECT id, queue, job_class, payload FROM job_queue WHERE status = :status LIMIT :limit',
-        ['status' => 'pending', 'limit' => $maxJobsPerCall]
-    );
-
-    if (!$jobs) {
+    if ($pendingBefore === 0) {
         echo json_encode([
             'success' => true,
             'message' => 'No pending jobs',
@@ -112,78 +104,16 @@ try {
         exit;
     }
 
-    foreach ($jobs as $job) {
-        $jobId = (int) ($job['id'] ?? 0);
-        $jobClass = (string) ($job['job_class'] ?? '');
-        $payload = (array) json_decode((string) ($job['payload'] ?? '{}'), true);
-        $queue = (string) ($job['queue'] ?? 'default');
+    job_runner_run('default', $maxJobsPerCall);
 
-        $jobsProcessed++;
-
-        try {
-            // Get job handler instance from container
-            $handler = app_resolve($jobClass);
-
-            // Execute job
-            $handler->handle($payload);
-
-            // Mark as completed
-            db_update(
-                'job_queue',
-                ['status' => 'completed', 'completed_at' => date('Y-m-d H:i:s')],
-                'id = :id',
-                ['id' => $jobId]
-            );
-
-            $jobsSuccess++;
-        } catch (Throwable $jobError) {
-            $jobsFailed++;
-            $errors[] = "Job #{$jobId} ({$jobClass}): " . $jobError->getMessage();
-
-            // Update job with error
-            $attempts = db_fetch(
-                'SELECT attempts, max_attempts FROM job_queue WHERE id = :id',
-                ['id' => $jobId]
-            );
-
-            $currentAttempts = (int) ($attempts['attempts'] ?? 0);
-            $maxAttempts = (int) ($attempts['max_attempts'] ?? 3);
-
-            if ($currentAttempts >= $maxAttempts) {
-                // Mark as failed
-                db_update(
-                    'job_queue',
-                    [
-                        'status' => 'failed',
-                        'failed_at' => date('Y-m-d H:i:s'),
-                        'error_message' => $jobError->getMessage(),
-                    ],
-                    'id = :id',
-                    ['id' => $jobId]
-                );
-            } else {
-                // Increment retry count
-                db_update(
-                    'job_queue',
-                    [
-                        'attempts' => $currentAttempts + 1,
-                        'available_at' => date('Y-m-d H:i:s', time() + (60 * ($currentAttempts + 1))),
-                    ],
-                    'id = :id',
-                    ['id' => $jobId]
-                );
-            }
-        }
-    }
-
-    // === RESPONSE ===
+    $statsAfter = job_runner_stats_by_status();
+    $pendingAfter = (int) ($statsAfter['pending'] ?? 0);
+    $processed = $pendingBefore - $pendingAfter;
 
     echo json_encode([
         'success' => true,
-        'jobs_processed' => $jobsProcessed,
-        'jobs_success' => $jobsSuccess,
-        'jobs_failed' => $jobsFailed,
-        'errors' => $errors ?: [],
+        'jobs_processed' => max(0, $processed),
+        'queue_stats' => $statsAfter,
         'timestamp' => date('Y-m-d H:i:s'),
     ]);
 } catch (Throwable $e) {
