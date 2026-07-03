@@ -35,7 +35,7 @@ $timeout = 30; // PHP execution timeout (should be less than webhook timeout)
 // === SECURITY ===
 
 // Load environment
-$envFile = dirname(__DIR__) . '/.env';
+$envFile = dirname(__DIR__, 2) . '/.env';
 if (is_file($envFile)) {
     $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     if ($lines) {
@@ -68,7 +68,7 @@ if (!hash_equals($webhookSecret, $providedSecret)) {
 // === BOOTSTRAP ===
 
 try {
-    $root = dirname(__DIR__);
+    $root = dirname(__DIR__, 2);
     require_once $root . '/backend/helpers/cli_bootstrap.php';
     require_once $root . '/backend/bootstrap-oop.php';
     require_once $root . '/backend/bootstrap-procedural.php';
