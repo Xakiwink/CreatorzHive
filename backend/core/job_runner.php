@@ -120,12 +120,11 @@ function job_runner_run(string $queue = 'default', int $maxJobs = 10): void
 {
     $maxJobs = max(1, min(100, $maxJobs));
 
-    $params = db_bind_limit(['q' => $queue, 'pending' => 'pending'], $maxJobs, 100);
     $rows = db_fetchAll(
         'SELECT * FROM job_queue
             WHERE queue = :q AND status = :pending AND available_at <= NOW()
-            ORDER BY id ASC LIMIT :limit',
-        $params
+            ORDER BY id ASC LIMIT ' . $maxJobs,
+        ['q' => $queue, 'pending' => 'pending']
     );
 
     foreach ($rows as $jobRow) {

@@ -37,6 +37,21 @@ require_once $backendDir . '/helpers/platforms.php';
 require_once $backendDir . '/core/database.php';
 require_once $backendDir . '/core/job_runner.php';
 
+if (!empty($_GET['details'])) {
+    $jobs = [];
+    try {
+        $jobs = db_fetchAll(
+            'SELECT id, queue, job_class, status, available_at, attempts, error_message, created_at
+             FROM job_queue ORDER BY id DESC LIMIT 20'
+        );
+    } catch (\Throwable $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        exit;
+    }
+    echo json_encode(['success' => true, 'jobs' => $jobs, 'ts' => date('c')]);
+    exit;
+}
+
 $queue   = trim((string) ($_GET['queue'] ?? 'default'));
 $maxJobs = min(50, max(1, (int) ($_GET['limit'] ?? 10)));
 
