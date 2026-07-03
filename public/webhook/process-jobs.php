@@ -167,7 +167,7 @@ try {
                     'job_queue',
                     [
                         'attempts' => $currentAttempts + 1,
-                        'next_retry_at' => date('Y-m-d H:i:s', time() + (60 * ($currentAttempts + 1))), // Exponential backoff
+                        'available_at' => date('Y-m-d H:i:s', time() + (60 * ($currentAttempts + 1))),
                     ],
                     'id = :id',
                     ['id' => $jobId]
