@@ -231,6 +231,7 @@ final class AppServiceProvider
                 $c->get(SocialAccountRepository::class),
                 $c->get(SocialApiService::class),
                 $c->get(AnalyticsService::class),
+                $c->get(YoutubeOAuthService::class),
                 $c->get(Connection::class)
             );
         });
