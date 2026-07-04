@@ -96,10 +96,28 @@ final class InstagramOAuthService implements SocialProviderInterface
             return ['success' => false, 'message' => 'Token exchange failed: ' . $detail];
         }
 
-        $accessToken = trim((string) ($exchange['data']['access_token'] ?? ''));
-        if ($accessToken === '') {
+        $shortToken = trim((string) ($exchange['data']['access_token'] ?? ''));
+        if ($shortToken === '') {
             return ['success' => false, 'message' => 'Instagram did not return an access token.'];
         }
+
+        $longTokenRes = social_api_service_http_request(
+            'GET',
+            self::INSTAGRAM_BASE . '/access_token?' . http_build_query([
+                'grant_type'    => 'ig_exchange_token',
+                'client_secret' => $appSecret,
+                'access_token'  => $shortToken,
+            ])
+        );
+
+        $accessToken  = $longTokenRes['ok'] && isset($longTokenRes['data']['access_token'])
+            ? trim((string) $longTokenRes['data']['access_token'])
+            : $shortToken;
+
+        $expiresIn    = (int) ($longTokenRes['data']['expires_in'] ?? 0);
+        $tokenExpires = $expiresIn > 0
+            ? gmdate('Y-m-d H:i:s', time() + $expiresIn)
+            : gmdate('Y-m-d H:i:s', strtotime('+55 days'));
 
         $igUser = $this->fetchUser($accessToken);
         if ($igUser === []) {
@@ -119,7 +137,7 @@ final class InstagramOAuthService implements SocialProviderInterface
             'display_name'     => (string) ($igUser['name'] ?? $username),
             'access_token'     => $accessToken,
             'refresh_token'    => '',
-            'token_expires_at' => date('Y-m-d H:i:s', strtotime('+55 days')),
+            'token_expires_at' => $tokenExpires,
         ]);
 
         return ['success' => true, 'message' => 'Instagram connected successfully.'];
