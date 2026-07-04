@@ -17,6 +17,7 @@ use CreatorzHive\Repositories\UserSessionRepository;
 use CreatorzHive\Services\AdminService;
 use CreatorzHive\Services\AuthService;
 use CreatorzHive\Services\InstagramOAuthService;
+use CreatorzHive\Services\YoutubeOAuthService;
 use CreatorzHive\Support\SettingsPageHelper;
 use function request_all;
 use function request_file;
@@ -55,6 +56,9 @@ final class SettingsController extends AbstractController
     /** @var InstagramOAuthService */
     private $instagramOAuth;
 
+    /** @var YoutubeOAuthService */
+    private $youtubeOAuth;
+
     /** @var JobQueueRepository */
     private $jobs;
 
@@ -71,6 +75,7 @@ final class SettingsController extends AbstractController
         AuthService $auth,
         AdminService $admin,
         InstagramOAuthService $instagramOAuth,
+        YoutubeOAuthService $youtubeOAuth,
         JobQueueRepository $jobs
     ) {
         parent::__construct($views, $json, $db);
@@ -83,6 +88,7 @@ final class SettingsController extends AbstractController
         $this->auth = $auth;
         $this->admin = $admin;
         $this->instagramOAuth = $instagramOAuth;
+        $this->youtubeOAuth = $youtubeOAuth;
         $this->jobs = $jobs;
     }
 
@@ -326,9 +332,17 @@ final class SettingsController extends AbstractController
 
         $userId = (int) $user['id'];
 
+        $oauthPlatforms = [];
+        if ($this->instagramOAuth->isConfigured()) {
+            $oauthPlatforms[] = 'instagram';
+        }
+        if ($this->youtubeOAuth->isConfigured()) {
+            $oauthPlatforms[] = 'youtube';
+        }
+
         $this->json->success([
             'accounts' => $this->socialAccounts->listSummaryForUser($userId),
-            'oauth_platforms' => $this->instagramOAuth->isConfigured() ? ['instagram'] : [],
+            'oauth_platforms' => $oauthPlatforms,
         ], 'Integrations loaded');
     }
 

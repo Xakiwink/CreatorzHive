@@ -399,10 +399,10 @@
               '<button type="button" class="btn btn-primary btn-sm integration-connect" data-platform="' +
               p.id +
               '">' +
-              (oauthReady ? 'Connect Instagram' : 'Connect ' + Utils.escapeHtml(p.name)) +
+              'Connect ' + Utils.escapeHtml(p.name) +
               '</button>' +
               (oauthReady
-                ? '<p class="text-xs text-muted mt-2">Secure OAuth via Instagram Business Login. Admin must configure App ID and Secret first.</p>'
+                ? '<p class="text-xs text-muted mt-2">Secure OAuth — admin must configure credentials first.</p>'
                 : '<p class="text-xs text-muted mt-2">Quick connect for development, or ask admin to enable OAuth.</p>')
             );
           })();
@@ -592,9 +592,10 @@
     if (!slug) return;
 
     if (oauthPlatforms.indexOf(slug) >= 0) {
+      const routeName = slug + '-connect';
       const target =
-        (typeof window.routeUrl === 'function' ? window.routeUrl('instagram-connect') : null) ||
-        (typeof window.routeQuery === 'function' ? window.routeQuery('instagram-connect') : null);
+        (typeof window.routeUrl === 'function' ? window.routeUrl(routeName) : null) ||
+        (typeof window.routeQuery === 'function' ? window.routeQuery(routeName) : null);
       if (target) {
         window.location.href = target;
         return;
