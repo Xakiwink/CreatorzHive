@@ -9,6 +9,7 @@ use function env;
 use function job_runner_dispatch;
 use function platform_api_secrets_resolve;
 use function social_account_upsert;
+use function social_api_service_http_request;
 use CreatorzHive\Core\Database\Connection;
 
 final class YoutubeOAuthService
@@ -143,7 +144,7 @@ final class YoutubeOAuthService
 
         $channelId = trim((string) ($channel['id'] ?? ''));
         $title = trim((string) ($channel['snippet']['title'] ?? ''));
-        $username = trim((string) ($channel['snippet']['customUrl'] ?? ''));
+        $username = ltrim(trim((string) ($channel['snippet']['customUrl'] ?? '')), '@');
         if ($username === '') {
             $username = 'yt_' . $channelId;
         }
