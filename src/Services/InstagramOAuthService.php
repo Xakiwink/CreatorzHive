@@ -8,6 +8,7 @@ use CreatorzHive\Contracts\SocialProviderInterface;
 use CreatorzHive\Core\Database\Connection;
 use function env;
 use function base_url_path;
+use function storage_path;
 use function platform_api_secrets_resolve;
 use function social_account_upsert;
 use function social_api_service_http_request;
@@ -119,6 +120,24 @@ final class InstagramOAuthService implements SocialProviderInterface
         $tokenExpires = $expiresIn > 0
             ? gmdate('Y-m-d H:i:s', time() + $expiresIn)
             : gmdate('Y-m-d H:i:s', strtotime('+55 days'));
+
+        $debugDir = storage_path('logs');
+        if (!is_dir($debugDir)) {
+            @mkdir($debugDir, 0755, true);
+        }
+        @file_put_contents(
+            $debugDir . '/oauth-instagram-debug.json',
+            json_encode([
+                'ts'              => gmdate('Y-m-d H:i:s'),
+                'short_token_len' => strlen($shortToken),
+                'short_token_pre' => substr($shortToken, 0, 30),
+                'exchange_status' => $longTokenRes['status'] ?? 0,
+                'exchange_ok'     => $longTokenRes['ok'] ?? false,
+                'exchange_data'   => $longTokenRes['data'] ?? null,
+                'final_token_len' => strlen($accessToken),
+                'used_long_lived' => ($accessToken !== $shortToken),
+            ], JSON_PRETTY_PRINT)
+        );
 
         $igUser = $this->fetchUser($accessToken);
         if ($igUser === []) {

@@ -132,6 +132,17 @@ if (!empty($_GET['test_instagram'])) {
     exit;
 }
 
+if (!empty($_GET['read_oauth_log'])) {
+    $logFile = dirname(__DIR__, 2) . '/backend/storage/logs/oauth-instagram-debug.json';
+    if (!is_file($logFile)) {
+        echo json_encode(['error' => 'No OAuth debug log found — reconnect Instagram first']);
+        exit;
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    echo file_get_contents($logFile);
+    exit;
+}
+
 if (!empty($_GET['diagnose'])) {
     $out = ['php_now' => date('Y-m-d H:i:s'), 'php_tz' => date_default_timezone_get()];
 
