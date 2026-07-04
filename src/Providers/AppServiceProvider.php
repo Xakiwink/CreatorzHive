@@ -318,6 +318,7 @@ final class AppServiceProvider
                 $c->get(AuthService::class),
                 $c->get(AdminService::class),
                 $c->get(InstagramOAuthService::class),
+                $c->get(YoutubeOAuthService::class),
                 $c->get(JobQueueRepository::class)
             );
         });
