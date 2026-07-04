@@ -15,9 +15,10 @@ use function job_runner_dispatch;
 
 final class InstagramOAuthService implements SocialProviderInterface
 {
-    private const AUTHORIZE_BASE = 'https://www.instagram.com/oauth/authorize';
-    private const TOKEN_BASE     = 'https://api.instagram.com/oauth/access_token';
-    private const INSTAGRAM_BASE = 'https://graph.instagram.com/v25.0';
+    private const AUTHORIZE_BASE      = 'https://www.instagram.com/oauth/authorize';
+    private const TOKEN_BASE          = 'https://api.instagram.com/oauth/access_token';
+    private const INSTAGRAM_BASE      = 'https://graph.instagram.com/v25.0';
+    private const INSTAGRAM_BASE_UNVERSIONED = 'https://graph.instagram.com';
     private const SCOPES         = 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights';
 
     /** @var Connection */
@@ -103,7 +104,7 @@ final class InstagramOAuthService implements SocialProviderInterface
 
         $longTokenRes = social_api_service_http_request(
             'GET',
-            self::INSTAGRAM_BASE . '/access_token?' . http_build_query([
+            self::INSTAGRAM_BASE_UNVERSIONED . '/access_token?' . http_build_query([
                 'grant_type'    => 'ig_exchange_token',
                 'client_secret' => $appSecret,
                 'access_token'  => $shortToken,

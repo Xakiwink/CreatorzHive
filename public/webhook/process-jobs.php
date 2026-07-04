@@ -90,19 +90,38 @@ if (!empty($_GET['test_instagram'])) {
 
         if ($token !== '' && $igId !== '') {
             $ch = curl_init('https://graph.instagram.com/v25.0/' . rawurlencode($igId) . '?fields=followers_count,username,account_type&access_token=' . rawurlencode($token));
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CONNECTTIMEOUT => 10,
-                CURLOPT_TIMEOUT        => 15,
-            ]);
+            curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_TIMEOUT => 15]);
             $raw    = curl_exec($ch);
             $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
             $err    = curl_error($ch);
             curl_close($ch);
-            $out['http_status']  = $status;
-            $out['curl_error']   = $err ?: null;
-            $out['response']     = $raw !== false ? json_decode((string) $raw, true) : null;
-            $out['raw_length']   = $raw !== false ? strlen((string) $raw) : 0;
+            $out['profile_status']   = $status;
+            $out['profile_error']    = $err ?: null;
+            $out['profile_response'] = $raw !== false ? json_decode((string) $raw, true) : null;
+
+            $appSecretLen = 0;
+            try {
+                if (class_exists(\CreatorzHive\Core\Application::class) && \CreatorzHive\Core\Application::instance() !== null) {
+                    $sec = platform_api_secrets_resolve('instagram_app_secret');
+                    $appSecretLen = strlen((string) $sec);
+                }
+            } catch (\Throwable $ignored) {}
+            $out['app_secret_length'] = $appSecretLen;
+
+            if ($appSecretLen > 0) {
+                $appSecret = platform_api_secrets_resolve('instagram_app_secret');
+                $ch2 = curl_init('https://graph.instagram.com/access_token?' . http_build_query([
+                    'grant_type'    => 'ig_exchange_token',
+                    'client_secret' => $appSecret,
+                    'access_token'  => $token,
+                ]));
+                curl_setopt_array($ch2, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_TIMEOUT => 15]);
+                $raw2    = curl_exec($ch2);
+                $status2 = (int) curl_getinfo($ch2, CURLINFO_RESPONSE_CODE);
+                curl_close($ch2);
+                $out['exchange_status']   = $status2;
+                $out['exchange_response'] = $raw2 !== false ? json_decode((string) $raw2, true) : null;
+            }
         } else {
             $out['error'] = 'No token or IG ID on account';
         }
