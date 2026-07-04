@@ -76,16 +76,8 @@ if (!empty($_GET['test_instagram'])) {
     $out = [];
     try {
         $account = db_fetch(
-            "SELECT sa.*, ps.value AS access_token_val
-             FROM social_accounts sa
-             LEFT JOIN platform_secrets ps ON ps.key_name = 'instagram_access_token_' || sa.id
-             WHERE sa.platform = 'instagram' AND sa.is_active = 1 LIMIT 1"
+            "SELECT * FROM social_accounts WHERE platform = 'instagram' AND is_active = 1 LIMIT 1"
         );
-        if ($account === null) {
-            $account = db_fetch(
-                "SELECT * FROM social_accounts WHERE platform = 'instagram' AND is_active = 1 LIMIT 1"
-            );
-        }
         if ($account === null) {
             echo json_encode(['success' => false, 'error' => 'No active Instagram account found']);
             exit;
