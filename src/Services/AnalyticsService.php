@@ -147,8 +147,8 @@ final class AnalyticsService
                         WHERE user_id = :uid AND period = \'daily\' AND platform IS NOT NULL AND platform != \'\'
                         GROUP BY platform
                     ) t ON t.platform = s.platform AND t.md = s.snapshot_date
-                    WHERE s.user_id = :uid AND s.period = \'daily\'',
-                ['uid' => $userId]
+                    WHERE s.user_id = :uid2 AND s.period = \'daily\'',
+                ['uid' => $userId, 'uid2' => $userId]
             );
         
             $roll = $this->db->fetchOne(
