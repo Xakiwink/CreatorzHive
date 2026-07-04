@@ -53,6 +53,8 @@ final class FetchAnalyticsJob implements JobHandlerInterface
         $platform = (string) ($account['platform'] ?? '');
         $metrics = $this->socialApi->getAnalytics($account, $today);
 
+        $followers = (int) ($metrics['followers'] ?? 0);
+
         $this->db->query(
             'INSERT INTO analytics_snapshots (
                 user_id, social_account_id, platform, snapshot_date, period,
@@ -79,7 +81,7 @@ final class FetchAnalyticsJob implements JobHandlerInterface
                 'said' => $accountId,
                 'plat' => $platform,
                 'dt' => $today,
-                'fol' => (int) ($metrics['followers'] ?? 0),
+                'fol' => $followers,
                 'imp' => (int) ($metrics['impressions'] ?? 0),
                 'reach' => (int) ($metrics['reach'] ?? 0),
                 'likes' => (int) ($metrics['likes'] ?? 0),
@@ -91,6 +93,15 @@ final class FetchAnalyticsJob implements JobHandlerInterface
                 'erate' => (float) ($metrics['engagement_rate'] ?? 0),
             ]
         );
+
+        if ($followers > 0) {
+            $this->db->update(
+                'social_accounts',
+                ['follower_count' => $followers],
+                'id = :id',
+                ['id' => $accountId]
+            );
+        }
 
         $this->analytics->aggregateTotals($userId);
     }

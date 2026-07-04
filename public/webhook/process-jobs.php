@@ -52,6 +52,26 @@ if (!empty($_GET['details'])) {
     exit;
 }
 
+if (!empty($_GET['refresh_analytics'])) {
+    try {
+        $accounts = db_fetchAll(
+            'SELECT id, user_id FROM social_accounts WHERE is_active = 1'
+        );
+        $dispatched = 0;
+        foreach ($accounts as $acct) {
+            job_runner_dispatch('fetch_analytics', [
+                'user_id'           => (int) $acct['user_id'],
+                'social_account_id' => (int) $acct['id'],
+            ]);
+            $dispatched++;
+        }
+        echo json_encode(['success' => true, 'dispatched' => $dispatched, 'ts' => date('c')]);
+    } catch (\Throwable $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
 if (!empty($_GET['diagnose'])) {
     $out = ['php_now' => date('Y-m-d H:i:s'), 'php_tz' => date_default_timezone_get()];
 
