@@ -109,7 +109,7 @@ if (!empty($_GET['test_insights'])) {
         $until = $since + 86400;
 
         $ch = curl_init('https://graph.instagram.com/v25.0/' . rawurlencode($id) . '/insights?' . http_build_query([
-            'metric'       => 'impressions,reach',
+            'metric'       => 'views,reach,likes,comments,shares,saves',
             'period'       => 'day',
             'since'        => $since,
             'until'        => $until,

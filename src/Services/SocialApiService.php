@@ -414,21 +414,28 @@ final class SocialApiService
                 $insightsRes = social_api_service_http_request(
                     'GET',
                     'https://graph.instagram.com/v25.0/' . rawurlencode($id) . '/insights?' . http_build_query([
-                        'metric'       => 'impressions,reach',
+                        'metric'       => 'views,reach,likes,comments,shares,saves',
                         'period'       => 'day',
                         'since'        => $since,
                         'until'        => $until,
                         'access_token' => $token,
                     ])
                 );
+                $insightLikes    = 0;
+                $insightComments = 0;
+                $insightShares   = 0;
+                $insightSaves    = 0;
                 if ($insightsRes['ok']) {
                     foreach (($insightsRes['data']['data'] ?? []) as $metric) {
                         $values = $metric['values'] ?? [];
                         $value  = (int) ($values[0]['value'] ?? 0);
-                        if ((string) ($metric['name'] ?? '') === 'impressions') {
-                            $impressions = $value;
-                        } elseif ((string) ($metric['name'] ?? '') === 'reach') {
-                            $reach = $value;
+                        switch ((string) ($metric['name'] ?? '')) {
+                            case 'views':     $impressions    = $value; break;
+                            case 'reach':     $reach          = $value; break;
+                            case 'likes':     $insightLikes   = $value; break;
+                            case 'comments':  $insightComments = $value; break;
+                            case 'shares':    $insightShares  = $value; break;
+                            case 'saves':     $insightSaves   = $value; break;
                         }
                     }
                 }
@@ -455,10 +462,10 @@ final class SocialApiService
             }
         }
 
-        $likes    = (int) round($impressions * 0.04);
-        $comments = (int) round($likes * 0.12);
-        $shares   = (int) round($likes * 0.08);
-        $saves    = (int) round($likes * 0.15);
+        $likes    = $insightLikes    ?? 0;
+        $comments = $insightComments ?? 0;
+        $shares   = $insightShares   ?? 0;
+        $saves    = $insightSaves    ?? 0;
 
         $engagementRate = $impressions > 0
             ? round((($likes + $comments + $shares + $saves) / $impressions) * 100, 2)
