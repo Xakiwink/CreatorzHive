@@ -140,6 +140,23 @@ final class InstagramOAuthService implements SocialProviderInterface
         );
 
         $igUser = $this->fetchUser($accessToken);
+
+        @file_put_contents(
+            $debugDir . '/oauth-instagram-debug.json',
+            json_encode([
+                'ts'               => gmdate('Y-m-d H:i:s'),
+                'short_token_len'  => strlen($shortToken),
+                'short_token_pre'  => substr($shortToken, 0, 30),
+                'exchange_status'  => $longTokenRes['status'] ?? 0,
+                'exchange_ok'      => $longTokenRes['ok'] ?? false,
+                'exchange_data'    => $longTokenRes['data'] ?? null,
+                'final_token_len'  => strlen($accessToken),
+                'used_long_lived'  => ($accessToken !== $shortToken),
+                'fetch_user_ok'    => ($igUser !== []),
+                'fetch_user_data'  => $igUser ?: null,
+            ], JSON_PRETTY_PRINT)
+        );
+
         if ($igUser === []) {
             return ['success' => false, 'message' => 'Could not retrieve Instagram Business account info.'];
         }
@@ -334,7 +351,7 @@ final class InstagramOAuthService implements SocialProviderInterface
         $res = social_api_service_http_request(
             'GET',
             self::INSTAGRAM_BASE . '/me?' . http_build_query([
-                'fields'       => 'id,username,name,account_type',
+                'fields'       => 'id,username,account_type',
                 'access_token' => $accessToken,
             ])
         );
