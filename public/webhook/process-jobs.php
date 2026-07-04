@@ -75,9 +75,14 @@ if (!empty($_GET['refresh_analytics'])) {
 if (!empty($_GET['test_instagram'])) {
     $out = [];
     try {
-        $account = db_fetch(
-            "SELECT * FROM social_accounts WHERE platform = 'instagram' AND is_active = 1 LIMIT 1"
+        $rawRow = db_fetch(
+            "SELECT user_id FROM social_accounts WHERE platform = 'instagram' AND is_active = 1 LIMIT 1"
         );
+        if ($rawRow === null) {
+            echo json_encode(['success' => false, 'error' => 'No active Instagram account found']);
+            exit;
+        }
+        $account = social_account_fetch((int) $rawRow['user_id'], 'instagram');
         if ($account === null) {
             echo json_encode(['success' => false, 'error' => 'No active Instagram account found']);
             exit;
