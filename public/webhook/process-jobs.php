@@ -37,6 +37,19 @@ require_once $backendDir . '/helpers/platforms.php';
 require_once $backendDir . '/core/database.php';
 require_once $backendDir . '/core/job_runner.php';
 
+if (!empty($_GET['reset_stuck'])) {
+    try {
+        $updated = db_query(
+            "UPDATE job_queue SET status = 'pending', attempts = 0
+             WHERE status = 'running' AND available_at <= NOW()"
+        )->rowCount();
+        echo json_encode(['success' => true, 'reset' => $updated, 'ts' => date('c')]);
+    } catch (\Throwable $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
 if (!empty($_GET['details'])) {
     $jobs = [];
     try {
