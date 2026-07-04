@@ -142,25 +142,27 @@ final class YoutubeOAuthService
             return ['success' => false, 'message' => 'No YouTube channel found on this Google account.'];
         }
 
-        $channelId = trim((string) ($channel['id'] ?? ''));
-        $title = trim((string) ($channel['snippet']['title'] ?? ''));
-        $username = ltrim(trim((string) ($channel['snippet']['customUrl'] ?? '')), '@');
+        $channelId   = trim((string) ($channel['id'] ?? ''));
+        $title       = trim((string) ($channel['snippet']['title'] ?? ''));
+        $username    = ltrim(trim((string) ($channel['snippet']['customUrl'] ?? '')), '@');
         if ($username === '') {
             $username = 'yt_' . $channelId;
         }
-        $avatar = trim((string) ($channel['snippet']['thumbnails']['default']['url'] ?? ''));
+        $avatar      = trim((string) ($channel['snippet']['thumbnails']['default']['url'] ?? ''));
+        $subscribers = (int) ($channel['statistics']['subscriberCount'] ?? 0);
 
         $expiresAt = gmdate('Y-m-d H:i:s', time() + max(3600, (int) ($exchange['expires_in'] ?? 3600)));
 
         social_account_upsert($userId, [
-            'platform' => 'youtube',
+            'platform'         => 'youtube',
             'platform_user_id' => $channelId,
-            'username' => $username,
-            'display_name' => $title !== '' ? $title : $username,
-            'avatar_url' => $avatar !== '' ? $avatar : null,
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
+            'username'         => $username,
+            'display_name'     => $title !== '' ? $title : $username,
+            'avatar_url'       => $avatar !== '' ? $avatar : null,
+            'access_token'     => $accessToken,
+            'refresh_token'    => $refreshToken,
             'token_expires_at' => $expiresAt,
+            'follower_count'   => $subscribers,
         ]);
 
         $account = $this->db->fetchOne(
