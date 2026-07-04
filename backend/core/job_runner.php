@@ -122,7 +122,7 @@ function job_runner_run(string $queue = 'default', int $maxJobs = 10): void
 
     $rows = db_fetchAll(
         'SELECT * FROM job_queue
-            WHERE queue = :q AND status = :pending AND available_at <= NOW()
+            WHERE queue = :q AND status = :pending
             ORDER BY id ASC LIMIT ' . $maxJobs,
         ['q' => $queue, 'pending' => 'pending']
     );
@@ -206,7 +206,7 @@ function job_runner_run(string $queue = 'default', int $maxJobs = 10): void
 
             if ($attempts < $maxAttempts) {
                 $delay = job_runner_backoff_seconds($attempts);
-                $nextAt = date('Y-m-d H:i:s', time() + $delay);
+                $nextAt = gmdate('Y-m-d H:i:s', time() + $delay);
                 db_update(
                     'job_queue',
                     [
