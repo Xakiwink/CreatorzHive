@@ -72,6 +72,55 @@ if (!empty($_GET['refresh_analytics'])) {
     exit;
 }
 
+if (!empty($_GET['test_instagram'])) {
+    $out = [];
+    try {
+        $account = db_fetch(
+            "SELECT sa.*, ps.value AS access_token_val
+             FROM social_accounts sa
+             LEFT JOIN platform_secrets ps ON ps.key_name = 'instagram_access_token_' || sa.id
+             WHERE sa.platform = 'instagram' AND sa.is_active = 1 LIMIT 1"
+        );
+        if ($account === null) {
+            $account = db_fetch(
+                "SELECT * FROM social_accounts WHERE platform = 'instagram' AND is_active = 1 LIMIT 1"
+            );
+        }
+        if ($account === null) {
+            echo json_encode(['success' => false, 'error' => 'No active Instagram account found']);
+            exit;
+        }
+        $token   = trim((string) ($account['access_token'] ?? ''));
+        $igId    = trim((string) ($account['platform_user_id'] ?? ''));
+        $out['account_id']    = (int) $account['id'];
+        $out['ig_id']         = $igId;
+        $out['token_length']  = strlen($token);
+
+        if ($token !== '' && $igId !== '') {
+            $ch = curl_init('https://graph.instagram.com/v25.0/' . rawurlencode($igId) . '?fields=followers_count,username,account_type&access_token=' . rawurlencode($token));
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT        => 15,
+            ]);
+            $raw    = curl_exec($ch);
+            $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+            $err    = curl_error($ch);
+            curl_close($ch);
+            $out['http_status']  = $status;
+            $out['curl_error']   = $err ?: null;
+            $out['response']     = $raw !== false ? json_decode((string) $raw, true) : null;
+            $out['raw_length']   = $raw !== false ? strlen((string) $raw) : 0;
+        } else {
+            $out['error'] = 'No token or IG ID on account';
+        }
+    } catch (\Throwable $e) {
+        $out['exception'] = $e->getMessage();
+    }
+    echo json_encode($out);
+    exit;
+}
+
 if (!empty($_GET['diagnose'])) {
     $out = ['php_now' => date('Y-m-d H:i:s'), 'php_tz' => date_default_timezone_get()];
 

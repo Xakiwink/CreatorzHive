@@ -142,15 +142,15 @@ final class AnalyticsService
         $followerSum = $this->db->fetchOne(
                 'SELECT COALESCE(SUM(s.followers), 0) AS total FROM analytics_snapshots s
                     INNER JOIN (
-                        SELECT platform, MAX(snapshot_date) AS md
+                        SELECT social_account_id, MAX(snapshot_date) AS md
                         FROM analytics_snapshots
-                        WHERE user_id = :uid AND period = \'daily\' AND platform IS NOT NULL AND platform != \'\'
-                        GROUP BY platform
-                    ) t ON t.platform = s.platform AND t.md = s.snapshot_date
-                    WHERE s.user_id = :uid2 AND s.period = \'daily\'',
+                        WHERE user_id = :uid AND period = \'daily\' AND social_account_id IS NOT NULL
+                        GROUP BY social_account_id
+                    ) t ON t.social_account_id = s.social_account_id AND t.md = s.snapshot_date
+                    WHERE s.user_id = :uid2 AND s.period = \'daily\' AND s.social_account_id IS NOT NULL',
                 ['uid' => $userId, 'uid2' => $userId]
             );
-        
+
             $roll = $this->db->fetchOne(
                 'SELECT
                         COALESCE(SUM(impressions), 0) AS total_impressions,
@@ -159,7 +159,7 @@ final class AnalyticsService
                         COALESCE(AVG(engagement_rate), 0) AS avg_engagement_rate
                     FROM analytics_snapshots
                     WHERE user_id = :uid AND period = \'daily\'
-                    AND platform IS NOT NULL
+                    AND social_account_id IS NOT NULL
                     AND snapshot_date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)',
                 ['uid' => $userId]
             );
