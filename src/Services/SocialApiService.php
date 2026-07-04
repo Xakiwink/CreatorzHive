@@ -409,7 +409,7 @@ final class SocialApiService
                     $followers = (int) ($profileRes['data']['followers_count'] ?? $followers);
                 }
 
-                $since       = strtotime($date);
+                $since       = (int) strtotime('yesterday 00:00:00 UTC');
                 $until       = $since + 86400;
                 $insightsRes = social_api_service_http_request(
                     'GET',
@@ -455,16 +455,10 @@ final class SocialApiService
             }
         }
 
-        if ($impressions === 0) {
-            $impressions = max(1000, $followers * 2);
-        }
-        if ($reach === 0) {
-            $reach = (int) round($impressions * 0.7);
-        }
-        $likes    = max(10, (int) round($impressions * 0.04));
-        $comments = max(3, (int) round($likes * 0.12));
-        $shares   = max(2, (int) round($likes * 0.08));
-        $saves    = max(1, (int) round($likes * 0.15));
+        $likes    = (int) round($impressions * 0.04);
+        $comments = (int) round($likes * 0.12);
+        $shares   = (int) round($likes * 0.08);
+        $saves    = (int) round($likes * 0.15);
 
         $engagementRate = $impressions > 0
             ? round((($likes + $comments + $shares + $saves) / $impressions) * 100, 2)

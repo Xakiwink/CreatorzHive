@@ -52,6 +52,86 @@ if (!empty($_GET['details'])) {
     exit;
 }
 
+if (!empty($_GET['clean_analytics'])) {
+    try {
+        $userId = (int) (db_fetch("SELECT user_id FROM social_accounts WHERE is_active = 1 LIMIT 1")['user_id'] ?? 0);
+        if ($userId < 1) {
+            echo json_encode(['success' => false, 'error' => 'No active social account found']);
+            exit;
+        }
+
+        $deleted = db_query(
+            'DELETE FROM analytics_snapshots WHERE user_id = :uid AND social_account_id IS NULL',
+            ['uid' => $userId]
+        )->rowCount();
+
+        analytics_recalculate($userId);
+
+        $accounts = db_fetchAll('SELECT id, user_id FROM social_accounts WHERE is_active = 1');
+        $dispatched = 0;
+        foreach ($accounts as $acct) {
+            job_runner_dispatch('fetch_analytics', [
+                'user_id'           => (int) $acct['user_id'],
+                'social_account_id' => (int) $acct['id'],
+            ]);
+            $dispatched++;
+        }
+
+        echo json_encode([
+            'success'           => true,
+            'seed_rows_deleted' => $deleted,
+            'posts_recounted'   => true,
+            'jobs_dispatched'   => $dispatched,
+            'ts'                => date('c'),
+        ]);
+    } catch (\Throwable $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+if (!empty($_GET['test_insights'])) {
+    try {
+        $rawRow = db_fetch("SELECT user_id FROM social_accounts WHERE platform = 'instagram' AND is_active = 1 LIMIT 1");
+        if ($rawRow === null) {
+            echo json_encode(['success' => false, 'error' => 'No active Instagram account found']);
+            exit;
+        }
+        $account = social_account_fetch((int) $rawRow['user_id'], 'instagram');
+        if ($account === null) {
+            echo json_encode(['success' => false, 'error' => 'No active Instagram account found']);
+            exit;
+        }
+        $token = trim((string) ($account['access_token'] ?? ''));
+        $id    = trim((string) ($account['platform_user_id'] ?? ''));
+
+        $since = (int) strtotime('yesterday 00:00:00 UTC');
+        $until = $since + 86400;
+
+        $ch = curl_init('https://graph.instagram.com/v25.0/' . rawurlencode($id) . '/insights?' . http_build_query([
+            'metric'       => 'impressions,reach',
+            'period'       => 'day',
+            'since'        => $since,
+            'until'        => $until,
+            'access_token' => $token,
+        ]));
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_TIMEOUT => 15]);
+        $raw    = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+
+        echo json_encode([
+            'since'    => date('Y-m-d H:i:s', $since) . ' UTC',
+            'until'    => date('Y-m-d H:i:s', $until) . ' UTC',
+            'status'   => $status,
+            'response' => $raw !== false ? json_decode((string) $raw, true) : null,
+        ]);
+    } catch (\Throwable $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
 if (!empty($_GET['refresh_analytics'])) {
     try {
         $accounts = db_fetchAll(
