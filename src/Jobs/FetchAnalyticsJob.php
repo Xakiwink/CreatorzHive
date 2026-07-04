@@ -8,6 +8,7 @@ use CreatorzHive\Core\Database\Connection;
 use CreatorzHive\Repositories\SocialAccountRepository;
 use CreatorzHive\Services\AnalyticsService;
 use CreatorzHive\Services\SocialApiService;
+use CreatorzHive\Services\YoutubeOAuthService;
 use RuntimeException;
 
 final class FetchAnalyticsJob implements JobHandlerInterface
@@ -21,6 +22,9 @@ final class FetchAnalyticsJob implements JobHandlerInterface
     /** @var AnalyticsService */
     private $analytics;
 
+    /** @var YoutubeOAuthService */
+    private $youtubeOAuth;
+
     /** @var Connection */
     private $db;
 
@@ -28,11 +32,13 @@ final class FetchAnalyticsJob implements JobHandlerInterface
         SocialAccountRepository $accounts,
         SocialApiService $socialApi,
         AnalyticsService $analytics,
+        YoutubeOAuthService $youtubeOAuth,
         Connection $db
     ) {
         $this->accounts = $accounts;
         $this->socialApi = $socialApi;
         $this->analytics = $analytics;
+        $this->youtubeOAuth = $youtubeOAuth;
         $this->db = $db;
     }
 
@@ -49,8 +55,32 @@ final class FetchAnalyticsJob implements JobHandlerInterface
             throw new RuntimeException('Social account not found');
         }
 
-        $today = date('Y-m-d');
+        $today    = gmdate('Y-m-d');
         $platform = (string) ($account['platform'] ?? '');
+
+        if ($platform === 'youtube') {
+            $expiresAt    = (string) ($account['token_expires_at'] ?? '');
+            $refreshToken = (string) ($account['refresh_token'] ?? '');
+            $isExpired    = $expiresAt !== '' && strtotime($expiresAt . ' UTC') < (time() + 300);
+
+            if ($isExpired && $refreshToken !== '') {
+                $refreshed = $this->youtubeOAuth->refreshToken($refreshToken);
+                if ($refreshed['success']) {
+                    $newExpiry = gmdate('Y-m-d H:i:s', time() + (int) ($refreshed['expires_in'] ?? 3600));
+                    $this->accounts->accountUpdateTokens(
+                        $accountId,
+                        (string) $refreshed['access_token'],
+                        '',
+                        $newExpiry
+                    );
+                    $account = $this->accounts->accountFetchById($accountId, $userId);
+                    if ($account === null) {
+                        throw new RuntimeException('Social account not found after token refresh');
+                    }
+                }
+            }
+        }
+
         $metrics = $this->socialApi->getAnalytics($account, $today);
 
         $followers = (int) ($metrics['followers'] ?? 0);

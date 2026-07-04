@@ -217,6 +217,53 @@ if (!empty($_GET['test_instagram'])) {
     exit;
 }
 
+if (!empty($_GET['test_youtube'])) {
+    try {
+        $rawRow = db_fetch("SELECT user_id FROM social_accounts WHERE platform = 'youtube' AND is_active = 1 LIMIT 1");
+        if ($rawRow === null) {
+            echo json_encode(['success' => false, 'error' => 'No active YouTube account found — connect YouTube first']);
+            exit;
+        }
+        $account = social_account_fetch((int) $rawRow['user_id'], 'youtube');
+        if ($account === null) {
+            echo json_encode(['success' => false, 'error' => 'No active YouTube account found']);
+            exit;
+        }
+        $token        = trim((string) ($account['access_token'] ?? ''));
+        $channelId    = trim((string) ($account['platform_user_id'] ?? ''));
+        $expiresAt    = (string) ($account['token_expires_at'] ?? '');
+        $hasRefresh   = trim((string) ($account['refresh_token'] ?? '')) !== '';
+
+        $out = [
+            'account_id'   => (int) $account['id'],
+            'channel_id'   => $channelId,
+            'token_length' => strlen($token),
+            'expires_at'   => $expiresAt,
+            'has_refresh'  => $hasRefresh,
+            'is_expired'   => $expiresAt !== '' && strtotime($expiresAt . ' UTC') < time(),
+        ];
+
+        if ($token !== '' && $channelId !== '') {
+            $ch = curl_init('https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=' . rawurlencode($channelId));
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $token],
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT        => 15,
+            ]);
+            $raw    = curl_exec($ch);
+            $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+            curl_close($ch);
+            $out['channel_status']   = $status;
+            $out['channel_response'] = $raw !== false ? json_decode((string) $raw, true) : null;
+        }
+        echo json_encode($out);
+    } catch (\Throwable $e) {
+        echo json_encode(['exception' => $e->getMessage()]);
+    }
+    exit;
+}
+
 if (!empty($_GET['read_oauth_log'])) {
     $logFile = dirname(__DIR__, 2) . '/backend/storage/logs/oauth-instagram-debug.json';
     if (!is_file($logFile)) {

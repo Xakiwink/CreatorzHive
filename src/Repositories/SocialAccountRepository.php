@@ -141,6 +141,18 @@ final class SocialAccountRepository
         );
     }
 
+    public function accountUpdateTokens(int $accountId, string $accessToken, string $refreshToken, string $expiresAt): void
+    {
+        $updates = ['access_token' => $this->accountEncryptToken($accessToken)];
+        if ($refreshToken !== '') {
+            $updates['refresh_token'] = $this->accountEncryptToken($refreshToken);
+        }
+        if ($expiresAt !== '') {
+            $updates['token_expires_at'] = $expiresAt;
+        }
+        $this->db->update('social_accounts', $updates, 'id = :id', ['id' => $accountId]);
+    }
+
     public function accountMigratePlaintextTokens()
     {
         $rows = $this->db->fetchAll('SELECT id, access_token, refresh_token FROM social_accounts');

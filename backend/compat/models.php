@@ -374,6 +374,11 @@ function social_account_upsert(int $userId, array $data)
     return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Repositories\SocialAccountRepository::class)->accountUpsert(...func_get_args());
 }
 
+function social_account_update_tokens(int $accountId, string $accessToken, string $refreshToken, string $expiresAt): void
+{
+    \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Repositories\SocialAccountRepository::class)->accountUpdateTokens(...func_get_args());
+}
+
 function social_account_migrate_plaintext_tokens()
 {
     return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Repositories\SocialAccountRepository::class)->accountMigratePlaintextTokens(...func_get_args());
