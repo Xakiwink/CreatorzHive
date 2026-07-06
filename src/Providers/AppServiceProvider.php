@@ -17,6 +17,7 @@ use CreatorzHive\Controllers\MediaController;
 use CreatorzHive\Controllers\NotificationController;
 use CreatorzHive\Controllers\InstagramOAuthController;
 use CreatorzHive\Controllers\PostController;
+use CreatorzHive\Controllers\TiktokOAuthController;
 use CreatorzHive\Controllers\YoutubeOAuthController;
 use CreatorzHive\Controllers\SettingsController;
 use CreatorzHive\Controllers\Support\AbstractController;
@@ -54,6 +55,7 @@ use CreatorzHive\Services\AuthService;
 use CreatorzHive\Services\DashboardService;
 use CreatorzHive\Services\GoogleAuthService;
 use CreatorzHive\Services\InstagramOAuthService;
+use CreatorzHive\Services\TiktokOAuthService;
 use CreatorzHive\Services\YoutubeOAuthService;
 use CreatorzHive\Services\NotificationService;
 use CreatorzHive\Services\PlatformApiSecretsService;
@@ -81,6 +83,9 @@ final class AppServiceProvider
         $container->set(GoogleAuthService::class, new GoogleAuthService());
         $container->factory(YoutubeOAuthService::class, static function (Container $c): YoutubeOAuthService {
             return new YoutubeOAuthService($c->get(Connection::class));
+        });
+        $container->factory(TiktokOAuthService::class, static function (Container $c): TiktokOAuthService {
+            return new TiktokOAuthService($c->get(Connection::class));
         });
 
         self::registerRepositories($container);
@@ -232,6 +237,7 @@ final class AppServiceProvider
                 $c->get(SocialApiService::class),
                 $c->get(AnalyticsService::class),
                 $c->get(YoutubeOAuthService::class),
+                $c->get(TiktokOAuthService::class),
                 $c->get(Connection::class)
             );
         });
@@ -266,6 +272,7 @@ final class AppServiceProvider
             InstagramOAuthController::class,
             GoogleAuthController::class,
             YoutubeOAuthController::class,
+            TiktokOAuthController::class,
             ApiMetaController::class,
         ];
 
@@ -320,6 +327,7 @@ final class AppServiceProvider
                 $c->get(AdminService::class),
                 $c->get(InstagramOAuthService::class),
                 $c->get(YoutubeOAuthService::class),
+                $c->get(TiktokOAuthService::class),
                 $c->get(JobQueueRepository::class)
             );
         });
@@ -420,6 +428,16 @@ final class AppServiceProvider
             );
         });
 
+        $container->factory(TiktokOAuthController::class, static function (Container $c): TiktokOAuthController {
+            return new TiktokOAuthController(
+                $c->get(ViewRenderer::class),
+                $c->get(JsonResponder::class),
+                $c->get(Connection::class),
+                $c->get(TiktokOAuthService::class),
+                $c->get(AdminService::class)
+            );
+        });
+
         $container->factory(GoogleAuthController::class, static function (Container $c): GoogleAuthController {
             return new GoogleAuthController(
                 $c->get(ViewRenderer::class),
@@ -458,6 +476,7 @@ final class AppServiceProvider
                 InstagramOAuthController::class,
                 GoogleAuthController::class,
                 YoutubeOAuthController::class,
+                TiktokOAuthController::class,
                 ApiMetaController::class,
             ], true)) {
                 continue;

@@ -17,6 +17,7 @@ use CreatorzHive\Repositories\UserSessionRepository;
 use CreatorzHive\Services\AdminService;
 use CreatorzHive\Services\AuthService;
 use CreatorzHive\Services\InstagramOAuthService;
+use CreatorzHive\Services\TiktokOAuthService;
 use CreatorzHive\Services\YoutubeOAuthService;
 use CreatorzHive\Support\SettingsPageHelper;
 use function request_all;
@@ -59,6 +60,9 @@ final class SettingsController extends AbstractController
     /** @var YoutubeOAuthService */
     private $youtubeOAuth;
 
+    /** @var TiktokOAuthService */
+    private $tiktokOAuth;
+
     /** @var JobQueueRepository */
     private $jobs;
 
@@ -76,6 +80,7 @@ final class SettingsController extends AbstractController
         AdminService $admin,
         InstagramOAuthService $instagramOAuth,
         YoutubeOAuthService $youtubeOAuth,
+        TiktokOAuthService $tiktokOAuth,
         JobQueueRepository $jobs
     ) {
         parent::__construct($views, $json, $db);
@@ -89,6 +94,7 @@ final class SettingsController extends AbstractController
         $this->admin = $admin;
         $this->instagramOAuth = $instagramOAuth;
         $this->youtubeOAuth = $youtubeOAuth;
+        $this->tiktokOAuth = $tiktokOAuth;
         $this->jobs = $jobs;
     }
 
@@ -338,6 +344,9 @@ final class SettingsController extends AbstractController
         }
         if ($this->youtubeOAuth->isConfigured()) {
             $oauthPlatforms[] = 'youtube';
+        }
+        if ($this->tiktokOAuth->isConfigured()) {
+            $oauthPlatforms[] = 'tiktok';
         }
 
         $this->json->success([

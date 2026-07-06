@@ -86,6 +86,18 @@ final class PlatformApiSecretsService
                             'secret' => false,
                             'help' => 'e.g. SELF_ONLY, MUTUAL_FOLLOW_FRIENDS, PUBLIC_TO_EVERYONE',
                         ],
+                        'tiktok_client_key' => [
+                            'label' => 'TikTok client key',
+                            'env' => 'TIKTOK_CLIENT_KEY',
+                            'secret' => false,
+                            'help' => 'From TikTok for Developers → your app → Login Kit.',
+                        ],
+                        'tiktok_client_secret' => [
+                            'label' => 'TikTok client secret',
+                            'env' => 'TIKTOK_CLIENT_SECRET',
+                            'secret' => true,
+                            'help' => 'Used for OAuth code exchange and refresh (server-side).',
+                        ],
                     ],
                 ],
                 'youtube' => [

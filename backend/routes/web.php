@@ -33,5 +33,8 @@ router_get_action('instagram-callback', CreatorzHive\Controllers\InstagramOAuthC
 router_get_action('youtube-connect', CreatorzHive\Controllers\YoutubeOAuthController::class, 'connectStart', ['auth']);
 router_get_action('youtube-callback', CreatorzHive\Controllers\YoutubeOAuthController::class, 'callbackHandler');
 
+router_get_action('tiktok-connect', CreatorzHive\Controllers\TiktokOAuthController::class, 'connectStart', ['auth']);
+router_get_action('tiktok-callback', CreatorzHive\Controllers\TiktokOAuthController::class, 'callbackHandler');
+
 router_get_action('privacy-policy', CreatorzHive\Controllers\SystemController::class, 'privacyPolicy');
 router_get_action('terms-of-service', CreatorzHive\Controllers\SystemController::class, 'termsOfService');

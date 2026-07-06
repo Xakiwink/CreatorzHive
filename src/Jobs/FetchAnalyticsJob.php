@@ -8,6 +8,7 @@ use CreatorzHive\Core\Database\Connection;
 use CreatorzHive\Repositories\SocialAccountRepository;
 use CreatorzHive\Services\AnalyticsService;
 use CreatorzHive\Services\SocialApiService;
+use CreatorzHive\Services\TiktokOAuthService;
 use CreatorzHive\Services\YoutubeOAuthService;
 use RuntimeException;
 
@@ -25,6 +26,9 @@ final class FetchAnalyticsJob implements JobHandlerInterface
     /** @var YoutubeOAuthService */
     private $youtubeOAuth;
 
+    /** @var TiktokOAuthService */
+    private $tiktokOAuth;
+
     /** @var Connection */
     private $db;
 
@@ -33,12 +37,14 @@ final class FetchAnalyticsJob implements JobHandlerInterface
         SocialApiService $socialApi,
         AnalyticsService $analytics,
         YoutubeOAuthService $youtubeOAuth,
+        TiktokOAuthService $tiktokOAuth,
         Connection $db
     ) {
         $this->accounts = $accounts;
         $this->socialApi = $socialApi;
         $this->analytics = $analytics;
         $this->youtubeOAuth = $youtubeOAuth;
+        $this->tiktokOAuth = $tiktokOAuth;
         $this->db = $db;
     }
 
@@ -58,13 +64,14 @@ final class FetchAnalyticsJob implements JobHandlerInterface
         $today    = gmdate('Y-m-d');
         $platform = (string) ($account['platform'] ?? '');
 
-        if ($platform === 'youtube') {
+        if ($platform === 'youtube' || $platform === 'tiktok') {
             $expiresAt    = (string) ($account['token_expires_at'] ?? '');
             $refreshToken = (string) ($account['refresh_token'] ?? '');
             $isExpired    = $expiresAt !== '' && strtotime($expiresAt . ' UTC') < (time() + 300);
 
             if ($isExpired && $refreshToken !== '') {
-                $refreshed = $this->youtubeOAuth->refreshToken($refreshToken);
+                $oauth = $platform === 'youtube' ? $this->youtubeOAuth : $this->tiktokOAuth;
+                $refreshed = $oauth->refreshToken($refreshToken);
                 if ($refreshed['success']) {
                     $newExpiry = gmdate('Y-m-d H:i:s', time() + (int) ($refreshed['expires_in'] ?? 3600));
                     $this->accounts->accountUpdateTokens(
