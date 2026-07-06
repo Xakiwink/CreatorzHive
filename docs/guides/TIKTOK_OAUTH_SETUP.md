@@ -6,53 +6,79 @@ TikTok uses its own OAuth 2.0 implementation ("Login Kit") which — unlike Goog
 
 Before this, TikTok only supported a single, admin-entered static access token (for testing/publishing as one account). Creators can now connect their own TikTok account via OAuth, the same way Instagram and YouTube work.
 
+### Why this guide uses a second domain, not creatorzhive.infinityfree.io directly
+
+TikTok requires **domain ownership verification** before it will accept a redirect URI or the privacy/terms URLs. It offers two methods, and **both are blocked on InfinityFree's free tier**:
+
+- **URL prefix + signature file** — TikTok's verifier fetches the file with a plain server-side HTTP request. InfinityFree's free-tier edge serves a JavaScript "anti-bot" challenge page to any request that doesn't already have a session cookie (confirmed by testing — `curl` and TikTok's own verifier both get the JS challenge stub instead of the real file, never the actual content).
+- **Domain + DNS TXT record** — InfinityFree's free DNS Zone Editor for `*.infinityfree.io` subdomains only supports A (root/`www` only), CNAME (subdomains), MX, and SPF — no arbitrary TXT record, which is what TikTok's verification string needs.
+
+The fix: point a domain you have **real DNS control** over (via Cloudflare's free plan, or any registrar) at the same InfinityFree hosting, and use that domain for TikTok's app registration instead. Full DNS control means TXT verification just works.
+
+**No code changes are needed for this** — `TiktokOAuthService::redirectUri()` already checks a `TIKTOK_OAUTH_REDIRECT_URI` env override before falling back to the primary `APP_URL`. And because the app builds all internal links as relative paths (`route_url()` / `routeQuery()` return `/?route=...`, never an absolute `APP_URL`-based link), there's no session-cookie conflict — as long as a creator starts the "Connect TikTok" click from the new domain, the whole connect → TikTok → callback round trip stays on that one domain.
+
 ---
 
-## Step 1 — TikTok for Developers
+## Step 1 — Get a domain with full DNS control
 
-### 1.1 Create the app
+1. Register a domain (a cheap ~$1–10/yr domain from any registrar works; you don't need anything fancy)
+2. Add it to [Cloudflare](https://dash.cloudflare.com) (free plan) and switch its nameservers to Cloudflare's
+3. In Cloudflare DNS, add an **A record** pointing to this site's IP:
+   ```
+   Type: A
+   Name: @  (or a subdomain, e.g. app)
+   Value: 185.27.134.164
+   Proxy status: DNS only (grey cloud) — a proxied orange-cloud record can interfere with InfinityFree's own SSL cert issuance
+   ```
+4. In your **InfinityFree control panel** → **Addon domains** (or **Subdomains**, depending on panel version) → add this new domain so InfinityFree serves the same `/htdocs/` content for it
+5. Wait for DNS propagation and for InfinityFree to issue a certificate for the new domain (can take up to a few hours)
+6. Confirm it works: visit `https://yournewdomain.com/` in a browser and see the same CreatorzHive login page
+
+---
+
+## Step 2 — TikTok for Developers
+
+### 2.1 Create the app
 
 1. Go to [developers.tiktok.com](https://developers.tiktok.com) → **Manage apps** → **Create an app**
 2. Fill in app name, description, category
-3. Under **Platform**, add **Web** and enter:
+3. Under **Platform**, add **Web** and enter your new domain:
    ```
-   https://creatorzhive.infinityfree.io
+   https://yournewdomain.com
    ```
 4. Set **Privacy Policy URL** and **Terms of Service URL** to:
    ```
-   https://creatorzhive.infinityfree.io/?route=privacy-policy
-   https://creatorzhive.infinityfree.io/?route=terms-of-service
+   https://yournewdomain.com/?route=privacy-policy
+   https://yournewdomain.com/?route=terms-of-service
    ```
 
-### 1.2 Verify domain ownership
+### 2.2 Verify domain ownership (DNS TXT record)
 
-TikTok will ask you to verify the domain before it accepts the redirect URI or the privacy/terms URLs. You'll be asked to choose:
+1. In the TikTok portal, choose **Add property → Domain → DNS record**
+2. Copy the **Host** and **TXT value** it gives you
+3. In Cloudflare DNS (not InfinityFree's DNS editor), add:
+   ```
+   Type: TXT
+   Name: (as given by TikTok, often @ or a specific subdomain)
+   Value: (the exact string TikTok gave you)
+   ```
+4. Wait a few minutes for DNS propagation, then click **Verify** in the TikTok portal
 
-- **Domain + DNS record** — requires editing a DNS TXT record. Skip this; InfinityFree's free subdomain DNS zone isn't reliably editable and propagation is slow.
-- **URL prefix + signature file** — use this one. No DNS access needed:
-  1. Choose **URL prefix**, verify prefix `https://creatorzhive.infinityfree.io/`
-  2. Download the signature file TikTok gives you (e.g. `tiktokXXXXXXXX.txt`)
-  3. Upload it unmodified via FTP to `/htdocs/` (site root, alongside `index.php`)
-  4. Confirm it loads at `https://creatorzhive.infinityfree.io/<filename>.txt`
-  5. Click **Verify** in the TikTok portal
-
-Because this app routes everything through `?route=...` on the same root path rather than real subpaths, verifying the root prefix covers the callback URL, privacy policy, and terms of service URLs all at once.
-
-### 1.3 Add products
+### 2.3 Add products
 
 On the app's **Products** tab, add:
 - **Login Kit** — provides `client_key` / `client_secret` and the `user.info.basic` / `user.info.stats` scopes
 - **Content Posting API** — provides `video.publish` (or `video.upload` if publish isn't approved yet)
 
-### 1.4 Configure the redirect URI
+### 2.4 Configure the redirect URI
 
-Under **Login Kit → Configure**, add this exact redirect URI:
+Under **Login Kit → Configure**, add this exact redirect URI (note: the new domain, not `creatorzhive.infinityfree.io`):
 ```
-https://creatorzhive.infinityfree.io/?route=tiktok-callback
+https://yournewdomain.com/?route=tiktok-callback
 ```
 It must match byte-for-byte or TikTok will reject the callback.
 
-### 1.5 Add yourself as a tester (sandbox / unaudited mode)
+### 2.5 Add yourself as a tester (sandbox / unaudited mode)
 
 New apps start in **sandbox mode** — only accounts added as testers can complete OAuth or see real stats:
 
@@ -61,7 +87,7 @@ New apps start in **sandbox mode** — only accounts added as testers can comple
 
 > Until TikTok reviews and approves the app for production, only added testers can connect, and some scopes (e.g. `video.publish`) may silently fall back to draft/inbox-only posting.
 
-### 1.6 Copy your credentials
+### 2.6 Copy your credentials
 
 From the app's **Basic information** tab, copy:
 - **Client key**
@@ -69,7 +95,7 @@ From the app's **Basic information** tab, copy:
 
 ---
 
-## Step 2 — Upload Files to InfinityFree
+## Step 3 — Upload Files to InfinityFree
 
 | Local path | Remote path |
 |---|---|
@@ -84,21 +110,36 @@ From the app's **Basic information** tab, copy:
 
 ---
 
-## Step 3 — Enter Credentials (Admin, no FTP/.env edit needed)
+## Step 4 — Enter Credentials
 
-1. Log in as **admin**
-2. **Settings → Integrations**
-3. Find the **TikTok** credentials group
-4. Enter **TikTok client key** and **TikTok client secret** (from Step 1.6)
-5. Save — these are encrypted and stored in the database, same as the other platform secrets
+Two values need to go in `.env` on the server (FTP-edit `.env` directly, since the redirect URI override isn't something the admin credentials UI exposes):
 
-> Alternatively, set `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET` in `.env` on the server — the app checks `.env` first, then falls back to the saved admin value.
+```
+TIKTOK_OAUTH_REDIRECT_URI=https://yournewdomain.com/?route=tiktok-callback
+```
+
+The client key/secret can go either in `.env` or via the admin UI:
+
+**Option A — Admin UI (no FTP edit needed):**
+1. Log in as **admin** → **Settings → Integrations**
+2. Find the **TikTok** credentials group
+3. Enter **TikTok client key** and **TikTok client secret** (from Step 2.6) → Save
+
+**Option B — `.env` directly:**
+```
+TIKTOK_CLIENT_KEY=...
+TIKTOK_CLIENT_SECRET=...
+```
+
+The app checks `.env` first, then falls back to the saved admin value, for both fields.
 
 ---
 
-## Step 4 — Connect TikTok
+## Step 5 — Connect TikTok
 
-1. Log in as a **creator** account (not admin)
+**Important:** start this from the **new domain**, not `creatorzhive.infinityfree.io` — that's what's registered as TikTok's redirect URI, and the OAuth state/PKCE verifier is stored in a session cookie scoped to whichever domain you click "Connect" from.
+
+1. Log in as a **creator** account (not admin) via `https://yournewdomain.com`
 2. Go to **Settings → Integrations**
 3. Click **Connect** on TikTok
 4. TikTok's consent screen appears — approve access
@@ -106,7 +147,7 @@ From the app's **Basic information** tab, copy:
 
 ---
 
-## Step 5 — Verify the Connection
+## Step 6 — Verify the Connection
 
 There's no dedicated `test_tiktok` diagnostic yet (unlike YouTube/Instagram), but you can confirm it's working with the generic endpoints:
 
@@ -124,6 +165,8 @@ https://creatorzhive.infinityfree.io/webhook/process-jobs.php?secret=YOUR_WEBHOO
 
 You can also confirm the connection status on **Settings → Integrations** (Admin view shows `connected_accounts` and `expiring_soon` per platform).
 
+> Note: the same anti-bot JS challenge that blocks TikTok's own domain-verification bot also intercepts plain `curl`/webhook-bot requests to `creatorzhive.infinityfree.io` (confirmed on `webhook/process-jobs.php` too). If UptimeRobot pings ever stop showing up as processed, this is worth investigating separately — it may affect the whole background job pipeline, not just TikTok.
+
 ---
 
 ## How Token Refresh Works
@@ -135,7 +178,7 @@ TikTok access tokens expire after **24 hours**, refresh tokens after **365 days*
 - The new access token is encrypted and stored in the database
 - The analytics fetch continues with the fresh token
 
-If the refresh token itself expires (a year of inactivity) or is revoked, the creator must reconnect via Settings → Integrations.
+If the refresh token itself expires (a year of inactivity) or is revoked, the creator must reconnect via Settings → Integrations (from the new domain).
 
 ---
 
@@ -144,11 +187,12 @@ If the refresh token itself expires (a year of inactivity) or is revoked, the cr
 | Symptom | Cause | Fix |
 |---|---|---|
 | "TikTok integration is disabled" on Settings page | Admin has disabled it | Log in as admin → enable TikTok integration |
-| "TikTok client key and secret must be configured..." | Credentials not saved yet | Complete Step 3 |
-| "Invalid OAuth state" / "OAuth session expired" | Took too long on TikTok's consent screen, or cookies blocked | Retry the connect flow |
-| Redirect error / "redirect_uri does not match" from TikTok | Redirect URI not registered exactly | Re-check Step 1.4 — must match exactly, including trailing slash rules |
-| "Authorization was denied or failed" | User not added as a tester in sandbox mode | Complete Step 1.5 |
-| Stuck on domain/URL verification | Signature file not reachable, or DNS record chosen instead | Re-check Step 1.2 — use URL prefix + signature file, confirm the file URL loads in a browser first |
+| "TikTok client key and secret must be configured..." | Credentials not saved yet | Complete Step 4 |
+| "Invalid OAuth state" / "OAuth session expired" | Started the connect flow from `creatorzhive.infinityfree.io` instead of the new domain, or took too long on TikTok's consent screen | Retry entirely from `https://yournewdomain.com` |
+| Redirect error / "redirect_uri does not match" from TikTok | Redirect URI not registered exactly, or `TIKTOK_OAUTH_REDIRECT_URI` not set in `.env` | Re-check Step 2.4 and Step 4 |
+| "Authorization was denied or failed" | User not added as a tester in sandbox mode | Complete Step 2.5 |
+| Stuck on domain verification, "couldn't find your verification signature" | Used URL prefix + signature file — blocked by InfinityFree's anti-bot layer | Use Step 1–2.2's domain + DNS TXT approach instead |
+| New domain shows InfinityFree's default page instead of CreatorzHive | Addon domain not added in InfinityFree panel yet, or DNS hasn't propagated | Re-check Step 1.4–1.5 |
 | Follower count stays at 0 or fake seed values | `user.info.stats` scope not approved/requested | Check Login Kit scope config in TikTok Developer Portal |
 | Publishing only lands in TikTok inbox/drafts, never public | App not approved for `video.publish` | Expected in sandbox mode — request app review for production posting |
 
