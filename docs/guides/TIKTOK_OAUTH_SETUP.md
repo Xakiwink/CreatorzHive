@@ -24,13 +24,27 @@ Before this, TikTok only supported a single, admin-entered static access token (
    https://creatorzhive.infinityfree.io/?route=terms-of-service
    ```
 
-### 1.2 Add products
+### 1.2 Verify domain ownership
+
+TikTok will ask you to verify the domain before it accepts the redirect URI or the privacy/terms URLs. You'll be asked to choose:
+
+- **Domain + DNS record** — requires editing a DNS TXT record. Skip this; InfinityFree's free subdomain DNS zone isn't reliably editable and propagation is slow.
+- **URL prefix + signature file** — use this one. No DNS access needed:
+  1. Choose **URL prefix**, verify prefix `https://creatorzhive.infinityfree.io/`
+  2. Download the signature file TikTok gives you (e.g. `tiktokXXXXXXXX.txt`)
+  3. Upload it unmodified via FTP to `/htdocs/` (site root, alongside `index.php`)
+  4. Confirm it loads at `https://creatorzhive.infinityfree.io/<filename>.txt`
+  5. Click **Verify** in the TikTok portal
+
+Because this app routes everything through `?route=...` on the same root path rather than real subpaths, verifying the root prefix covers the callback URL, privacy policy, and terms of service URLs all at once.
+
+### 1.3 Add products
 
 On the app's **Products** tab, add:
 - **Login Kit** — provides `client_key` / `client_secret` and the `user.info.basic` / `user.info.stats` scopes
 - **Content Posting API** — provides `video.publish` (or `video.upload` if publish isn't approved yet)
 
-### 1.3 Configure the redirect URI
+### 1.4 Configure the redirect URI
 
 Under **Login Kit → Configure**, add this exact redirect URI:
 ```
@@ -38,7 +52,7 @@ https://creatorzhive.infinityfree.io/?route=tiktok-callback
 ```
 It must match byte-for-byte or TikTok will reject the callback.
 
-### 1.4 Add yourself as a tester (sandbox / unaudited mode)
+### 1.5 Add yourself as a tester (sandbox / unaudited mode)
 
 New apps start in **sandbox mode** — only accounts added as testers can complete OAuth or see real stats:
 
@@ -47,7 +61,7 @@ New apps start in **sandbox mode** — only accounts added as testers can comple
 
 > Until TikTok reviews and approves the app for production, only added testers can connect, and some scopes (e.g. `video.publish`) may silently fall back to draft/inbox-only posting.
 
-### 1.5 Copy your credentials
+### 1.6 Copy your credentials
 
 From the app's **Basic information** tab, copy:
 - **Client key**
@@ -75,7 +89,7 @@ From the app's **Basic information** tab, copy:
 1. Log in as **admin**
 2. **Settings → Integrations**
 3. Find the **TikTok** credentials group
-4. Enter **TikTok client key** and **TikTok client secret** (from Step 1.5)
+4. Enter **TikTok client key** and **TikTok client secret** (from Step 1.6)
 5. Save — these are encrypted and stored in the database, same as the other platform secrets
 
 > Alternatively, set `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET` in `.env` on the server — the app checks `.env` first, then falls back to the saved admin value.
@@ -132,8 +146,9 @@ If the refresh token itself expires (a year of inactivity) or is revoked, the cr
 | "TikTok integration is disabled" on Settings page | Admin has disabled it | Log in as admin → enable TikTok integration |
 | "TikTok client key and secret must be configured..." | Credentials not saved yet | Complete Step 3 |
 | "Invalid OAuth state" / "OAuth session expired" | Took too long on TikTok's consent screen, or cookies blocked | Retry the connect flow |
-| Redirect error / "redirect_uri does not match" from TikTok | Redirect URI not registered exactly | Re-check Step 1.3 — must match exactly, including trailing slash rules |
-| "Authorization was denied or failed" | User not added as a tester in sandbox mode | Complete Step 1.4 |
+| Redirect error / "redirect_uri does not match" from TikTok | Redirect URI not registered exactly | Re-check Step 1.4 — must match exactly, including trailing slash rules |
+| "Authorization was denied or failed" | User not added as a tester in sandbox mode | Complete Step 1.5 |
+| Stuck on domain/URL verification | Signature file not reachable, or DNS record chosen instead | Re-check Step 1.2 — use URL prefix + signature file, confirm the file URL loads in a browser first |
 | Follower count stays at 0 or fake seed values | `user.info.stats` scope not approved/requested | Check Login Kit scope config in TikTok Developer Portal |
 | Publishing only lands in TikTok inbox/drafts, never public | App not approved for `video.publish` | Expected in sandbox mode — request app review for production posting |
 
