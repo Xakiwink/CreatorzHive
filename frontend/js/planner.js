@@ -784,6 +784,18 @@
       });
     });
 
+    document.querySelectorAll('.composer-mobile-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const panel = btn.getAttribute('data-panel') || 'form';
+        const split = document.getElementById('composerSplit');
+        document.querySelectorAll('.composer-mobile-tab').forEach(function (b) {
+          b.classList.toggle('active', b === btn);
+          b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+        });
+        if (split) split.classList.toggle('show-mobile-preview', panel === 'preview');
+      });
+    });
+
     document.getElementById('pmTagCreate')?.addEventListener('click', function () {
       const name = window.prompt('New tag name');
       if (!name || !name.trim()) return;
