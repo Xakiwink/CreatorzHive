@@ -306,8 +306,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--text-lg);
   background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+}
+
+.analytics-posts-table .post-thumb--placeholder svg {
+  width: 18px;
+  height: 18px;
 }
 
 .analytics-posts-table .num {
@@ -327,9 +332,14 @@
 }
 
 .analytics-empty-visual {
-  font-size: 3rem;
   line-height: 1;
   margin-bottom: var(--space-4);
+  opacity: 0.6;
+}
+
+.analytics-empty-visual svg {
+  width: 48px;
+  height: 48px;
 }
 
 .analytics-empty-title {

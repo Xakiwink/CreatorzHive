@@ -12,6 +12,17 @@
     default: '#6366f1',
   };
 
+  // Same line icons as dashboard.js (frontend/js/dashboard.js ICONS) -- kept in sync
+  // for icon consistency instead of emoji. users/chart reuse the exact sidebar paths.
+  const ICONS = {
+    post: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+    users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.742-.477 3 3 0 00-4.682-2.72m.94 3.198v.75c0 .414-.336.75-.75.75H5.25a.75.75 0 01-.75-.75v-.75m13.5 0a9.09 9.09 0 01-13.5 0m13.5 0a9.09 9.09 0 00-13.5 0m13.5 0v-1.35a3 3 0 00-3-3h-1.5m-7.5 4.35v-1.35a3 3 0 013-3H7.5m0 0A3 3 0 104.5 9.75 3 3 0 007.5 13.5zm9 0a3 3 0 100-6 3 3 0 000 6z" /></svg>',
+    chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zm9.75 1.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v5.625c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125v-5.625zm0-9.75C13.5 5.504 14.004 5 14.625 5h2.25c.621 0 1.125.504 1.125 1.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V6.125z" /></svg>',
+    eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>',
+    signal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" /></svg>',
+  };
+
   let currentPeriod = '30d';
   let currentSort = 'top';
   let customStart = '';
@@ -203,7 +214,7 @@
 
     const cards = [
       {
-        icon: '👥',
+        icon: ICONS.users,
         label: 'Total followers',
         value: compactNumber(summary.total_followers),
         trend: trendHtml(summary.follower_growth_pct, { abs: summary.follower_growth }),
@@ -213,7 +224,7 @@
         deltas: gd.followers,
       },
       {
-        icon: '👁️',
+        icon: ICONS.eye,
         label: 'Impressions',
         value: compactNumber(summary.total_impressions),
         trend: trendHtml(summary.impressions_change_pct),
@@ -222,7 +233,7 @@
         deltas: gd.impressions,
       },
       {
-        icon: '📡',
+        icon: ICONS.signal,
         label: 'Reach',
         value: compactNumber(summary.total_reach),
         trend: trendHtml(summary.reach_change_pct),
@@ -231,7 +242,7 @@
         deltas: gd.reach,
       },
       {
-        icon: '📊',
+        icon: ICONS.chart,
         label: 'Avg engagement',
         value: (Number(summary.avg_engagement_rate) || 0).toFixed(1) + '%',
         trend: trendHtml(summary.avg_engagement_change_pct),
@@ -241,7 +252,7 @@
         deltas: gd.engagement_rate,
       },
       {
-        icon: '✅',
+        icon: ICONS.check,
         label: 'Posts published',
         value: String(summary.posts_published ?? 0),
         trend: trendHtml(summary.posts_published_change_pct),
@@ -474,7 +485,7 @@
         ? '<img class="post-thumb" src="' +
           Utils.escapeHtml(p.cover_thumb) +
           '" alt="" loading="lazy" />'
-        : '<div class="post-thumb post-thumb--placeholder" aria-hidden="true">📝</div>';
+        : '<div class="post-thumb post-thumb--placeholder" aria-hidden="true">' + ICONS.post + '</div>';
       const title = Utils.escapeHtml(Utils.truncate(p.title || 'Untitled', 48));
       const nicePlat = plat.charAt(0).toUpperCase() + plat.slice(1);
       const metricsHtml =

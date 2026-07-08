@@ -2,6 +2,19 @@
   let postChart = null;
   let lastPostStatusBreakdown = null;
 
+  // Line icons matching the sidebar's icon language (frontend/components/sidebar.html) --
+  // chart/users/dollar are the exact paths already used there for Analytics/User
+  // Management/Deals, reused here for visual consistency instead of emoji.
+  const ICONS = {
+    post: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+    users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.742-.477 3 3 0 00-4.682-2.72m.94 3.198v.75c0 .414-.336.75-.75.75H5.25a.75.75 0 01-.75-.75v-.75m13.5 0a9.09 9.09 0 01-13.5 0m13.5 0a9.09 9.09 0 00-13.5 0m13.5 0v-1.35a3 3 0 00-3-3h-1.5m-7.5 4.35v-1.35a3 3 0 013-3H7.5m0 0A3 3 0 104.5 9.75 3 3 0 007.5 13.5zm9 0a3 3 0 100-6 3 3 0 000 6z" /></svg>',
+    chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zm9.75 1.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v5.625c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125v-5.625zm0-9.75C13.5 5.504 14.004 5 14.625 5h2.25c.621 0 1.125.504 1.125 1.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V6.125z" /></svg>',
+    dollar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+    trendUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" /></svg>',
+  };
+
   const DASHBOARD_STAT_SKELETON = (
     '<div class="stat-card skeleton-block" data-skeleton>' +
     '<div class="skeleton skeleton-text" style="width:40%;height:14px;margin-bottom:12px"></div>' +
@@ -187,7 +200,7 @@
       : '<span class="stat-trend">Not enough data yet</span>';
     grid.innerHTML =
       '<div class="stat-card stat-card--accent-posts fade-in">' +
-      '<div class="stat-icon" aria-hidden="true">📄</div>' +
+      '<div class="stat-icon" aria-hidden="true">' + ICONS.post + '</div>' +
       '<div class="stat-label">Total posts</div>' +
       '<div class="stat-value">' +
       Utils.escapeHtml(String(stats.total_posts ?? 0)) +
@@ -195,7 +208,7 @@
       trendLine('posts', stats) +
       '</div>' +
       '<div class="stat-card stat-card--accent-published fade-in">' +
-      '<div class="stat-icon" aria-hidden="true">✅</div>' +
+      '<div class="stat-icon" aria-hidden="true">' + ICONS.check + '</div>' +
       '<div class="stat-label">Published</div>' +
       '<div class="stat-value">' +
       Utils.escapeHtml(String(stats.published_posts ?? 0)) +
@@ -203,7 +216,7 @@
       trendLine('published', stats) +
       '</div>' +
       '<div class="stat-card stat-card--accent-scheduled fade-in">' +
-      '<div class="stat-icon" aria-hidden="true">🕐</div>' +
+      '<div class="stat-icon" aria-hidden="true">' + ICONS.clock + '</div>' +
       '<div class="stat-label">Scheduled</div>' +
       '<div class="stat-value">' +
       Utils.escapeHtml(String(stats.scheduled_posts ?? 0)) +
@@ -211,7 +224,7 @@
       trendLine('scheduled', stats) +
       '</div>' +
       '<div class="stat-card stat-card--accent-followers fade-in">' +
-      '<div class="stat-icon" aria-hidden="true">👥</div>' +
+      '<div class="stat-icon" aria-hidden="true">' + ICONS.users + '</div>' +
       '<div class="stat-label">Followers</div>' +
       '<div class="stat-value">' +
       Utils.escapeHtml(formatFollowers(stats.total_followers)) +
@@ -221,14 +234,14 @@
       '<div class="stat-card fade-in ' +
       engagementAccentClass(stats.avg_engagement_rate) +
       '">' +
-      '<div class="stat-icon" aria-hidden="true">📊</div>' +
+      '<div class="stat-icon" aria-hidden="true">' + ICONS.chart + '</div>' +
       '<div class="stat-label">Avg engagement</div>' +
       '<div class="stat-value">' +
       Utils.escapeHtml(eng) +
       '</div>' +
       '</div>' +
       '<div class="stat-card stat-card--revenue fade-in">' +
-      '<div class="stat-icon" aria-hidden="true">💰</div>' +
+      '<div class="stat-icon" aria-hidden="true">' + ICONS.dollar + '</div>' +
       '<div class="stat-label">Revenue</div>' +
       '<div class="stat-value">' +
       Utils.escapeHtml(rev) +
@@ -237,7 +250,7 @@
       '<div class="stat-card fade-in ' +
       growthScoreAccentClass(sc.creator_score) +
       '">' +
-      '<div class="stat-icon" aria-hidden="true">🚀</div>' +
+      '<div class="stat-icon" aria-hidden="true">' + ICONS.trendUp + '</div>' +
       '<div class="stat-label">Growth score</div>' +
       '<div class="stat-value">' +
       scoreHtml +
@@ -253,7 +266,7 @@
     if (!posts || posts.length === 0) {
       mount.innerHTML =
         '<div class="empty-state">' +
-        '<div class="empty-icon" aria-hidden="true">📝</div>' +
+        '<div class="empty-icon" aria-hidden="true">' + ICONS.post + '</div>' +
         '<p>Create your first post to see it here.</p>' +
         '<a class="btn btn-primary" href="' +
         Utils.escapeHtml(window.routeQuery('planner')) +
