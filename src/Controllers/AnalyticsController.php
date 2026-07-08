@@ -10,6 +10,7 @@ use CreatorzHive\Core\Http\JsonResponder;
 use CreatorzHive\Core\Http\ViewRenderer;
 use CreatorzHive\Repositories\AnalyticsRepository;
 use CreatorzHive\Services\AnalyticsService;
+use CreatorzHive\Services\AnalyticsIntelligenceService;
 use CreatorzHive\Helpers\PlatformHelper;
 use CreatorzHive\Support\AnalyticsReportHelper;
 use function env;
@@ -27,18 +28,23 @@ final class AnalyticsController extends AbstractController
     /** @var AnalyticsService */
     private $analyticsService;
 
+    /** @var AnalyticsIntelligenceService */
+    private $intelligence;
+
     public function __construct(
         ViewRenderer $views,
         JsonResponder $json,
         Connection $db,
         AnalyticsRepository $analytics,
         AnalyticsReportHelper $reports,
-        AnalyticsService $analyticsService
+        AnalyticsService $analyticsService,
+        AnalyticsIntelligenceService $intelligence
     ) {
         parent::__construct($views, $json, $db);
         $this->analytics = $analytics;
         $this->reports = $reports;
         $this->analyticsService = $analyticsService;
+        $this->intelligence = $intelligence;
     }
 
     public function index(): void
@@ -66,6 +72,9 @@ final class AnalyticsController extends AbstractController
         $prevStart = date('Y-m-d', strtotime($prevEnd . ' -' . ($rangeDays - 1) . ' days'));
 
         $hasData = $this->analytics->hasSnapshotData($userId);
+        if ($hasData) {
+            $this->intelligence->ensureFresh($userId);
+        }
 
         $curFollowEnd = $this->analytics->sumFollowersOnDate($userId, $curEnd, $platform);
         $prevFollowEnd = $this->analytics->sumFollowersOnDate($userId, $prevEnd, $platform);
@@ -147,6 +156,9 @@ final class AnalyticsController extends AbstractController
             'posting_frequency' => $this->reports->formatPostingFrequency($postingFrequency),
             'platform_breakdown' => $platformBreakdown,
             'top_posts' => $topPosts,
+            'growth_deltas' => $hasData ? $this->intelligence->computeGrowthDeltas($userId, $platform) : ['available' => false, 'as_of' => null, 'metrics' => []],
+            'insights' => $hasData ? $this->intelligence->getInsights($userId) : [],
+            'predictions' => $hasData ? $this->intelligence->getPredictions($userId) : [],
         ], 'Analytics loaded');
     }
 

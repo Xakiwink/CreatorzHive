@@ -49,6 +49,7 @@ use CreatorzHive\Jobs\SendNotificationJob;
 use CreatorzHive\Core\Security\TokenCrypto;
 use CreatorzHive\Services\AdminService;
 use CreatorzHive\Services\AnalyticsService;
+use CreatorzHive\Services\AnalyticsIntelligenceService;
 use CreatorzHive\Services\ApiMetaService;
 use CreatorzHive\Services\AuthRateLimitService;
 use CreatorzHive\Services\AuthService;
@@ -209,6 +210,12 @@ final class AppServiceProvider
         $container->factory(AnalyticsReportHelper::class, static function (Container $c): AnalyticsReportHelper {
             return new AnalyticsReportHelper($c->get(Connection::class));
         });
+        $container->factory(AnalyticsIntelligenceService::class, static function (Container $c): AnalyticsIntelligenceService {
+            return new AnalyticsIntelligenceService(
+                $c->get(Connection::class),
+                $c->get(AnalyticsRepository::class)
+            );
+        });
         $container->factory(DealWorkflowHelper::class, static function (Container $c): DealWorkflowHelper {
             return new DealWorkflowHelper(
                 $c->get(AuditLogRepository::class),
@@ -361,7 +368,8 @@ final class AppServiceProvider
                 $c->get(Connection::class),
                 $c->get(AnalyticsRepository::class),
                 $c->get(AnalyticsReportHelper::class),
-                $c->get(AnalyticsService::class)
+                $c->get(AnalyticsService::class),
+                $c->get(AnalyticsIntelligenceService::class)
             );
         });
 

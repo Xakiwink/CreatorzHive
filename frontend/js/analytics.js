@@ -85,6 +85,39 @@
     return '<div class="stat-trend ' + cls + '">' + mid + '</div>';
   }
 
+  function microDeltaRow(metricDeltas, isDecimalMetric) {
+    if (!metricDeltas) return '';
+    const windows = [
+      { key: 'today', label: 'Today' },
+      { key: 'week', label: 'Week' },
+      { key: 'month', label: 'Month' },
+    ];
+    const cells = windows
+      .map(function (w) {
+        const win = metricDeltas[w.key];
+        if (!win) return '';
+        const d = Number(win.delta) || 0;
+        const cls = d > 0 ? 'positive' : d < 0 ? 'negative' : '';
+        const arrow = d > 0 ? '↑' : d < 0 ? '↓' : '→';
+        const sign = d >= 0 ? '+' : '';
+        const formatted = isDecimalMetric ? d.toFixed(1) : compactNumber(d);
+        return (
+          '<span class="kpi-delta-cell ' +
+          cls +
+          '"><span class="kpi-delta-label">' +
+          w.label +
+          '</span>' +
+          arrow +
+          ' ' +
+          sign +
+          formatted +
+          '</span>'
+        );
+      })
+      .join('');
+    return cells ? '<div class="kpi-delta-row">' + cells + '</div>' : '';
+  }
+
   function destroySparklines() {
     sparkCharts.forEach(function (c) {
       try {
@@ -158,10 +191,11 @@
     sparkCharts.push(c);
   }
 
-  function renderSummaryCards(summary, sparklines) {
+  function renderSummaryCards(summary, sparklines, growthDeltas) {
     const grid = document.getElementById('analyticsKpiGrid');
     if (!grid) return;
     const sl = sparklines || {};
+    const gd = (growthDeltas && growthDeltas.available && growthDeltas.metrics) || {};
     const primary =
       getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() ||
       '#6366f1';
@@ -175,6 +209,7 @@
         accent: 'stat-card--accent-followers',
         spark: sl.followers || [],
         color: primary,
+        deltas: gd.followers,
       },
       {
         icon: '👁️',
@@ -183,6 +218,7 @@
         trend: trendHtml(summary.impressions_change_pct),
         spark: sl.impressions || [],
         color: '#0ea5e9',
+        deltas: gd.impressions,
       },
       {
         icon: '📡',
@@ -191,6 +227,7 @@
         trend: trendHtml(summary.reach_change_pct),
         spark: sl.reach || [],
         color: '#8b5cf6',
+        deltas: gd.reach,
       },
       {
         icon: '📊',
@@ -200,6 +237,7 @@
         accent: engagementAccent(summary.avg_engagement_rate),
         spark: sl.avg_engagement_rate || [],
         color: '#10b981',
+        deltas: gd.engagement_rate,
       },
       {
         icon: '✅',
@@ -228,6 +266,7 @@
         Utils.escapeHtml(c.value) +
         '</div>' +
         c.trend +
+        microDeltaRow(c.deltas, c.label === 'Avg engagement') +
         '<div class="stat-sparkline"><canvas id="spark-' +
         i +
         '" width="120" height="40"></canvas></div>' +
@@ -461,6 +500,70 @@
     body.innerHTML = html;
   }
 
+  const SEVERITY_ICON = { positive: '↑', negative: '↓', neutral: '•' };
+
+  function renderInsights(insights) {
+    const mount = document.getElementById('insightsMount');
+    if (!mount) return;
+    if (!insights || insights.length === 0) {
+      mount.innerHTML =
+        '<p class="text-muted" style="margin:0;font-size:var(--text-sm)">Not enough history yet to surface insights. Check back after a few more analytics refreshes.</p>';
+      return;
+    }
+    let html = '';
+    insights.forEach(function (ins) {
+      const sev = ['positive', 'negative', 'neutral'].indexOf(ins.severity) !== -1 ? ins.severity : 'neutral';
+      html +=
+        '<div class="insight-item insight-item--' +
+        sev +
+        '"><span class="insight-icon" aria-hidden="true">' +
+        (SEVERITY_ICON[sev] || '•') +
+        '</span><span class="insight-message">' +
+        Utils.escapeHtml(ins.message || '') +
+        '</span></div>';
+    });
+    mount.innerHTML = html;
+  }
+
+  const PREDICTION_METRIC_LABEL = { followers: 'Followers', engagement_rate: 'Engagement rate' };
+  const PREDICTION_HORIZON_LABEL = { next_week: 'next week', next_month: 'next month' };
+
+  function formatPredictionValue(metric, value) {
+    return metric === 'engagement_rate' ? Number(value).toFixed(1) + '%' : compactNumber(value);
+  }
+
+  function renderPredictions(predictions) {
+    const mount = document.getElementById('predictionsMount');
+    if (!mount) return;
+    if (!predictions || predictions.length === 0) {
+      mount.innerHTML =
+        '<p class="text-muted" style="margin:0;font-size:var(--text-sm)">Not enough historical snapshots yet to predict trends.</p>';
+      return;
+    }
+    let html = '';
+    predictions.forEach(function (p) {
+      const metricLabel = PREDICTION_METRIC_LABEL[p.metric] || Utils.escapeHtml(p.metric);
+      const horizonLabel = PREDICTION_HORIZON_LABEL[p.horizon] || Utils.escapeHtml(p.horizon);
+      html +=
+        '<div class="prediction-card">' +
+        '<div class="prediction-label">' +
+        metricLabel +
+        ' — ' +
+        horizonLabel +
+        '</div>' +
+        '<div class="prediction-value">~' +
+        formatPredictionValue(p.metric, p.predicted_value) +
+        '</div>' +
+        '<div class="prediction-meta">' +
+        (p.method === 'linear_regression' ? 'Linear trend' : 'Moving average') +
+        ' · ' +
+        p.based_on_snapshots +
+        ' snapshots</div>' +
+        '</div>';
+    });
+    mount.innerHTML = html;
+  }
+
   function fetchAnalytics(query) {
     return fetch(window.routeQuery('analytics_data', query), {
       headers: { Accept: 'application/json' },
@@ -497,12 +600,14 @@
           destroySparklines();
           return;
         }
-        renderSummaryCards(d.summary || {}, d.sparklines || {});
+        renderSummaryCards(d.summary || {}, d.sparklines || {}, d.growth_deltas || {});
         renderFollowerChart(d.follower_trend || []);
         renderEngagementChart(d.engagement_trend || []);
         renderPostingChart(d.posting_frequency || []);
         renderPlatformChart(d.platform_breakdown || []);
         renderTopPosts(d.top_posts || []);
+        renderInsights(d.insights || []);
+        renderPredictions(d.predictions || []);
       })
       .catch(function (e) {
         window.Toast?.error(e.message || 'Could not load analytics');
