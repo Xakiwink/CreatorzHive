@@ -108,6 +108,13 @@
     if (t) {
       t.textContent = mapTitle[route] || 'CreatorzHive';
     }
+
+    const settingsDropdown = document.querySelector('#settingsNavDropdown');
+    if (settingsDropdown && route.indexOf('settings') === 0) {
+      settingsDropdown.classList.add('open');
+      const trigger = settingsDropdown.querySelector('.dropdown-trigger');
+      if (trigger) trigger.setAttribute('aria-expanded', 'true');
+    }
   }
 
   /** Resolve light|dark|system (and legacy values) to light or dark for data-theme. */
@@ -292,12 +299,51 @@
   }
   window.refreshNotifBadge = refreshNotifBadge;
 
-  function initDropdown() {
-    const menu = document.querySelector('#userMenu');
-    if (!menu) return;
-    menu.querySelector('button').onclick = () => menu.classList.toggle('open');
+  /** Wires up every dropdown-family menu (navbar user menu, sidebar Settings
+   *  accordion, ...) with one consistent open/close behavior: click the
+   *  trigger to toggle, click outside or Escape to close, only one open
+   *  at a time. Sidebar dropdowns are skipped while the sidebar is
+   *  collapsed to icon-only mode, where their trigger just navigates
+   *  normally instead (no room for an inline accordion there). */
+  function initDropdowns() {
+    const containers = Array.from(document.querySelectorAll('.dropdown, .nav-dropdown'));
+
+    function closeAll(except) {
+      containers.forEach((container) => {
+        if (container === except) return;
+        container.classList.remove('open');
+        const t = container.querySelector('.dropdown-trigger');
+        if (t) t.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    containers.forEach((container) => {
+      const trigger = container.querySelector('.dropdown-trigger');
+      if (!trigger) return;
+      trigger.addEventListener('click', (e) => {
+        if (container.classList.contains('nav-dropdown') && document.body.classList.contains('sidebar-collapsed')) {
+          return;
+        }
+        e.preventDefault();
+        const willOpen = !container.classList.contains('open');
+        closeAll(container);
+        container.classList.toggle('open', willOpen);
+        trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      });
+    });
+
     document.addEventListener('click', (e) => {
-      if (!menu.contains(e.target)) menu.classList.remove('open');
+      containers.forEach((container) => {
+        if (!container.contains(e.target)) {
+          container.classList.remove('open');
+          const t = container.querySelector('.dropdown-trigger');
+          if (t) t.setAttribute('aria-expanded', 'false');
+        }
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeAll(null);
     });
   }
 
@@ -424,7 +470,7 @@
     setActiveNav();
     initEditorialTicker();
     initTheme();
-    initDropdown();
+    initDropdowns();
     initModalClose();
     initMobileMenu();
     initNotif();

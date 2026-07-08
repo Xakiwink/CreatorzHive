@@ -147,8 +147,56 @@
   opacity: 1;
 }
 
-.sidebar-nav .nav-item.settings-subnav {
-  padding-left: calc(var(--space-4) + 6px);
+.nav-dropdown {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-dropdown-trigger {
+  cursor: pointer;
+}
+
+.nav-dropdown-chevron {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.nav-dropdown.open .nav-dropdown-chevron {
+  transform: rotate(90deg);
+}
+
+.nav-dropdown.open .nav-dropdown-trigger:not(.active) {
+  background: var(--color-bg-subtle);
+  color: var(--color-ink);
+}
+
+.nav-dropdown-menu {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-left: var(--space-5);
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--color-border-strong);
+  transition:
+    max-height var(--duration-normal) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-out),
+    margin-top var(--duration-normal) var(--ease-out);
+}
+
+.nav-dropdown.open .nav-dropdown-menu {
+  max-height: 400px;
+  opacity: 1;
+  margin-top: var(--space-1);
+}
+
+.nav-dropdown-menu .nav-item {
+  padding: var(--space-2) var(--space-3);
   font-size: var(--text-sm);
 }
 
@@ -185,6 +233,7 @@ body.sidebar-collapsed .sidebar {
 body.sidebar-collapsed .logo-text,
 body.sidebar-collapsed .sidebar-user-meta,
 body.sidebar-collapsed .nav-item .label,
+body.sidebar-collapsed .nav-dropdown-chevron,
 body.sidebar-collapsed .sidebar-footer .btn .label {
   position: absolute;
   width: 1px;
@@ -195,6 +244,14 @@ body.sidebar-collapsed .sidebar-footer .btn .label {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* No room for an inline accordion in icon-only mode -- Settings behaves as a
+   plain navigable link there instead (see initDropdowns() in app.js). */
+body.sidebar-collapsed .nav-dropdown-menu {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  margin-top: 0 !important;
 }
 
 body.sidebar-collapsed .sidebar-user {
