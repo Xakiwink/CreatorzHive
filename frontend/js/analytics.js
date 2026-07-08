@@ -66,6 +66,15 @@
     return PLATFORM_COLORS[k] || PLATFORM_COLORS.default;
   }
 
+  function hexToRgba(hex, alpha) {
+    const h = String(hex || '').replace('#', '');
+    if (h.length !== 6) return 'rgba(99,102,241,' + alpha + ')';
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+  }
+
   function compactNumber(n) {
     const x = Number(n) || 0;
     if (x >= 1e6) return (x / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
@@ -158,13 +167,7 @@
 
   /** Simple hex fill */
   function sparkFill(hex) {
-    if (hex.charAt(0) === '#') {
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
-      return 'rgba(' + r + ',' + g + ',' + b + ',0.12)';
-    }
-    return 'rgba(99,102,241,0.12)';
+    return hexToRgba(hex, 0.12);
   }
 
   function renderSparklineFixed(canvas, values, color) {
@@ -264,11 +267,19 @@
     let html = '';
     cards.forEach(function (c, i) {
       const ac = c.accent ? ' ' + c.accent : '';
+      // Cards with an accent class (followers, avg engagement) get their icon
+      // tint from CSS -- avg engagement's low/mid/high color is meaningful and
+      // must not be flattened to its sparkline color here.
+      const iconStyle = c.accent
+        ? ''
+        : ' style="background:' + hexToRgba(c.color, 0.16) + ';color:' + c.color + '"';
       html +=
         '<div class="stat-card analytics-stat-card fade-in' +
         ac +
         '">' +
-        '<div class="stat-icon" aria-hidden="true">' +
+        '<div class="stat-icon" aria-hidden="true"' +
+        iconStyle +
+        '>' +
         c.icon +
         '</div>' +
         '<div class="stat-label">' +
