@@ -457,6 +457,12 @@ final class SocialApiService
                         $stats       = $items[0]['statistics'];
                         $followers   = (int) ($stats['subscriberCount'] ?? $followers);
                         $impressions = (int) ($stats['viewCount'] ?? 0);
+                        // YouTube Data API exposes no separate "reach" metric (that needs the
+                        // yt-analytics.readonly scope, which isn't granted) -- views is the closest
+                        // real signal available, so reflect it into reach rather than leaving it 0.
+                        $reach       = $impressions;
+                        // commentCount can be hidden by the channel owner -- absent means genuinely 0, not fabricated.
+                        $insightComments = (int) ($stats['commentCount'] ?? 0);
                     }
                 }
             }
