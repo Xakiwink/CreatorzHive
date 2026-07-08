@@ -117,6 +117,25 @@
   border-top-color: var(--color-success);
 }
 
+.stat-card.stat-card--score-low {
+  border-top-color: var(--color-danger);
+}
+
+.stat-card.stat-card--score-mid {
+  border-top-color: #d97706;
+}
+
+.stat-card.stat-card--score-high {
+  border-top-color: var(--color-success);
+}
+
+.stat-card .stat-value-suffix {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-left: 2px;
+}
+
 .stat-card .stat-icon {
   font-size: var(--text-lg);
   opacity: 0.85;
@@ -208,6 +227,30 @@
 .platform-dot.connected {
   background: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.platform-dot.connected.platform-dot--steady {
+  background: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2);
+}
+
+.platform-dot.connected.platform-dot--at-risk {
+  background: #b91c1c;
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.2);
+}
+
+.platform-health-note {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.platform-health-note--steady {
+  color: #d97706;
+}
+
+.platform-health-note--at-risk {
+  color: #b91c1c;
 }
 
 .platform-name {

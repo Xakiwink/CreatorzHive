@@ -19,12 +19,16 @@ final class DashboardService
     /** @var DashboardRepository */
     private $repository;
 
+    /** @var CreatorScoreService */
+    private $scores;
+
     /** @var list<string> */
     private const PLATFORM_SLUGS = ['instagram', 'tiktok', 'youtube', 'twitter'];
 
-    public function __construct(DashboardRepository $repository)
+    public function __construct(DashboardRepository $repository, CreatorScoreService $scores)
     {
         $this->repository = $repository;
+        $this->scores = $scores;
     }
 
     /**
@@ -65,18 +69,27 @@ final class DashboardService
             $byPlatform[(string) $account['platform']] = $account;
         }
 
+        $health = [];
+        foreach ($this->scores->computePlatformHealth($userId) as $h) {
+            $health[(string) $h['platform']] = $h;
+        }
+
         $platformStatus = [];
         foreach (self::PLATFORM_SLUGS as $platform) {
             $acc = $byPlatform[$platform] ?? null;
+            $h = $health[$platform] ?? null;
             $platformStatus[] = [
                 'platform' => $platform,
                 'connected' => $acc !== null,
                 'username' => $acc['username'] ?? null,
+                'health' => $h['status'] ?? 'unknown',
+                'growth_pct' => $h['growth_pct'] ?? null,
             ];
         }
 
         return [
             'stats' => $stats,
+            'scores' => $this->scores->getScores($userId),
             'recent_posts' => $recentPosts,
             'upcoming_posts' => $upcomingPosts,
             'platform_status' => $platformStatus,

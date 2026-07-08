@@ -8,7 +8,7 @@
     '<div class="skeleton skeleton-text" style="width:55%;height:28px"></div>' +
     '<div class="skeleton skeleton-text" style="width:30%;height:12px;margin-top:10px"></div>' +
     '</div>'
-  ).repeat(6);
+  ).repeat(7);
 
   const RECENT_TABLE_SKELETON =
     '<div class="table-wrapper"><table class="table"><thead><tr>' +
@@ -166,11 +166,25 @@
     return Utils.formatDate(post.updated_at || post.created_at);
   }
 
-  function renderStatCards(stats) {
+  function growthScoreAccentClass(score) {
+    const s = Number(score) || 0;
+    if (s < 40) return 'stat-card--score-low';
+    if (s < 70) return 'stat-card--score-mid';
+    return 'stat-card--score-high';
+  }
+
+  function renderStatCards(stats, scores) {
     const grid = document.getElementById('statGrid');
     if (!grid) return;
     const rev = Utils.formatCurrency(stats.total_revenue || 0, 'TZS');
     const eng = (Number(stats.avg_engagement_rate) || 0).toFixed(1) + '%';
+    const sc = scores || {};
+    const scoreHtml = sc.available
+      ? Utils.escapeHtml(String(Math.round(Number(sc.creator_score) || 0))) + '<span class="stat-value-suffix">/100</span>'
+      : '—';
+    const scoreSub = sc.available
+      ? ''
+      : '<span class="stat-trend">Not enough data yet</span>';
     grid.innerHTML =
       '<div class="stat-card stat-card--accent-posts fade-in">' +
       '<div class="stat-icon" aria-hidden="true">📄</div>' +
@@ -219,6 +233,16 @@
       '<div class="stat-value">' +
       Utils.escapeHtml(rev) +
       '</div>' +
+      '</div>' +
+      '<div class="stat-card fade-in ' +
+      growthScoreAccentClass(sc.creator_score) +
+      '">' +
+      '<div class="stat-icon" aria-hidden="true">🚀</div>' +
+      '<div class="stat-label">Growth score</div>' +
+      '<div class="stat-value">' +
+      scoreHtml +
+      '</div>' +
+      scoreSub +
       '</div>';
     grid.setAttribute('aria-busy', 'false');
   }
@@ -324,6 +348,21 @@
     mount.innerHTML = html;
   }
 
+  function platformDotClass(conn, health) {
+    if (!conn) return '';
+    if (health === 'steady') return ' connected platform-dot--steady';
+    if (health === 'at_risk') return ' connected platform-dot--at-risk';
+    return ' connected';
+  }
+
+  function platformHealthNote(conn, health) {
+    if (!conn) return '';
+    if (health === 'steady') return '<span class="platform-health-note platform-health-note--steady">Steady</span>';
+    if (health === 'at_risk')
+      return '<span class="platform-health-note platform-health-note--at-risk">Needs attention</span>';
+    return '';
+  }
+
   function renderPlatformStatus(platforms) {
     const mount = document.getElementById('platformStatusMount');
     if (!mount) return;
@@ -331,11 +370,12 @@
     (platforms || []).forEach((row) => {
       const p = row.platform;
       const conn = row.connected;
+      const health = row.health || 'unknown';
       html +=
         '<div class="platform-row">' +
         '<div class="platform-meta">' +
         '<span class="platform-dot' +
-        (conn ? ' connected' : '') +
+        platformDotClass(conn, health) +
         '" aria-hidden="true"></span>' +
         '<div>' +
         '<div class="platform-name">' +
@@ -348,7 +388,7 @@
           : '') +
         '</div></div>' +
         (conn
-          ? ''
+          ? platformHealthNote(conn, health)
           : '<a class="btn btn-sm btn-secondary" href="' +
             Utils.escapeHtml(window.routeQuery('settings', { tab: 'integrations' })) +
             '">Connect</a>') +
@@ -563,7 +603,7 @@
       .api('dashboard_data', 'GET')
       .then(function (res) {
         const d = res.data || {};
-        renderStatCards(d.stats || {});
+        renderStatCards(d.stats || {}, d.scores || {});
         renderRecentPosts(d.recent_posts || []);
         renderUpcomingPosts(d.upcoming_posts || []);
         renderPlatformStatus(d.platform_status || []);

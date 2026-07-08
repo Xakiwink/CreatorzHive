@@ -53,6 +53,7 @@ use CreatorzHive\Services\AnalyticsIntelligenceService;
 use CreatorzHive\Services\ApiMetaService;
 use CreatorzHive\Services\AuthRateLimitService;
 use CreatorzHive\Services\AuthService;
+use CreatorzHive\Services\CreatorScoreService;
 use CreatorzHive\Services\DashboardService;
 use CreatorzHive\Services\GoogleAuthService;
 use CreatorzHive\Services\InstagramOAuthService;
@@ -190,8 +191,18 @@ final class AppServiceProvider
             );
         });
 
+        $container->factory(CreatorScoreService::class, static function (Container $c): CreatorScoreService {
+            return new CreatorScoreService(
+                $c->get(Connection::class),
+                $c->get(AnalyticsRepository::class)
+            );
+        });
+
         $container->factory(DashboardService::class, static function (Container $c): DashboardService {
-            return new DashboardService($c->get(DashboardRepository::class));
+            return new DashboardService(
+                $c->get(DashboardRepository::class),
+                $c->get(CreatorScoreService::class)
+            );
         });
 
         $container->factory(ApiMetaService::class, static function (Container $c): ApiMetaService {
