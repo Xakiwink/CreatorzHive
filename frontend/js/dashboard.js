@@ -255,9 +255,10 @@
         '<div class="empty-state">' +
         '<div class="empty-icon" aria-hidden="true">📝</div>' +
         '<p>Create your first post to see it here.</p>' +
-        '<button type="button" class="btn btn-primary" id="emptyCreatePost">Create your first post</button>' +
+        '<a class="btn btn-primary" href="' +
+        Utils.escapeHtml(window.routeQuery('planner')) +
+        '">Create your first post</a>' +
         '</div>';
-      document.getElementById('emptyCreatePost')?.addEventListener('click', openQuickPostModal);
       return;
     }
 
@@ -465,122 +466,6 @@
       });
   }
 
-  function openQuickPostModal() {
-    const body =
-      '<div class="quick-post-field">' +
-      '<label for="qpTitle">Title</label>' +
-      '<input type="text" id="qpTitle" name="title" required maxlength="255">' +
-      '</div>' +
-      '<div class="quick-post-field">' +
-      '<label for="qpContent">Content</label>' +
-      '<textarea id="qpContent" name="content" rows="5" required></textarea>' +
-      '<div class="char-count" id="qpCharCount">0 characters</div>' +
-      '</div>' +
-      '<div class="quick-post-field">' +
-      '<span style="font-size:var(--text-xs);font-weight:600;text-transform:uppercase;color:var(--color-text-muted)">Platforms</span>' +
-      '<div class="quick-post-platforms" style="margin-top:8px">' +
-      '<label><input type="checkbox" name="qp_platform" value="instagram"> Instagram</label>' +
-      '<label><input type="checkbox" name="qp_platform" value="tiktok"> TikTok</label>' +
-      '<label><input type="checkbox" name="qp_platform" value="youtube"> YouTube</label>' +
-      '</div></div>' +
-      '<div class="quick-post-field">' +
-      '<span style="font-size:var(--text-xs);font-weight:600;text-transform:uppercase;color:var(--color-text-muted)">Status</span>' +
-      '<div class="quick-post-status" style="margin-top:8px">' +
-      '<label><input type="radio" name="qp_status" value="draft" checked> Draft</label>' +
-      '<label><input type="radio" name="qp_status" value="scheduled"> Schedule</label>' +
-      '</div></div>' +
-      '<div class="quick-post-field" id="qpScheduleRow" style="display:none">' +
-      '<label for="qpScheduledAt">Scheduled time</label>' +
-      '<input type="datetime-local" id="qpScheduledAt">' +
-      '</div>';
-
-    const footer =
-      '<button type="button" class="btn btn-primary" id="quickPostSave">Save Post</button>' +
-      '<button type="button" class="btn btn-ghost" id="quickPostCancel">Cancel</button>';
-
-    window.Modal.open('New post', body, footer);
-
-    document.getElementById('quickPostSave')?.addEventListener('click', submitQuickPost);
-    document.getElementById('quickPostCancel')?.addEventListener('click', function () {
-      window.Modal.close();
-    });
-
-    const ta = document.getElementById('qpContent');
-    const cc = document.getElementById('qpCharCount');
-    if (ta && cc) {
-      ta.addEventListener('input', function () {
-        cc.textContent = ta.value.length + ' characters';
-      });
-    }
-
-    document.querySelectorAll('input[name="qp_status"]').forEach(function (r) {
-      r.addEventListener('change', function () {
-        const row = document.getElementById('qpScheduleRow');
-        if (!row) return;
-        const v = document.querySelector('input[name="qp_status"]:checked')?.value;
-        row.style.display = v === 'scheduled' ? 'block' : 'none';
-      });
-    });
-  }
-
-  function submitQuickPost() {
-    const titleEl = document.getElementById('qpTitle');
-    const contentEl = document.getElementById('qpContent');
-    const schedEl = document.getElementById('qpScheduledAt');
-    const title = titleEl?.value?.trim() || '';
-    const content = contentEl?.value?.trim() || '';
-    if (!title || !content) {
-      window.Toast.error('Title and content are required.');
-      return;
-    }
-
-    const status =
-      document.querySelector('input[name="qp_status"]:checked')?.value || 'draft';
-    const scheduledAt = schedEl?.value?.trim() || '';
-
-    if (status === 'scheduled' && !scheduledAt) {
-      window.Toast.error('Pick a date and time for scheduled posts.');
-      return;
-    }
-
-    const platforms = [];
-    document.querySelectorAll('input[name="qp_platform"]:checked').forEach(function (c) {
-      platforms.push(c.value);
-    });
-
-    const fd = new URLSearchParams();
-    fd.append('_token', window.__CSRF__ || '');
-    fd.append('title', title);
-    fd.append('content', content);
-    platforms.forEach(function (p) {
-      fd.append('platforms[]', p);
-    });
-    fd.append('status', status);
-    if (status === 'scheduled') {
-      fd.append('scheduled_at', scheduledAt);
-    }
-
-    fetch(window.routeQuery('create_post'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
-      body: fd.toString(),
-    })
-      .then(function (r) {
-        return r.json();
-      })
-      .then(function (j) {
-        if (!j.success) {
-          throw new Error(j.message || 'Could not create post');
-        }
-        window.Toast.success('Post created!');
-        window.Modal.close();
-        loadDashboard();
-      })
-      .catch(function (e) {
-        window.Toast.error(e.message || 'Could not create post');
-      });
-  }
-
   function deletePost(postId) {
     if (!postId || !window.confirm('Delete this post?')) return;
     window
@@ -614,8 +499,6 @@
       });
   }
 
-  document.getElementById('quickPostBtn')?.addEventListener('click', openQuickPostModal);
-
   new MutationObserver(function () {
     updatePostChartTheme();
   }).observe(document.documentElement, {
@@ -632,8 +515,6 @@
     renderUpcomingPosts: renderUpcomingPosts,
     renderPlatformStatus: renderPlatformStatus,
     renderPostChart: renderPostChart,
-    openQuickPostModal: openQuickPostModal,
-    submitQuickPost: submitQuickPost,
     deletePost: deletePost,
   };
 
