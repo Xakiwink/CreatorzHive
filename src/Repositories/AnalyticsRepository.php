@@ -148,20 +148,34 @@ final class AnalyticsRepository
                 return $this->db->fetchAll($sql, $params);
     }
 
+    /**
+     * Sums each platform's most recently known follower count on or before :date,
+     * not an exact-date match -- jobs on InfinityFree run irregularly, so a platform
+     * with no snapshot dated exactly :date (e.g. YouTube/TikTok fetched less often
+     * than Instagram) would otherwise be silently excluded from the total.
+     */
     public function sumFollowersOnDate(int $userId, string $date, ?string $platform)
     {
-        $sql = 'SELECT COALESCE(SUM(followers), 0) AS s FROM analytics_snapshots
-                    WHERE user_id = :uid AND period = \'daily\' AND snapshot_date = :dt';
+        $sql = 'SELECT COALESCE(SUM(s.followers), 0) AS total FROM analytics_snapshots s
+                    INNER JOIN (
+                        SELECT platform, MAX(snapshot_date) AS md
+                        FROM analytics_snapshots
+                        WHERE user_id = :uid AND period = \'daily\'
+                        AND platform IS NOT NULL AND platform != \'\'
+                        AND snapshot_date <= :dt';
                 $params = ['uid' => $userId, 'dt' => $date];
-                if ($platform !== null && $platform !== '') {
+                $platformNorm = PlatformHelper::normalize($platform);
+                if ($platformNorm !== null) {
                     $sql .= ' AND platform = :plat';
-                    $params['plat'] = $platform;
-                } else {
-                    $sql .= ' AND platform IS NOT NULL AND platform != \'\'';
+                    $params['plat'] = $platformNorm;
                 }
+                $sql .= ' GROUP BY platform
+                    ) t ON t.platform = s.platform AND t.md = s.snapshot_date
+                    WHERE s.user_id = :uid2 AND s.period = \'daily\'';
+                $params['uid2'] = $userId;
                 $row = $this->db->fetchOne($sql, $params);
-        
-                return (int) ($row['s'] ?? 0);
+
+                return (int) ($row['total'] ?? 0);
     }
 
     public function sumMetricsInRange(int $userId, string $startDate, string $endDate, ?string $platform)
