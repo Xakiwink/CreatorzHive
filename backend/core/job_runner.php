@@ -30,6 +30,8 @@ function job_runner_resolve_callable(string $jobClass): ?callable
         'publish_post' => \CreatorzHive\Jobs\PublishPostJob::class,
         'App\\Jobs\\FetchAnalyticsJob' => \CreatorzHive\Jobs\FetchAnalyticsJob::class,
         'fetch_analytics' => \CreatorzHive\Jobs\FetchAnalyticsJob::class,
+        'App\\Jobs\\FetchPostPerformanceJob' => \CreatorzHive\Jobs\FetchPostPerformanceJob::class,
+        'fetch_post_performance' => \CreatorzHive\Jobs\FetchPostPerformanceJob::class,
         'App\\Jobs\\CleanupMediaJob' => \CreatorzHive\Jobs\CleanupMediaJob::class,
         'cleanup_media' => \CreatorzHive\Jobs\CleanupMediaJob::class,
         'App\\Jobs\\SendNotificationJob' => \CreatorzHive\Jobs\SendNotificationJob::class,

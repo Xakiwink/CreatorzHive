@@ -65,8 +65,10 @@ final class AnalyticsController extends AbstractController
         $endIn = (string) request_get('end_date', '');
         $platformRaw = (string) request_get('platform', '');
         $platform = PlatformHelper::normalize($platformRaw !== '' ? $platformRaw : null);
+        $sortRaw = (string) request_get('sort', 'top');
+        $sort = in_array($sortRaw, ['top', 'worst', 'most_commented', 'highest_reach'], true) ? $sortRaw : 'top';
 
-        [$curStart, $curEnd] = $this->reports->resolvePeriodRange($period, $startIn, $endIn);
+        [$curStart, $curEnd] = $this->reports->resolvePeriodRange($period, $startIn, $endIn, $userId);
         $rangeDays = max(1, (int) round((strtotime($curEnd) - strtotime($curStart)) / 86400) + 1);
         $prevEnd = date('Y-m-d', strtotime($curStart . ' -1 day'));
         $prevStart = date('Y-m-d', strtotime($prevEnd . ' -' . ($rangeDays - 1) . ' days'));
@@ -94,7 +96,7 @@ final class AnalyticsController extends AbstractController
         $engagementTrend = $this->analytics->getEngagementTrend($userId, $curStart, $curEnd, $platform);
         $postingFrequency = $this->analytics->getPostingFrequency($userId, 'weekly', $curStart, $curEnd);
         $platformBreakdown = $this->analytics->getPlatformBreakdown($userId, $curStart, $curEnd, $platform);
-        $topPosts = $this->analytics->getTopPosts($userId, 5, $platform);
+        $topPosts = $this->analytics->getTopPosts($userId, 5, $platform, $sort);
 
         foreach ($platformBreakdown as &$pb) {
             $pb['engagement_rate'] = round((float) ($pb['engagement_rate'] ?? 0), 2);
@@ -127,6 +129,7 @@ final class AnalyticsController extends AbstractController
                 'end' => $curEnd,
                 'period' => $period,
                 'platform' => $platform,
+                'sort' => $sort,
             ],
             'summary' => [
                 'total_followers' => $curFollowEnd,

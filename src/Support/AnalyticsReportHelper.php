@@ -19,7 +19,7 @@ final class AnalyticsReportHelper
     /**
      * @return array{0: string, 1: string}
      */
-    public function resolvePeriodRange(string $period, string $startIn, string $endIn): array
+    public function resolvePeriodRange(string $period, string $startIn, string $endIn, int $userId = 0): array
     {
         $end = date('Y-m-d');
 
@@ -34,12 +34,34 @@ final class AnalyticsReportHelper
             case '90d':
                 $start = date('Y-m-d', strtotime('-89 days'));
                 break;
+            case '6m':
+                $start = date('Y-m-d', strtotime('-179 days'));
+                break;
+            case '1y':
+                $start = date('Y-m-d', strtotime('-364 days'));
+                break;
+            case 'all':
+                $start = $userId > 0 ? $this->earliestSnapshotDate($userId) : null;
+                if ($start === null) {
+                    $start = date('Y-m-d', strtotime('-729 days'));
+                }
+                break;
             default:
                 $start = date('Y-m-d', strtotime('-29 days'));
                 break;
         }
 
         return [$start, $end];
+    }
+
+    private function earliestSnapshotDate(int $userId): ?string
+    {
+        $row = $this->db->fetchOne(
+            'SELECT MIN(snapshot_date) AS d FROM analytics_snapshots WHERE user_id = :uid',
+            ['uid' => $userId]
+        );
+
+        return $row !== null && $row['d'] !== null ? (string) $row['d'] : null;
     }
 
     public function percentChange(float $current, float $previous): float

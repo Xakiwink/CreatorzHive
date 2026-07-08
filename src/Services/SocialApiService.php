@@ -483,6 +483,119 @@ final class SocialApiService
         ];
     }
 
+    /**
+     * Real per-post performance where the currently-granted OAuth scope allows
+     * reading it back (Instagram, YouTube). Never fabricates data: platforms
+     * without a read-back scope (TikTok, Twitter) return available=false.
+     */
+    public function getPostInsights(array $account, string $platformPostId): array
+    {
+        $platform = strtolower((string) ($account['platform'] ?? ''));
+        $token = $this->bearer($account);
+
+        if ($platformPostId === '' || $token === '') {
+            return ['available' => false];
+        }
+
+        if ($platform === 'instagram') {
+            return $this->getInstagramPostInsights($token, $platformPostId);
+        }
+
+        if ($platform === 'youtube') {
+            return $this->getYoutubePostInsights($token, $platformPostId);
+        }
+
+        return ['available' => false];
+    }
+
+    private function getInstagramPostInsights(string $token, string $mediaId): array
+    {
+        $attempts = ['likes,comments,saves,shares,reach', 'likes,comments,reach'];
+
+        foreach ($attempts as $metrics) {
+            $res = social_api_service_http_request(
+                'GET',
+                'https://graph.instagram.com/v25.0/' . rawurlencode($mediaId) . '/insights?' . http_build_query([
+                    'metric'       => $metrics,
+                    'access_token' => $token,
+                ])
+            );
+
+            if (!$res['ok']) {
+                continue;
+            }
+
+            $likes = 0;
+            $comments = 0;
+            $shares = 0;
+            $saves = 0;
+            $reach = 0;
+            foreach (($res['data']['data'] ?? []) as $metric) {
+                $value = (int) ($metric['values'][0]['value'] ?? 0);
+                switch ((string) ($metric['name'] ?? '')) {
+                    case 'likes': $likes = $value; break;
+                    case 'comments': $comments = $value; break;
+                    case 'shares': $shares = $value; break;
+                    case 'saves': $saves = $value; break;
+                    case 'reach': $reach = $value; break;
+                }
+            }
+
+            $engagementRate = $reach > 0
+                ? round((($likes + $comments + $shares + $saves) / $reach) * 100, 2)
+                : 0.0;
+
+            return [
+                'available' => true,
+                'likes' => $likes,
+                'comments' => $comments,
+                'shares' => $shares,
+                'saves' => $saves,
+                'reach' => $reach,
+                'engagement_rate' => $engagementRate,
+            ];
+        }
+
+        return ['available' => false];
+    }
+
+    private function getYoutubePostInsights(string $token, string $videoId): array
+    {
+        $res = social_api_service_http_request(
+            'GET',
+            'https://www.googleapis.com/youtube/v3/videos?part=statistics&id=' . rawurlencode($videoId),
+            ['Authorization: Bearer ' . $token]
+        );
+
+        if (!$res['ok']) {
+            return ['available' => false];
+        }
+
+        $items = $res['data']['items'] ?? [];
+        if (!is_array($items) || !isset($items[0]['statistics'])) {
+            return ['available' => false];
+        }
+
+        $stats = $items[0]['statistics'];
+        $views = (int) ($stats['viewCount'] ?? 0);
+        $likes = (int) ($stats['likeCount'] ?? 0);
+        $comments = (int) ($stats['commentCount'] ?? 0);
+
+        $engagementRate = $views > 0
+            ? round((($likes + $comments) / $views) * 100, 2)
+            : 0.0;
+
+        return [
+            'available' => true,
+            'likes' => $likes,
+            'comments' => $comments,
+            'shares' => 0,
+            'saves' => 0,
+            'reach' => $views,
+            'engagement_rate' => $engagementRate,
+        ];
+    }
+
     public function refreshToken(array $account): array
     {
         $platform = strtolower((string) ($account['platform'] ?? ''));

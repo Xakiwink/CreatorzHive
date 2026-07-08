@@ -44,6 +44,7 @@ use CreatorzHive\Repositories\UserRepository;
 use CreatorzHive\Repositories\UserSessionRepository;
 use CreatorzHive\Jobs\CleanupMediaJob;
 use CreatorzHive\Jobs\FetchAnalyticsJob;
+use CreatorzHive\Jobs\FetchPostPerformanceJob;
 use CreatorzHive\Jobs\PublishPostJob;
 use CreatorzHive\Jobs\SendNotificationJob;
 use CreatorzHive\Core\Security\TokenCrypto;
@@ -257,6 +258,14 @@ final class AppServiceProvider
                 $c->get(YoutubeOAuthService::class),
                 $c->get(TiktokOAuthService::class),
                 $c->get(Connection::class)
+            );
+        });
+
+        $container->factory(FetchPostPerformanceJob::class, static function (Container $c): FetchPostPerformanceJob {
+            return new FetchPostPerformanceJob(
+                $c->get(Connection::class),
+                $c->get(SocialAccountRepository::class),
+                $c->get(SocialApiService::class)
             );
         });
 

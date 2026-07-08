@@ -13,6 +13,7 @@
   };
 
   let currentPeriod = '30d';
+  let currentSort = 'top';
   let customStart = '';
   let customEnd = '';
 
@@ -452,6 +453,11 @@
     }
   }
 
+  const CONTENT_STATE_LABEL = {
+    pending: 'Insights pending',
+    unavailable: 'Insights unavailable',
+  };
+
   function renderTopPosts(posts) {
     const body = document.getElementById('topPostsBody');
     if (!body) return;
@@ -463,6 +469,7 @@
     let html = '';
     posts.forEach(function (p) {
       const plat = String(p.platform || 'instagram');
+      const state = p.state || 'ranked';
       const thumb = p.cover_thumb
         ? '<img class="post-thumb" src="' +
           Utils.escapeHtml(p.cover_thumb) +
@@ -470,8 +477,27 @@
         : '<div class="post-thumb post-thumb--placeholder" aria-hidden="true">📝</div>';
       const title = Utils.escapeHtml(Utils.truncate(p.title || 'Untitled', 48));
       const nicePlat = plat.charAt(0).toUpperCase() + plat.slice(1);
+      const metricsHtml =
+        state === 'ranked'
+          ? '<td class="num">' +
+            Utils.escapeHtml(String(p.likes ?? 0)) +
+            '</td>' +
+            '<td class="num">' +
+            Utils.escapeHtml(String(p.comments ?? 0)) +
+            '</td>' +
+            '<td class="num">' +
+            Utils.escapeHtml(String(p.reach ?? 0)) +
+            '</td>' +
+            '<td class="num">' +
+            Utils.escapeHtml(String(p.engagement_rate ?? 0)) +
+            '%</td>'
+          : '<td class="text-muted" colspan="4">' +
+            Utils.escapeHtml(CONTENT_STATE_LABEL[state] || 'Insights unavailable') +
+            '</td>';
       html +=
-        '<tr>' +
+        '<tr' +
+        (state !== 'ranked' ? ' class="content-row--' + state + '"' : '') +
+        '>' +
         '<td>' +
         thumb +
         '</td>' +
@@ -483,21 +509,73 @@
         '">' +
         Utils.escapeHtml(nicePlat) +
         '</span></td>' +
-        '<td class="num">' +
-        Utils.escapeHtml(String(p.likes ?? 0)) +
-        '</td>' +
-        '<td class="num">' +
-        Utils.escapeHtml(String(p.comments ?? 0)) +
-        '</td>' +
-        '<td class="num">' +
-        Utils.escapeHtml(String(p.reach ?? 0)) +
-        '</td>' +
-        '<td class="num">' +
-        Utils.escapeHtml(String(p.engagement_rate ?? 0)) +
-        '%</td>' +
+        metricsHtml +
         '</tr>';
     });
     body.innerHTML = html;
+  }
+
+  function renderPlatformComparison(breakdown) {
+    const mount = document.getElementById('platformComparisonMount');
+    if (!mount) return;
+    if (!breakdown || breakdown.length === 0) {
+      mount.innerHTML =
+        '<p class="text-muted" style="margin:0;font-size:var(--text-sm)">Connect more than one platform to compare performance.</p>';
+      return;
+    }
+
+    let bestSlug = null;
+    let worstSlug = null;
+    let bestRate = -Infinity;
+    let worstRate = Infinity;
+    breakdown.forEach(function (row) {
+      const rate = Number(row.engagement_rate) || 0;
+      if (rate > bestRate) {
+        bestRate = rate;
+        bestSlug = row.platform;
+      }
+      if (rate < worstRate) {
+        worstRate = rate;
+        worstSlug = row.platform;
+      }
+    });
+
+    let html = '<div class="table-wrapper"><table class="table platform-comparison-table">' +
+      '<thead><tr><th>Platform</th><th class="num">Followers</th><th class="num">Reach</th>' +
+      '<th class="num">Eng. rate</th><th></th></tr></thead><tbody>';
+    breakdown.forEach(function (row) {
+      const plat = String(row.platform || '');
+      const isBest = breakdown.length > 1 && plat === bestSlug;
+      const isWorst = breakdown.length > 1 && plat === worstSlug;
+      html +=
+        '<tr>' +
+        '<td><span class="platform-badge platform-badge--' +
+        Utils.escapeHtml(plat) +
+        '">' +
+        Utils.escapeHtml(platformLabel(plat)) +
+        '</span></td>' +
+        '<td class="num">' +
+        compactNumber(row.followers) +
+        '</td>' +
+        '<td class="num">' +
+        compactNumber(row.reach) +
+        '</td>' +
+        '<td class="num">' +
+        (Number(row.engagement_rate) || 0).toFixed(1) +
+        '%</td>' +
+        '<td>' +
+        (isBest ? '<span class="platform-callout platform-callout--best">Best</span>' : '') +
+        (isWorst ? '<span class="platform-callout platform-callout--worst">Needs focus</span>' : '') +
+        '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></div>';
+    mount.innerHTML = html;
+  }
+
+  function platformLabel(p) {
+    const labels = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', twitter: 'Twitter' };
+    return labels[p] || (p ? p.charAt(0).toUpperCase() + p.slice(1) : 'Unknown');
   }
 
   const SEVERITY_ICON = { positive: '↑', negative: '↓', neutral: '•' };
@@ -582,7 +660,7 @@
   function loadAnalytics() {
     const platEl = document.getElementById('platformFilter');
     const platform = platEl ? String(platEl.value || '') : '';
-    const q = { period: currentPeriod };
+    const q = { period: currentPeriod, sort: currentSort };
     if (currentPeriod === 'custom' && customStart && customEnd) {
       q.start_date = customStart;
       q.end_date = customEnd;
@@ -606,6 +684,7 @@
         renderPostingChart(d.posting_frequency || []);
         renderPlatformChart(d.platform_breakdown || []);
         renderTopPosts(d.top_posts || []);
+        renderPlatformComparison(d.platform_breakdown || []);
         renderInsights(d.insights || []);
         renderPredictions(d.predictions || []);
       })
@@ -653,6 +732,20 @@
     if (sel) sel.addEventListener('change', loadAnalytics);
   }
 
+  function initSortButtons() {
+    document.querySelectorAll('.content-sort-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const s = btn.getAttribute('data-sort');
+        if (!s) return;
+        currentSort = s;
+        document.querySelectorAll('.content-sort-tab').forEach(function (b) {
+          b.classList.toggle('active', b === btn);
+        });
+        loadAnalytics();
+      });
+    });
+  }
+
   function initSeed() {
     const btn = document.getElementById('analyticsSeedBtn');
     if (!btn) return;
@@ -679,6 +772,7 @@
     initPeriodTabs();
     initCustomRange();
     initPlatformFilter();
+    initSortButtons();
     initSeed();
     loadAnalytics();
   }

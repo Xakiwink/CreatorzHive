@@ -11,6 +11,7 @@ use CreatorzHive\Repositories\SocialAccountRepository;
 use CreatorzHive\Services\NotificationService;
 use CreatorzHive\Services\SocialApiService;
 use RuntimeException;
+use function job_runner_dispatch;
 
 final class PublishPostJob implements JobHandlerInterface
 {
@@ -130,7 +131,7 @@ final class PublishPostJob implements JobHandlerInterface
             $sid = (int) ($account['id'] ?? 0);
 
             if (!empty($result['success'])) {
-                $this->db->insert('platform_post_results', [
+                $resultId = $this->db->insert('platform_post_results', [
                     'post_id' => $postId,
                     'social_account_id' => $sid,
                     'platform' => $platform,
@@ -140,6 +141,14 @@ final class PublishPostJob implements JobHandlerInterface
                     'error_message' => null,
                     'published_at' => now(),
                 ]);
+                if ($platform === 'instagram' || $platform === 'youtube') {
+                    job_runner_dispatch(
+                        'fetch_post_performance',
+                        ['platform_post_result_id' => (int) $resultId],
+                        'default',
+                        1800
+                    );
+                }
                 $successCount++;
             } else {
                 $err = (string) ($result['error'] ?? 'Publish failed');

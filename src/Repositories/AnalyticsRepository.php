@@ -9,6 +9,15 @@ use CreatorzHive\Helpers\PlatformHelper;
 
 final class AnalyticsRepository
 {
+    private const TOP_POSTS_SORT_METRICS = [
+        'top' => 'engagement_rate',
+        'worst' => 'engagement_rate',
+        'most_commented' => 'comments',
+        'highest_reach' => 'reach',
+    ];
+
+    private const INSIGHTS_SUPPORTED_PLATFORMS = ['instagram', 'youtube'];
+
     /** @var Connection */
     private $db;
 
@@ -292,39 +301,70 @@ final class AnalyticsRepository
                 return $this->db->fetchAll($sql, $params);
     }
 
-    public function getTopPosts(int $userId, int $limit = 5, ?string $platform = null)
+    /**
+     * Real per-post performance, joined through platform_post_results/post_performance
+     * (populated by FetchPostPerformanceJob for Instagram/YouTube -- the only platforms
+     * with a granted read-back scope). Never fabricates data: a post is 'pending' until
+     * the job has run, or 'unavailable' for platforms with no insights scope (TikTok,
+     * Twitter) or a failed fetch.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getTopPosts(int $userId, int $limit = 5, ?string $platform = null, string $sort = 'top')
     {
         $limit = max(1, min(20, $limit));
-                $sql = 'SELECT p.id, p.title, p.platforms, p.published_at, m.thumbnail_url AS cover_thumb,
-                    (200 + (p.id * 17) % 800) AS likes,
-                    (20 + (p.id * 5) % 120) AS comments,
-                    (2000 + (p.id * 23) % 15000) AS reach,
-                    (3.5 + ((p.id * 7) % 25) / 10) AS engagement_rate
-                    FROM posts p
-                    LEFT JOIN media_files m ON m.id = p.cover_media_id
-                    WHERE p.user_id = :uid AND p.is_deleted = 0 AND p.status = \'published\'';
-                $params = ['uid' => $userId];
-                $platform = PlatformHelper::normalize($platform);
-                if ($platform !== null) {
-                    $sql .= ' AND JSON_CONTAINS(p.platforms, :plat, \'$\')';
-                    $params['plat'] = json_encode($platform);
-                }
-                $sql .= ' ORDER BY engagement_rate DESC, p.published_at DESC LIMIT :limit';
-                $params = $this->db->bindLimit($params, $limit, 20);
-        
-                $rows = $this->db->fetchAll($sql, $params);
-                foreach ($rows as &$r) {
-                    $r['platform'] = analytics_first_platform_slug($r['platforms'] ?? null);
-                    $r['likes'] = (int) $r['likes'];
-                    $r['comments'] = (int) $r['comments'];
-                    $r['reach'] = (int) $r['reach'];
-                    $r['engagement_rate'] = round((float) $r['engagement_rate'], 2);
-                    if (!empty($r['cover_thumb']) && strpos((string) $r['cover_thumb'], 'http') !== 0) {
-                        $r['cover_thumb'] = upload_url(ltrim((string) $r['cover_thumb'], '/'));
-                    }
-                }
-        
-                return $rows;
+        $metric = self::TOP_POSTS_SORT_METRICS[$sort] ?? 'engagement_rate';
+        $direction = $sort === 'worst' ? 'ASC' : 'DESC';
+
+        $sql = 'SELECT p.id, p.title, p.published_at, m.thumbnail_url AS cover_thumb,
+                    ppr.platform, ppr.platform_url,
+                    pp.available, pp.likes, pp.comments, pp.shares, pp.saves, pp.reach, pp.engagement_rate
+                FROM posts p
+                INNER JOIN platform_post_results ppr ON ppr.post_id = p.id AND ppr.status = \'success\'
+                LEFT JOIN post_performance pp ON pp.platform_post_result_id = ppr.id
+                LEFT JOIN media_files m ON m.id = p.cover_media_id
+                WHERE p.user_id = :uid AND p.is_deleted = 0 AND p.status = \'published\'';
+        $params = ['uid' => $userId];
+
+        $platform = PlatformHelper::normalize($platform);
+        if ($platform !== null) {
+            $sql .= ' AND ppr.platform = :plat';
+            $params['plat'] = $platform;
+        }
+
+        $sql .= ' ORDER BY COALESCE(pp.available, 0) DESC, pp.' . $metric . ' ' . $direction . ', p.published_at DESC LIMIT :limit';
+        $params = $this->db->bindLimit($params, $limit, 20);
+
+        $rows = $this->db->fetchAll($sql, $params);
+        foreach ($rows as &$r) {
+            $plat = (string) $r['platform'];
+            $hasPerfRow = $r['available'] !== null;
+
+            if (!in_array($plat, self::INSIGHTS_SUPPORTED_PLATFORMS, true)) {
+                $state = 'unavailable';
+            } elseif (!$hasPerfRow) {
+                $state = 'pending';
+            } elseif ((int) $r['available'] === 1) {
+                $state = 'ranked';
+            } else {
+                $state = 'unavailable';
+            }
+
+            $r['state'] = $state;
+            $r['likes'] = (int) ($r['likes'] ?? 0);
+            $r['comments'] = (int) ($r['comments'] ?? 0);
+            $r['shares'] = (int) ($r['shares'] ?? 0);
+            $r['saves'] = (int) ($r['saves'] ?? 0);
+            $r['reach'] = (int) ($r['reach'] ?? 0);
+            $r['engagement_rate'] = round((float) ($r['engagement_rate'] ?? 0), 2);
+            unset($r['available']);
+            if (!empty($r['cover_thumb']) && strpos((string) $r['cover_thumb'], 'http') !== 0) {
+                $r['cover_thumb'] = upload_url(ltrim((string) $r['cover_thumb'], '/'));
+            }
+        }
+        unset($r);
+
+        return $rows;
     }
 
     public function countPublishedInRange(int $userId, string $startDate, string $endDate)

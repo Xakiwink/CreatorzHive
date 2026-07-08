@@ -10,6 +10,9 @@
         <button type="button" class="period-tab" data-period="7d" role="tab">7 days</button>
         <button type="button" class="period-tab active" data-period="30d" role="tab" aria-selected="true">30 days</button>
         <button type="button" class="period-tab" data-period="90d" role="tab">90 days</button>
+        <button type="button" class="period-tab" data-period="6m" role="tab">6 months</button>
+        <button type="button" class="period-tab" data-period="1y" role="tab">1 year</button>
+        <button type="button" class="period-tab" data-period="all" role="tab">All time</button>
         <button type="button" class="period-tab" data-period="custom" role="tab">Custom</button>
       </div>
       <div class="date-range hidden" id="customRange">
@@ -116,12 +119,30 @@
       </div>
     </section>
 
-    <section class="analytics-top-posts">
+    <section class="analytics-chart-section">
       <div class="card card--feature">
         <div class="card-header">
-          <h3 class="card-title">Top performing posts</h3>
+          <h3 class="card-title">Platform comparison</h3>
         </div>
         <div class="card-body">
+          <div id="platformComparisonMount"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="analytics-top-posts">
+      <div class="card card--feature">
+        <div class="card-header analytics-content-header">
+          <h3 class="card-title">Content performance</h3>
+          <div class="content-sort-tabs" role="tablist" aria-label="Sort content by">
+            <button type="button" class="content-sort-tab active" data-sort="top" role="tab" aria-selected="true">Top</button>
+            <button type="button" class="content-sort-tab" data-sort="worst" role="tab">Worst</button>
+            <button type="button" class="content-sort-tab" data-sort="most_commented" role="tab">Most commented</button>
+            <button type="button" class="content-sort-tab" data-sort="highest_reach" role="tab">Highest reach</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="text-muted analytics-content-note">Real per-post insights are only available for Instagram and YouTube (the only platforms with a granted read-back permission). TikTok posts show as unavailable rather than estimated.</p>
           <div class="table-wrapper">
             <table class="table analytics-posts-table" id="topPostsTable">
               <thead>
