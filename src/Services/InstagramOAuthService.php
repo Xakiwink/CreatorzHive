@@ -175,6 +175,7 @@ final class InstagramOAuthService implements SocialProviderInterface
             'access_token'     => $accessToken,
             'refresh_token'    => '',
             'token_expires_at' => $tokenExpires,
+            'follower_count'   => (int) ($igUser['followers_count'] ?? 0),
         ]);
 
         return ['success' => true, 'message' => 'Instagram connected successfully.'];
@@ -351,7 +352,7 @@ final class InstagramOAuthService implements SocialProviderInterface
         $res = social_api_service_http_request(
             'GET',
             self::INSTAGRAM_BASE . '/me?' . http_build_query([
-                'fields'       => 'id,username,account_type',
+                'fields'       => 'id,username,account_type,followers_count',
                 'access_token' => $accessToken,
             ])
         );
