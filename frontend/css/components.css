@@ -551,6 +551,13 @@ input.success:focus {
   min-height: 0;
 }
 
+.modal--composer .modal-body > * {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ---------- Toasts ---------- */
 
 .toast-container {
@@ -940,9 +947,41 @@ input.success:focus {
   margin-bottom: var(--space-3);
 }
 
-.integration-emoji {
-  font-size: 1.75rem;
-  line-height: 1;
+.integration-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  color: var(--color-text-secondary);
+}
+
+.integration-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Same brand colors as the Planner composer's platform cards (planner.css .pci-icon). */
+.integration-icon--instagram {
+  color: #e1306c;
+}
+
+.integration-icon--tiktok {
+  color: #010101;
+}
+
+.integration-icon--youtube {
+  color: #ff0000;
+}
+
+.integration-icon--twitter {
+  color: #0f1419;
+}
+
+html[data-theme="dark"] .integration-icon--tiktok,
+html[data-theme="dark"] .integration-icon--twitter {
+  color: var(--color-text-primary);
 }
 
 .pref-list {

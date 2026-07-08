@@ -11,11 +11,24 @@
     { key: 'push_deal_updated', label: 'Deal updated' },
   ];
 
+  // Same glyphs as the Planner composer's platform cards/preview tabs
+  // (frontend/pages/planner/post-create.html) -- kept in sync for icon consistency.
+  const PLATFORM_ICONS = {
+    instagram:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>',
+    tiktok:
+      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.81a8.18 8.18 0 004.78 1.52V6.89a4.85 4.85 0 01-1.01-.2z"/></svg>',
+    youtube:
+      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 001.46 6.42 29 29 0 001 12a29 29 0 00.46 5.58A2.78 2.78 0 003.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.4a2.78 2.78 0 001.95-1.97A29 29 0 0023 12a29 29 0 00-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white"/></svg>',
+    twitter:
+      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+  };
+
   const PLATFORMS = [
-    { id: 'instagram', name: 'Instagram', emoji: '📸' },
-    { id: 'tiktok', name: 'TikTok', emoji: '🎵' },
-    { id: 'youtube', name: 'YouTube', emoji: '▶️' },
-    { id: 'twitter', name: 'X / Twitter', emoji: '𝕏' },
+    { id: 'instagram', name: 'Instagram' },
+    { id: 'tiktok', name: 'TikTok' },
+    { id: 'youtube', name: 'YouTube' },
+    { id: 'twitter', name: 'X / Twitter' },
   ];
 
   let oauthPlatforms = [];
@@ -368,8 +381,10 @@
           : '—';
         card.innerHTML =
           '<div class="integration-card-head">' +
-          '<span class="integration-emoji">' +
-          p.emoji +
+          '<span class="integration-icon integration-icon--' +
+          p.id +
+          '">' +
+          (PLATFORM_ICONS[p.id] || '') +
           '</span>' +
           '<div><strong>' +
           Utils.escapeHtml(p.name) +
@@ -387,8 +402,10 @@
       } else {
         card.innerHTML =
           '<div class="integration-card-head">' +
-          '<span class="integration-emoji">' +
-          p.emoji +
+          '<span class="integration-icon integration-icon--' +
+          p.id +
+          '">' +
+          (PLATFORM_ICONS[p.id] || '') +
           '</span>' +
           '<div><strong>' +
           Utils.escapeHtml(p.name) +
