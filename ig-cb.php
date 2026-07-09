@@ -51,18 +51,12 @@ if ($cbError !== '') {
 
 $appSecret = trim((string) env('APP_SECRET', ''));
 $userId    = null;
-$parts     = explode('.', $cbState, 4);
-$stateMaxAge = \CreatorzHive\Controllers\InstagramOAuthController::STATE_MAX_AGE;
+$parts     = explode('.', $cbState, 3);
 
-if (count($parts) === 4) {
-    [$userIdStr, $nonce, $issuedStr, $sig] = $parts;
-    $expected = hash_hmac('sha256', $userIdStr . '.' . $nonce . '.' . $issuedStr, $appSecret);
-    if (
-        hash_equals($expected, $sig)
-        && (int) $userIdStr > 0
-        && ctype_digit($issuedStr)
-        && (time() - (int) $issuedStr) <= $stateMaxAge
-    ) {
+if (count($parts) === 3) {
+    [$userIdStr, $nonce, $sig] = $parts;
+    $expected = hash_hmac('sha256', $userIdStr . '.' . $nonce, $appSecret);
+    if (hash_equals($expected, $sig) && (int) $userIdStr > 0) {
         $userId = (int) $userIdStr;
     }
 }
