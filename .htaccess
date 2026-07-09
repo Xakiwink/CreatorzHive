@@ -9,7 +9,10 @@ Options -Indexes
 
     # Block sensitive paths
     RewriteRule (^|/)\.env$ - [F,L,NC]
-    RewriteRule ^(backend|database|vendor|scripts|tests|\.git)(/|$) - [F,L,NC]
+    RewriteRule ^(backend|database|vendor|scripts|tests|app|\.git)(/|$) - [F,L,NC]
+
+    # Block unrouted legacy entry point (superseded by public/index.php + backend/routes/*)
+    RewriteRule ^routes\.php$ - [F,L,NC]
 
     # Allow real files and directories to be served directly
     RewriteCond %{REQUEST_FILENAME} !-f
