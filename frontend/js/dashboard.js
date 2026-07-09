@@ -13,6 +13,9 @@
     chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zm9.75 1.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v5.625c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125v-5.625zm0-9.75C13.5 5.504 14.004 5 14.625 5h2.25c.621 0 1.125.504 1.125 1.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V6.125z" /></svg>',
     dollar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
     trendUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" /></svg>',
+    flame: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" /></svg>',
+    trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0a5.982 5.982 0 01-4.006 0m4.006 0a5.987 5.987 0 003-4.665v-2.61m-11 2.61a5.987 5.987 0 003 4.665m-3-4.665v-2.61a1.5 1.5 0 011.5-1.5h7.5a1.5 1.5 0 011.5 1.5v2.61m-10.5 0a3 3 0 01-3-3v-.75a1.5 1.5 0 011.5-1.5h1.5m10.5 5.25a3 3 0 003-3v-.75a1.5 1.5 0 00-1.5-1.5h-1.5" /></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>',
   };
 
   const DASHBOARD_STAT_SKELETON = (
@@ -21,7 +24,7 @@
     '<div class="skeleton skeleton-text" style="width:55%;height:28px"></div>' +
     '<div class="skeleton skeleton-text" style="width:30%;height:12px;margin-top:10px"></div>' +
     '</div>'
-  ).repeat(7);
+  ).repeat(8);
 
   const RECENT_TABLE_SKELETON =
     '<div class="table-wrapper"><table class="table"><thead><tr>' +
@@ -52,6 +55,17 @@
     );
   }).join('');
 
+  const ACHIEVEMENTS_SKELETON = Array.from({ length: 4 }, function () {
+    return (
+      '<div class="achievement-badge">' +
+      '<div class="skeleton skeleton-circle achievement-icon"></div>' +
+      '<div class="achievement-body">' +
+      '<div class="skeleton skeleton-text" style="width:70%;height:13px;margin-bottom:6px"></div>' +
+      '<div class="skeleton skeleton-text" style="width:50%;height:11px"></div>' +
+      '</div></div>'
+    );
+  }).join('');
+
   function showDashboardSkeletons() {
     const grid = document.getElementById('statGrid');
     if (grid) {
@@ -64,6 +78,8 @@
     if (up) up.innerHTML = UPCOMING_SKELETON;
     const plat = document.getElementById('platformStatusMount');
     if (plat) plat.innerHTML = PLATFORM_SKELETON;
+    const ach = document.getElementById('achievementsMount');
+    if (ach) ach.innerHTML = '<div class="achievements-grid">' + ACHIEVEMENTS_SKELETON + '</div>';
   }
 
   function chartLegendColor() {
@@ -103,6 +119,12 @@
       return (v >= 10 ? v.toFixed(0) : v.toFixed(1)).replace(/\.0$/, '') + 'K';
     }
     return String(x);
+  }
+
+  function formatStreak(weeks) {
+    const w = Number(weeks) || 0;
+    if (w <= 0) return '—';
+    return w + (w === 1 ? ' week' : ' weeks');
   }
 
   function engagementAccentClass(rate) {
@@ -256,6 +278,13 @@
       scoreHtml +
       '</div>' +
       scoreSub +
+      '</div>' +
+      '<div class="stat-card stat-card--streak fade-in">' +
+      '<div class="stat-icon" aria-hidden="true">' + ICONS.flame + '</div>' +
+      '<div class="stat-label">Posting streak</div>' +
+      '<div class="stat-value">' +
+      Utils.escapeHtml(formatStreak(stats.posting_streak_weeks)) +
+      '</div>' +
       '</div>';
     grid.setAttribute('aria-busy', 'false');
   }
@@ -411,6 +440,42 @@
     mount.innerHTML = html;
   }
 
+  function renderAchievements(data) {
+    const mount = document.getElementById('achievementsMount');
+    if (!mount) return;
+    const badges = (data && data.badges) || [];
+    if (badges.length === 0) {
+      mount.innerHTML = '<p class="empty-state-inline">Keep going — badges will show up here.</p>';
+      return;
+    }
+
+    let html = '<div class="achievements-grid">';
+    badges.forEach((b) => {
+      const icon = ICONS[b.icon] || ICONS.trophy;
+      const locked = !b.unlocked;
+      let progressHtml = '';
+      if (locked && b.progress) {
+        const cur = Number(b.progress.current) || 0;
+        const target = Number(b.progress.target) || 1;
+        const pct = Math.max(0, Math.min(100, Math.round((cur / target) * 100)));
+        progressHtml =
+          '<div class="achievement-progress">' +
+          '<div class="achievement-progress-bar" style="width:' + pct + '%"></div>' +
+          '</div>';
+      }
+      html +=
+        '<div class="achievement-badge' + (locked ? ' is-locked' : '') + '" title="' +
+        Utils.escapeHtml(b.description || '') + '">' +
+        '<div class="achievement-icon" aria-hidden="true">' + icon + '</div>' +
+        '<div class="achievement-body">' +
+        '<div class="achievement-label">' + Utils.escapeHtml(b.label || '') + '</div>' +
+        progressHtml +
+        '</div></div>';
+    });
+    html += '</div>';
+    mount.innerHTML = html;
+  }
+
   function loadChartScript() {
     return new Promise(function (resolve, reject) {
       if (window.Chart) {
@@ -506,6 +571,7 @@
         renderUpcomingPosts(d.upcoming_posts || []);
         renderPlatformStatus(d.platform_status || []);
         renderPostChart(d.post_status_breakdown || {});
+        renderAchievements(d.achievements || {});
       })
       .catch(function (e) {
         window.Toast.error(e.message || 'Could not load dashboard');
@@ -527,6 +593,7 @@
     renderRecentPosts: renderRecentPosts,
     renderUpcomingPosts: renderUpcomingPosts,
     renderPlatformStatus: renderPlatformStatus,
+    renderAchievements: renderAchievements,
     renderPostChart: renderPostChart,
     deletePost: deletePost,
   };

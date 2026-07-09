@@ -54,6 +54,7 @@ use CreatorzHive\Services\AnalyticsIntelligenceService;
 use CreatorzHive\Services\ApiMetaService;
 use CreatorzHive\Services\AuthRateLimitService;
 use CreatorzHive\Services\AuthService;
+use CreatorzHive\Services\AchievementService;
 use CreatorzHive\Services\CreatorScoreService;
 use CreatorzHive\Services\DashboardService;
 use CreatorzHive\Services\GoogleAuthService;
@@ -199,10 +200,19 @@ final class AppServiceProvider
             );
         });
 
+        $container->factory(AchievementService::class, static function (Container $c): AchievementService {
+            return new AchievementService(
+                $c->get(AnalyticsRepository::class),
+                $c->get(DashboardRepository::class),
+                $c->get(CreatorScoreService::class)
+            );
+        });
+
         $container->factory(DashboardService::class, static function (Container $c): DashboardService {
             return new DashboardService(
                 $c->get(DashboardRepository::class),
-                $c->get(CreatorScoreService::class)
+                $c->get(CreatorScoreService::class),
+                $c->get(AchievementService::class)
             );
         });
 

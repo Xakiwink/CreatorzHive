@@ -206,8 +206,24 @@ final class AnalyticsRepository
                     'SELECT 1 AS x FROM analytics_snapshots WHERE user_id = :uid LIMIT 1',
                     ['uid' => $userId]
                 );
-        
+
                 return $row !== null;
+    }
+
+    public function getMaxFollowersEver(int $userId): int
+    {
+        $row = $this->db->fetchOne(
+                    'SELECT MAX(daily_total) AS m FROM (
+                        SELECT snapshot_date, SUM(followers) AS daily_total
+                        FROM analytics_snapshots
+                        WHERE user_id = :uid AND period = \'daily\'
+                        AND platform IS NOT NULL AND platform != \'\'
+                        GROUP BY snapshot_date
+                    ) t',
+                    ['uid' => $userId]
+                );
+
+                return (int) ($row['m'] ?? 0);
     }
 
     public function getGrowthTrend(int $userId, string $startDate, string $endDate, ?string $platform)

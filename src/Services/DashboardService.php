@@ -22,13 +22,17 @@ final class DashboardService
     /** @var CreatorScoreService */
     private $scores;
 
+    /** @var AchievementService */
+    private $achievements;
+
     /** @var list<string> */
     private const PLATFORM_SLUGS = ['instagram', 'tiktok', 'youtube', 'twitter'];
 
-    public function __construct(DashboardRepository $repository, CreatorScoreService $scores)
+    public function __construct(DashboardRepository $repository, CreatorScoreService $scores, AchievementService $achievements)
     {
         $this->repository = $repository;
         $this->scores = $scores;
+        $this->achievements = $achievements;
     }
 
     /**
@@ -37,6 +41,7 @@ final class DashboardService
     public function buildPayload(int $userId): array
     {
         $summary = $this->repository->findCreatorSummary($userId);
+        $achievements = $this->achievements->getAchievements($userId);
 
         $stats = [
             'total_posts' => (int) ($summary['total_posts'] ?? 0),
@@ -51,6 +56,7 @@ final class DashboardService
             'trend_published' => 0,
             'trend_scheduled' => 0,
             'trend_followers' => 0,
+            'posting_streak_weeks' => (int) $achievements['streak']['current_weeks'],
         ];
 
         $recentPosts = \function_exists('post_get_recent_by_user')
@@ -94,6 +100,7 @@ final class DashboardService
             'upcoming_posts' => $upcomingPosts,
             'platform_status' => $platformStatus,
             'post_status_breakdown' => $breakdown,
+            'achievements' => $achievements,
         ];
     }
 }
