@@ -592,6 +592,12 @@
   box-shadow: 0 0 0 3px var(--color-accent-ring);
 }
 
+.composer-input.field-invalid,
+.composer-textarea.field-invalid {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px var(--color-danger-soft);
+}
+
 .composer-textarea--short {
   resize: none;
 }

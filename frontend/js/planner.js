@@ -740,6 +740,12 @@
     ta?.addEventListener('input', onInput);
     cap?.addEventListener('input', onInput);
     title?.addEventListener('input', onInput);
+    ta?.addEventListener('input', function () {
+      ta.classList.remove('field-invalid');
+    });
+    title?.addEventListener('input', function () {
+      title.classList.remove('field-invalid');
+    });
 
     document.querySelectorAll('input[name="pm_platform"]').forEach(function (r) {
       r.addEventListener('change', function () {
@@ -992,6 +998,12 @@
 
     if (!title || !content) {
       window.Toast.error('Title and content are required.');
+      const missing = !title ? document.getElementById('pmTitle') : document.getElementById('pmContent');
+      if (missing) {
+        missing.classList.add('field-invalid');
+        missing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        missing.focus();
+      }
       return;
     }
 
