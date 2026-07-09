@@ -329,7 +329,16 @@ final class SocialApiService
 
         $uploadUrl = trim((string) ($initRes['headers']['location'] ?? $initRes['headers']['Location'] ?? ''));
         if ($uploadUrl === '') {
-            return ['success' => false, 'error' => 'YouTube did not return a resumable upload URL'];
+            $reason = (string) ($initRes['data']['error']['errors'][0]['reason'] ?? '');
+            $message = (string) ($initRes['data']['error']['message'] ?? '');
+            if ($reason !== '' || $message !== '') {
+                $hint = $reason === 'insufficientPermissions' || $reason === 'forbidden'
+                    ? ' -- reconnect YouTube in Settings so the upload permission is actually granted, not just read access'
+                    : '';
+                return ['success' => false, 'error' => 'YouTube rejected the upload request: ' . ($message !== '' ? $message : $reason) . $hint];
+            }
+
+            return ['success' => false, 'error' => 'YouTube did not return a resumable upload URL (HTTP ' . (int) ($initRes['status'] ?? 0) . ')'];
         }
 
         if (!function_exists('curl_init')) {
@@ -364,7 +373,18 @@ final class SocialApiService
         curl_close($ch);
 
         if ($raw === false || ($status < 200 || $status >= 300)) {
-            return ['success' => false, 'error' => 'YouTube video upload failed (HTTP ' . $status . ')'];
+            $decoded = json_decode((string) $raw, true);
+            $reason = (string) ($decoded['error']['errors'][0]['reason'] ?? '');
+            $message = (string) ($decoded['error']['message'] ?? '');
+            $hint = $reason === 'insufficientPermissions' || $reason === 'forbidden' || $status === 403
+                ? ' -- reconnect YouTube in Settings so the upload permission is actually granted, not just read access'
+                : '';
+
+            return [
+                'success' => false,
+                'error' => 'YouTube video upload failed (HTTP ' . $status . ')'
+                    . ($message !== '' ? ': ' . $message : '') . $hint,
+            ];
         }
 
         $data    = json_decode((string) $raw, true);
