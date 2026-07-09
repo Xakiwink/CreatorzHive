@@ -74,7 +74,7 @@ $googleAuthStartUrl = google_auth_start_url('creator');
             </div>
           </div>
           <div class="row">
-            <label class="auth-checkbox-label auth-terms-label"><input type="checkbox" name="terms" id="terms" class="auth-checkbox" value="1" required> I agree to the <a href="#" onclick="return false;">Terms</a> and <a href="#" onclick="return false;">Privacy Policy</a></label>
+            <label class="auth-checkbox-label auth-terms-label"><input type="checkbox" name="terms" id="terms" class="auth-checkbox" value="1" required> I agree to the <a href="<?= htmlspecialchars(route_url('terms-of-service')) ?>" target="_blank" rel="noopener">Terms</a> and <a href="<?= htmlspecialchars(route_url('privacy-policy')) ?>" target="_blank" rel="noopener">Privacy Policy</a></label>
           </div>
           <div class="row">
             <button class="btn" id="registerBtn" type="submit"><span class="btn-label">Create account</span></button>
