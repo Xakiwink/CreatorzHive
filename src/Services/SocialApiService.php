@@ -113,6 +113,29 @@ final class SocialApiService
         return social_api_service_env_token($fallbackEnv);
     }
 
+    /**
+     * Caption overrides post text when present, otherwise falls back to it.
+     * Caption is always stored as a string (the composer sends it as '' when
+     * left blank, never omitted/null), so a plain ?? chain never actually
+     * falls through to content -- an empty caption silently wins and the
+     * post goes out with no text at all. Emptiness, not nullness, is what
+     * has to decide the fallback here.
+     */
+    private function resolvePostText(array $post): string
+    {
+        $caption = trim((string) ($post['caption'] ?? ''));
+        if ($caption !== '') {
+            return $caption;
+        }
+
+        $content = trim((string) ($post['content'] ?? ''));
+        if ($content !== '') {
+            return $content;
+        }
+
+        return trim((string) ($post['title'] ?? ''));
+    }
+
     public function publish(array $account, array $post): array
     {
         $platform = (string) ($account['platform'] ?? '');
@@ -154,7 +177,7 @@ final class SocialApiService
                 : ['success' => false, 'error' => 'Instagram token or business account ID missing'];
         }
 
-        $caption  = (string) ($post['caption'] ?? $post['content'] ?? '');
+        $caption  = $this->resolvePostText($post);
         $imageUrl = trim((string) ($post['cover_url'] ?? env('SOCIAL_FALLBACK_IMAGE_URL', '')));
         if ($imageUrl === '') {
             return ['success' => false, 'error' => 'Instagram publish requires cover_url or SOCIAL_FALLBACK_IMAGE_URL'];
@@ -223,7 +246,7 @@ final class SocialApiService
         $payload = [
             'post_info' => [
                 'title'           => (string) ($post['title'] ?? 'CreatorzHive Post'),
-                'description'     => (string) ($post['caption'] ?? $post['content'] ?? ''),
+                'description'     => $this->resolvePostText($post),
                 'privacy_level'   => (string) (platform_api_secrets_resolve('tiktok_privacy_level') ?: 'SELF_ONLY'),
                 'disable_comment' => false,
                 'disable_duet'    => false,
@@ -264,7 +287,7 @@ final class SocialApiService
         }
 
         $title       = trim((string) ($post['title'] ?? $post['caption'] ?? 'CreatorzHive Upload'));
-        $description = trim((string) ($post['caption'] ?? $post['content'] ?? ''));
+        $description = $this->resolvePostText($post);
         $privacy     = (string) (platform_api_secrets_resolve('youtube_privacy_status') ?: 'private');
 
         $metadataArr = [
@@ -341,7 +364,7 @@ final class SocialApiService
                 : ['success' => false, 'error' => 'X token missing'];
         }
 
-        $text = (string) ($post['caption'] ?? $post['content'] ?? $post['title'] ?? '');
+        $text = $this->resolvePostText($post);
         if ($text === '') {
             $text = 'Posted via CreatorzHive';
         }
