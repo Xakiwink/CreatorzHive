@@ -61,6 +61,7 @@ final class SocialApiService
 
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER         => true,
             CURLOPT_CUSTOMREQUEST  => strtoupper($method),
             CURLOPT_HTTPHEADER     => $headers,
             CURLOPT_CONNECTTIMEOUT => 10,
@@ -71,25 +72,45 @@ final class SocialApiService
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         }
 
-        $raw    = curl_exec($ch);
-        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        $err    = curl_error($ch);
+        $raw        = curl_exec($ch);
+        $status     = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $err        = curl_error($ch);
+        $headerSize = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
         curl_close($ch);
 
         if ($raw === false) {
-            return ['ok' => false, 'status' => $status, 'data' => null, 'error' => $err !== '' ? $err : 'HTTP request failed'];
+            return ['ok' => false, 'status' => $status, 'data' => null, 'headers' => [], 'error' => $err !== '' ? $err : 'HTTP request failed'];
         }
 
-        $json = json_decode((string) $raw, true);
+        // CURLOPT_HEADER prepends the response headers to the body in one
+        // string -- needed because some APIs (YouTube's resumable upload
+        // init) only return the actual payload location in a response
+        // header, not the JSON body. Split them apart and lowercase the
+        // header names so callers don't have to guess a case.
+        $rawHeaders = substr((string) $raw, 0, $headerSize);
+        $rawBody    = substr((string) $raw, $headerSize);
+
+        $responseHeaders = [];
+        foreach (explode("\r\n", $rawHeaders) as $line) {
+            $pos = strpos($line, ':');
+            if ($pos === false) {
+                continue;
+            }
+            $name = strtolower(trim(substr($line, 0, $pos)));
+            $responseHeaders[$name] = trim(substr($line, $pos + 1));
+        }
+
+        $json = json_decode($rawBody, true);
         if (!is_array($json)) {
-            $json = ['raw' => (string) $raw];
+            $json = ['raw' => $rawBody];
         }
 
         return [
-            'ok'     => $status >= 200 && $status < 300,
-            'status' => $status,
-            'data'   => $json,
-            'error'  => $status >= 200 && $status < 300 ? null : 'HTTP ' . $status,
+            'ok'      => $status >= 200 && $status < 300,
+            'status'  => $status,
+            'data'    => $json,
+            'headers' => $responseHeaders,
+            'error'   => $status >= 200 && $status < 300 ? null : 'HTTP ' . $status,
         ];
     }
 
@@ -281,10 +302,11 @@ final class SocialApiService
                 : ['success' => false, 'error' => 'YouTube token missing'];
         }
 
-        $videoUrl = trim((string) ($post['video_url'] ?? $post['cover_url'] ?? ''));
+        $videoUrl = trim((string) ($post['video_url'] ?? ''));
         if ($videoUrl === '') {
-            return ['success' => false, 'error' => 'YouTube publish requires a video_url'];
+            return ['success' => false, 'error' => 'YouTube requires an actual video file attached to the post (an image alone isn\'t enough)'];
         }
+        $videoMime = trim((string) ($post['video_mime'] ?? '')) ?: 'video/mp4';
 
         $title       = trim((string) ($post['title'] ?? $post['caption'] ?? 'CreatorzHive Upload'));
         $description = $this->resolvePostText($post);
@@ -300,7 +322,7 @@ final class SocialApiService
             'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',
             [
                 'Authorization: Bearer ' . $token,
-                'X-Upload-Content-Type: video/mp4',
+                'X-Upload-Content-Type: ' . $videoMime,
             ],
             $metadataArr
         );
@@ -330,7 +352,7 @@ final class SocialApiService
             CURLOPT_POSTFIELDS     => $videoData,
             CURLOPT_HTTPHEADER     => [
                 'Authorization: Bearer ' . $token,
-                'Content-Type: video/mp4',
+                'Content-Type: ' . $videoMime,
                 'Content-Length: ' . strlen($videoData),
             ],
             CURLOPT_CONNECTTIMEOUT => 30,

@@ -72,33 +72,48 @@ final class PublishPostJob implements JobHandlerInterface
         }
 
         // findById() only returns raw post columns -- cover_media_id is a
-        // foreign key, not a URL. Instagram/YouTube publishing needs an
-        // actual reachable image URL, so resolve it from the attached media
-        // (falling back to the first attached file if no cover was chosen).
+        // foreign key, not a URL. Resolve real, absolute URLs from the
+        // attached media: an image for Instagram/TikTok, and separately a
+        // video for YouTube -- these are not necessarily the same
+        // attachment (a post can have a video plus a distinct cover
+        // thumbnail), so pick each by its actual mime type rather than
+        // assuming "cover" always means "the thing to upload".
         $media = $post['media'] ?? [];
         $coverMediaId = (int) ($post['cover_media_id'] ?? 0);
-        $coverUrl = '';
+        $imageUrl = '';
+        $videoUrl = '';
+        $videoMime = '';
         foreach ($media as $m) {
-            if ($coverMediaId > 0 && (int) ($m['id'] ?? 0) === $coverMediaId) {
-                $coverUrl = (string) ($m['cdn_url'] ?? '');
-                break;
+            $mime = (string) ($m['mime_type'] ?? '');
+            $url = (string) ($m['cdn_url'] ?? '');
+            if ($url === '') {
+                continue;
+            }
+            $isChosenCover = $coverMediaId > 0 && (int) ($m['id'] ?? 0) === $coverMediaId;
+            if (strpos($mime, 'image/') === 0 && ($imageUrl === '' || $isChosenCover)) {
+                $imageUrl = $url;
+            }
+            if (strpos($mime, 'video/') === 0 && $videoUrl === '') {
+                $videoUrl = $url;
+                $videoMime = $mime;
             }
         }
-        if ($coverUrl === '' && $media !== []) {
-            $coverUrl = (string) ($media[0]['cdn_url'] ?? '');
-        }
-        // media_files.cdn_url is stored relative (e.g. "uploads/x.jpg") -- fine
-        // for an <img> tag resolved against the page origin, but Instagram's
-        // Graph API fetches image_url itself server-side, so it must be a
-        // fully-qualified public URL, not a relative/root-relative path.
-        if ($coverUrl !== '' && !preg_match('#^https?://#i', $coverUrl)) {
-            $relative = ltrim($coverUrl, '/');
-            if (upload_url_needs_public_segment() && strpos($relative, 'public/') !== 0) {
-                $relative = 'public/' . $relative;
+        if ($imageUrl === '' && $videoUrl === '' && $media !== []) {
+            // Nothing matched by mime type (missing/unrecognized mime) --
+            // fall back to whichever file was chosen as cover, or the first.
+            foreach ($media as $m) {
+                if ($coverMediaId > 0 && (int) ($m['id'] ?? 0) === $coverMediaId) {
+                    $imageUrl = (string) ($m['cdn_url'] ?? '');
+                    break;
+                }
             }
-            $coverUrl = rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/' . $relative;
+            if ($imageUrl === '') {
+                $imageUrl = (string) ($media[0]['cdn_url'] ?? '');
+            }
         }
-        $post['cover_url'] = $coverUrl;
+        $post['cover_url'] = $this->toAbsoluteUploadUrl($imageUrl);
+        $post['video_url'] = $this->toAbsoluteUploadUrl($videoUrl);
+        $post['video_mime'] = $videoMime;
 
         $userId = (int) $post['user_id'];
         $platforms = $post['platforms'] ?? [];
@@ -251,5 +266,23 @@ final class PublishPostJob implements JobHandlerInterface
         } catch (\Throwable $e) {
             // Nothing more useful to do here -- the post's own status already reflects the failure.
         }
+    }
+
+    // media_files.cdn_url is stored relative (e.g. "uploads/x.jpg") -- fine
+    // for an <img> tag resolved against the page origin, but the platform
+    // APIs fetch/upload this URL themselves server-side, so it must be a
+    // fully-qualified public URL, not a relative/root-relative path.
+    private function toAbsoluteUploadUrl(string $relativeOrAbsolute): string
+    {
+        if ($relativeOrAbsolute === '' || preg_match('#^https?://#i', $relativeOrAbsolute) === 1) {
+            return $relativeOrAbsolute;
+        }
+
+        $relative = ltrim($relativeOrAbsolute, '/');
+        if (upload_url_needs_public_segment() && strpos($relative, 'public/') !== 0) {
+            $relative = 'public/' . $relative;
+        }
+
+        return rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/' . $relative;
     }
 }
