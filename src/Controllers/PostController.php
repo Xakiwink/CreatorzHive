@@ -228,11 +228,11 @@ final class PostController extends AbstractController
                 $this->input->syncPostTags($postId, $tagIds, $userId);
         
                 if ($status === 'scheduled') {
-                    $this->jobQueue->queueEnqueuePublishPost($postId);
+                    $this->jobQueue->queueEnqueuePublishPost($postId, $scheduledAt);
                 }
-        
+
                 $this->analytics->recalculate($userId);
-        
+
                 if ($status === 'published') {
                     $this->notifications->postPublished($userId, (string) $payload['title'], $postId);
                 }
@@ -327,11 +327,11 @@ final class PostController extends AbstractController
                 $this->input->syncPostTags($postId, $tagIds, $userId);
         
                 if ($status === 'scheduled') {
-                    $this->jobQueue->queueEnqueuePublishPost($postId);
+                    $this->jobQueue->queueEnqueuePublishPost($postId, $scheduledAt);
                 }
-        
+
                 $this->analytics->recalculate($userId);
-        
+
                 $wasPublished = (string) ($existing['status'] ?? '') === 'published';
                 if ($status === 'published' && !$wasPublished) {
                     $this->notifications->postPublished($userId, (string) $payload['title'], $postId);

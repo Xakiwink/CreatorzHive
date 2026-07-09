@@ -26,14 +26,14 @@ final class JobQueueRepository
         return 'App\\Jobs\\PublishPostJob';
     }
 
-    public function queueEnqueuePublishPost(int $postId)
+    public function queueEnqueuePublishPost(int $postId, ?string $availableAt = null)
     {
         $this->db->insert('job_queue', [
                 'queue' => 'default',
                 'job_class' => $this->queuePublishJobType(),
                 'payload' => json_encode(['post_id' => $postId]),
                 'status' => 'pending',
-                'available_at' => now(),
+                'available_at' => $availableAt ?? now(),
             ]);
     }
 

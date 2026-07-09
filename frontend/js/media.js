@@ -52,6 +52,11 @@
     return wrap;
   }
 
+  // Opens as its own nested overlay (not window.Modal) so it can be used from
+  // inside an already-open modal -- e.g. the post composer -- without
+  // clobbering that modal's content. window.Modal has a single shared
+  // #modalBody, so calling Modal.open() here would replace whatever was
+  // already showing underneath it (the composer would visibly "close").
   function openMediaLibrary(onPick) {
     fetch(window.routeQuery('media_list', { per_page: 48 }), {
       headers: { Accept: 'application/json' },
@@ -62,19 +67,35 @@
       .then(function (j) {
         if (!j.success) throw new Error(j.message || 'Failed to load media');
         const files = (j.data && j.data.files) || [];
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay open';
+        overlay.style.zIndex = '65';
+        overlay.innerHTML =
+          '<div class="modal" role="dialog" aria-modal="true">' +
+          '<div class="modal-header"><h3 class="modal-title">Media library</h3>' +
+          '<button class="btn btn-ghost btn-sm" type="button" data-media-lib-close>✕</button></div>' +
+          '<div class="modal-body"><div class="media-lib-body"></div></div>' +
+          '<div class="modal-footer"><button type="button" class="btn btn-ghost" data-media-lib-close>Close</button></div>' +
+          '</div>';
+        document.body.appendChild(overlay);
+
+        function closePicker() {
+          overlay.remove();
+        }
+
         const grid = renderMediaGrid(files, function (f) {
-          window.Modal.close();
+          closePicker();
           onPick(f);
         });
-        window.Modal.open(
-          'Media library',
-          '<div class="media-lib-body"></div>',
-          '<button type="button" class="btn btn-ghost" id="mediaLibClose">Close</button>',
-        );
-        const b = document.querySelector('#modalBody .media-lib-body');
+        const b = overlay.querySelector('.media-lib-body');
         if (b) b.appendChild(grid);
-        document.getElementById('mediaLibClose')?.addEventListener('click', function () {
-          window.Modal.close();
+
+        overlay.querySelectorAll('[data-media-lib-close]').forEach(function (btn) {
+          btn.addEventListener('click', closePicker);
+        });
+        overlay.addEventListener('click', function (e) {
+          if (e.target === overlay) closePicker();
         });
       })
       .catch(function (e) {

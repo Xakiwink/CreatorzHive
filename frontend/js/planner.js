@@ -1022,6 +1022,12 @@
     });
     const tagIds = Array.from(selectedTagIds);
 
+    // "Post now" reuses the scheduled pipeline (queued for immediate publish
+    // via the job queue) since that's the only path that actually calls the
+    // platform APIs -- there's no separate synchronous immediate-publish path.
+    const isPostNow = status === 'now';
+    const sendStatus = isPostNow ? 'scheduled' : status;
+
     const payload = {
       _token: window.__CSRF__ || '',
       title: title,
@@ -1030,9 +1036,13 @@
       platforms: JSON.stringify(platforms),
       media_ids: JSON.stringify(mediaIds),
       tag_ids: JSON.stringify(tagIds),
-      status: status,
+      status: sendStatus,
     };
-    if (status === 'scheduled') {
+    if (isPostNow) {
+      const now = new Date();
+      now.setSeconds(now.getSeconds() + 5);
+      payload.scheduled_at = now.toISOString().slice(0, 19).replace('T', ' ');
+    } else if (status === 'scheduled') {
       payload.scheduled_at = sched;
     }
 
