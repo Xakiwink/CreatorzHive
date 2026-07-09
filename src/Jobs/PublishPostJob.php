@@ -205,8 +205,8 @@ final class PublishPostJob implements JobHandlerInterface
                 'status' => 'failed',
                 'published_at' => null,
             ]);
-            $this->notifications->postFailed($userId, (string) $post['title'], 'No platforms selected');
             $this->analytics->recalculate($userId);
+            $this->notifyFailedSafely($userId, (string) $post['title'], 'No platforms selected');
 
             return;
         }
@@ -216,7 +216,8 @@ final class PublishPostJob implements JobHandlerInterface
                 'status' => 'failed',
                 'published_at' => null,
             ]);
-            $this->notifications->postFailed(
+            $this->analytics->recalculate($userId);
+            $this->notifyFailedSafely(
                 $userId,
                 (string) $post['title'],
                 $firstError !== '' ? $firstError : 'All platforms failed'
@@ -226,9 +227,29 @@ final class PublishPostJob implements JobHandlerInterface
                 'status' => 'published',
                 'published_at' => now(),
             ]);
-            $this->notifications->postPublished($userId, (string) $post['title'], $postId);
+            $this->analytics->recalculate($userId);
+            $this->notifyPublishedSafely($userId, (string) $post['title'], $postId);
         }
+    }
 
-        $this->analytics->recalculate($userId);
+    // A notification failure (e.g. mail delivery) must never look like a
+    // publish failure -- the post is already correctly saved and the
+    // analytics summary already recalculated by this point either way.
+    private function notifyPublishedSafely(int $userId, string $title, int $postId): void
+    {
+        try {
+            $this->notifications->postPublished($userId, $title, $postId);
+        } catch (\Throwable $e) {
+            // Publishing itself already succeeded; a notification hiccup shouldn't fail the job.
+        }
+    }
+
+    private function notifyFailedSafely(int $userId, string $title, string $reason): void
+    {
+        try {
+            $this->notifications->postFailed($userId, $title, $reason);
+        } catch (\Throwable $e) {
+            // Nothing more useful to do here -- the post's own status already reflects the failure.
+        }
     }
 }

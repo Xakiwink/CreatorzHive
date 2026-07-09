@@ -363,14 +363,8 @@
 
 .achievements-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--space-3);
-}
-
-@media (max-width: 480px) {
-  .achievements-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .achievement-badge {
@@ -380,6 +374,7 @@
   padding: var(--space-3);
   border-radius: var(--radius-md);
   background: var(--color-bg-subtle);
+  min-width: 0;
 }
 
 .achievement-icon {
