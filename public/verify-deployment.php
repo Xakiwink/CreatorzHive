@@ -4,7 +4,31 @@
  * Visit: https://creatorzhive.infinityfree.io/verify-deployment.php
  *
  * Checks all critical systems needed for production deployment.
+ *
+ * Restricted to the same trusted IPs as public/setup.php (SETUP_ALLOWED_IPS
+ * in .env) because it discloses DB host/name/user, APP_SECRET presence, and
+ * row counts for every table -- not safe for anonymous internet access.
  */
+
+$remoteIp = $_SERVER['REMOTE_ADDR'] ?? '';
+$allowedIps = ['127.0.0.1', '::1'];
+$setupAllowedIps = $_ENV['SETUP_ALLOWED_IPS'] ?? getenv('SETUP_ALLOWED_IPS');
+if ($setupAllowedIps === '*') {
+    $isAllowed = true;
+} else {
+    if ($setupAllowedIps) {
+        foreach (explode(',', $setupAllowedIps) as $ip) {
+            $allowedIps[] = trim($ip);
+        }
+    }
+    $isAllowed = in_array($remoteIp, $allowedIps, true);
+}
+
+if (!$isAllowed) {
+    http_response_code(403);
+    echo "<h1>Access Denied</h1><p>This diagnostic page is restricted. Add your IP to SETUP_ALLOWED_IPS in .env to use it.</p>";
+    exit;
+}
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
