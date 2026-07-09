@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__DIR__, 2) . '/backend/bootstrap-web-view.php';
+$year = date('Y');
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -10,76 +11,85 @@ require_once dirname(__DIR__, 2) . '/backend/bootstrap-web-view.php';
   <title>Terms of Service — CreatorzHive</title>
   <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2">
   <link rel="apple-touch-icon" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2">
-  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/auth.css')) ?>">
+  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/main.css')) ?>">
+  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/components.css')) ?>">
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/dark-mode.css')) ?>">
-  <style>
-    body { background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
-    .legal-container { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    h1 { margin-bottom: 0.5rem; }
-    .last-updated { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem; }
-    h2 { margin-top: 2rem; margin-bottom: 1rem; }
-    ul, ol { margin: 1rem 0 1rem 1.5rem; }
-    li { margin: 0.5rem 0; }
-  </style>
+  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/legal.css')) ?>">
 </head>
-<body>
-<div class="legal-container">
-  <h1>Terms of Service</h1>
-  <p class="last-updated">Last updated: June 12, 2026</p>
+<body class="legal-body">
 
-  <h2>1. Agreement to Terms</h2>
-  <p>By accessing and using CreatorzHive, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.</p>
+<header class="legal-nav">
+  <div class="legal-nav-inner">
+    <a href="<?= htmlspecialchars(route_url('home')) ?>" class="legal-logo">
+      <img class="legal-logo-mark" src="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2" alt="">
+      <span class="legal-logo-text">CreatorzHive</span>
+    </a>
+    <a href="<?= htmlspecialchars(route_url('home')) ?>" class="legal-nav-back">&larr; Back to home</a>
+  </div>
+</header>
 
-  <h2>2. Use License</h2>
-  <p>Permission is granted to temporarily download one copy of the materials (information or software) on CreatorzHive for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:</p>
-  <ul>
-    <li>Modify or copy the materials</li>
-    <li>Use the materials for any commercial purpose or for any public display</li>
-    <li>Attempt to decompile or reverse engineer any software contained on CreatorzHive</li>
-    <li>Remove any copyright or other proprietary notations from the materials</li>
-    <li>Transfer the materials to another person or "mirror" the materials on any other server</li>
-    <li>Engage in any data mining, scraping, or harvesting</li>
-  </ul>
+<main class="legal-page">
+  <div class="legal-card">
+    <span class="eyebrow">Legal</span>
+    <h1>Terms of Service</h1>
+    <p class="legal-updated">Last updated: July 9, 2026</p>
 
-  <h2>3. Disclaimer</h2>
-  <p>The materials on CreatorzHive are provided on an 'as is' basis. CreatorzHive makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.</p>
+    <div class="legal-body">
+      <h2>1. Agreement to Terms</h2>
+      <p>By creating an account or using CreatorzHive ("we," "us," "our," or "the service"), you agree to be bound by these Terms of Service. If you do not agree, please do not use the service.</p>
 
-  <h2>4. Limitations</h2>
-  <p>In no event shall CreatorzHive or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on CreatorzHive.</p>
+      <h2>2. What CreatorzHive Is</h2>
+      <p>CreatorzHive is a creator workspace for planning content, tracking growth analytics, and managing deals and invoices across the social platforms you connect. The service is currently offered free of charge — there is no billing, subscription, or payment step to sign up or use it.</p>
 
-  <h2>5. Accuracy of Materials</h2>
-  <p>The materials appearing on CreatorzHive could include technical, typographical, or photographic errors. CreatorzHive does not warrant that any of the materials on its website are accurate, complete, or current. CreatorzHive may make changes to the materials contained on its website at any time without notice.</p>
+      <h2>3. Your Account</h2>
+      <p>You can create an account with an email and password, or sign in with Google. You're responsible for keeping your login credentials confidential and for all activity that happens under your account. Notify us immediately if you suspect unauthorized access.</p>
 
-  <h2>6. Links</h2>
-  <p>CreatorzHive has not reviewed all of the sites linked to its website and is not responsible for the contents of any such linked site. The inclusion of any link does not imply endorsement by CreatorzHive of the site. Use of any such linked website is at the user's own risk.</p>
+      <h2>4. Connecting Social Platforms</h2>
+      <p>CreatorzHive currently supports connecting Instagram, TikTok, and YouTube through each platform's official OAuth authorization flow (X/Twitter support is planned but not yet available). We only request the permissions needed to show your own analytics and let you plan posts — we never ask for your platform password, and we don't scrape or access data outside what you explicitly authorize. Access tokens are encrypted at rest. You can disconnect any platform at any time from Settings, which stops any further data collection from it.</p>
 
-  <h2>7. Modifications</h2>
-  <p>CreatorzHive may revise these terms of service for its website at any time without notice. By using this website, you are agreeing to be bound by the then current version of these terms of service.</p>
+      <h2>5. Acceptable Use</h2>
+      <p>You agree not to:</p>
+      <ul>
+        <li>Attempt to gain unauthorized access to CreatorzHive, other users' accounts, or connected platform accounts</li>
+        <li>Scrape, data-mine, or harvest data from the service</li>
+        <li>Interfere with or disrupt the normal operation of the service</li>
+        <li>Use the service to plan or publish unlawful, harassing, or infringing content</li>
+        <li>Reverse engineer or attempt to extract the source code of the service</li>
+      </ul>
 
-  <h2>8. Governing Law</h2>
-  <p>These terms and conditions are governed by and construed in accordance with the laws of the jurisdiction in which CreatorzHive operates, and you irrevocably submit to the exclusive jurisdiction of the courts in that location.</p>
+      <h2>6. Your Content</h2>
+      <p>Content you create, upload, or plan through CreatorzHive (captions, media, notes) remains yours. We only use it to provide the service — for example, storing a draft until you publish it, or displaying it back to you in the planner.</p>
 
-  <h2>9. User Accounts</h2>
-  <p>When you create an account with CreatorzHive, you are responsible for maintaining the confidentiality of your account information and password. You agree to accept responsibility for all activities that occur under your account. You must notify us immediately of any unauthorized use of your account.</p>
+      <h2>7. Insights and Predictions</h2>
+      <p>Growth deltas, insights, and predictions shown in CreatorzHive are calculated from statistics and trends in your own historical data — they are not generated by AI, and they are not financial, business, or investment advice. Past performance and projected trends are estimates and are not guaranteed to reflect future results.</p>
 
-  <h2>10. Prohibited Conduct</h2>
-  <p>You agree not to engage in any of the following prohibited conduct:</p>
-  <ul>
-    <li>Harassing or causing distress or inconvenience to any person</li>
-    <li>Interfering with the normal operation of CreatorzHive</li>
-    <li>Attempting to gain unauthorized access to our system</li>
-    <li>Posting or transmitting unlawful, threatening, abusive, defamatory, obscene, or otherwise objectionable material</li>
-    <li>Violating any applicable laws or regulations</li>
-  </ul>
+      <h2>8. Service Availability</h2>
+      <p>CreatorzHive is provided on an "as is" and "as available" basis, without warranties of any kind, express or implied. We aim to keep the service reliable, but we don't guarantee uninterrupted access, and background jobs (like fetching updated analytics) may run on a delay rather than instantly.</p>
 
-  <h2>11. Intellectual Property Rights</h2>
-  <p>All content included in CreatorzHive, such as text, graphics, logos, images, and software, is the property of CreatorzHive or its content suppliers and is protected by international copyright laws.</p>
+      <h2>9. Limitation of Liability</h2>
+      <p>To the fullest extent permitted by law, CreatorzHive will not be liable for any indirect, incidental, or consequential damages arising from your use of, or inability to use, the service.</p>
 
-  <h2>12. Termination</h2>
-  <p>CreatorzHive may terminate or suspend your account and access to the service immediately, without prior notice or liability, for any reason, including if you breach these Terms of Service.</p>
+      <h2>10. Termination</h2>
+      <p>You may stop using CreatorzHive and disconnect your platforms at any time. We may suspend or terminate accounts that violate these Terms or that we reasonably believe pose a security risk to the service or other users.</p>
 
-  <h2>13. Contact Information</h2>
-  <p>If you have any questions about these Terms of Service, please contact us at: support@creatorzhive.com</p>
-</div>
+      <h2>11. Changes to These Terms</h2>
+      <p>We may update these Terms as the service evolves. Continued use of CreatorzHive after a change means you accept the updated Terms. We'll update the "last updated" date above whenever this happens.</p>
+
+      <h2>12. Contact</h2>
+      <p>Questions about these Terms? Reach us at <a href="mailto:support@creatorzhive.com">support@creatorzhive.com</a>.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="legal-footer">
+  <div class="legal-footer-inner">
+    <span>&copy; <?= htmlspecialchars($year) ?> CreatorzHive. All rights reserved.</span>
+    <nav aria-label="Legal">
+      <a href="<?= htmlspecialchars(route_url('privacy-policy')) ?>">Privacy Policy</a>
+      <a href="<?= htmlspecialchars(route_url('terms-of-service')) ?>">Terms of Service</a>
+    </nav>
+  </div>
+</footer>
+
 </body>
 </html>

@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__DIR__, 2) . '/backend/bootstrap-web-view.php';
+$year = date('Y');
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -10,75 +11,88 @@ require_once dirname(__DIR__, 2) . '/backend/bootstrap-web-view.php';
   <title>Privacy Policy — CreatorzHive</title>
   <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2">
   <link rel="apple-touch-icon" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2">
-  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/auth.css')) ?>">
+  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/main.css')) ?>">
+  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/components.css')) ?>">
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/dark-mode.css')) ?>">
-  <style>
-    body { background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
-    .legal-container { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    h1 { margin-bottom: 0.5rem; }
-    .last-updated { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem; }
-    h2 { margin-top: 2rem; margin-bottom: 1rem; }
-    ul, ol { margin: 1rem 0 1rem 1.5rem; }
-    li { margin: 0.5rem 0; }
-  </style>
+  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/legal.css')) ?>">
 </head>
-<body>
-<div class="legal-container">
-  <h1>Privacy Policy</h1>
-  <p class="last-updated">Last updated: June 12, 2026</p>
+<body class="legal-body">
 
-  <h2>1. Introduction</h2>
-  <p>CreatorzHive ("we," "us," "our," or "Company") operates the CreatorzHive platform. This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our service and the choices you have associated with that data.</p>
+<header class="legal-nav">
+  <div class="legal-nav-inner">
+    <a href="<?= htmlspecialchars(route_url('home')) ?>" class="legal-logo">
+      <img class="legal-logo-mark" src="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2" alt="">
+      <span class="legal-logo-text">CreatorzHive</span>
+    </a>
+    <a href="<?= htmlspecialchars(route_url('home')) ?>" class="legal-nav-back">&larr; Back to home</a>
+  </div>
+</header>
 
-  <h2>2. Information Collection and Use</h2>
-  <p>We collect several different types of information for various purposes to provide and improve our service to you.</p>
+<main class="legal-page">
+  <div class="legal-card">
+    <span class="eyebrow">Legal</span>
+    <h1>Privacy Policy</h1>
+    <p class="legal-updated">Last updated: July 9, 2026</p>
 
-  <h3>2.1 Personal Data</h3>
-  <ul>
-    <li>Email address</li>
-    <li>Username and password</li>
-    <li>Profile information (name, avatar, bio)</li>
-    <li>Social media account credentials (encrypted)</li>
-    <li>Usage analytics and preferences</li>
-  </ul>
+    <div class="legal-body">
+      <h2>1. Introduction</h2>
+      <p>This Privacy Policy explains what information CreatorzHive ("we," "us," "our," or "the service") collects, how we use it, and the choices you have. By using CreatorzHive, you agree to the collection and use of information as described here.</p>
 
-  <h3>2.2 Usage Data</h3>
-  <p>We may also collect information on how the service is accessed and used ("Usage Data"). This includes information such as your computer's IP address, browser type and version, the pages you visit, timestamps, and other diagnostic data.</p>
+      <h2>2. Information We Collect</h2>
+      <p><strong>Account information</strong> — name, username, email address, and a securely hashed password (or your Google account identifier if you sign in with Google), plus any profile details you add such as an avatar or bio.</p>
+      <p><strong>Connected platform data</strong> — when you connect Instagram, TikTok, or YouTube, we store an encrypted access token and the analytics data those platforms make available through their official APIs for your own account: follower counts, engagement, reach, and post performance. We only request the specific permissions needed to display that data back to you.</p>
+      <p><strong>Content you create</strong> — posts, captions, and media you draft or schedule in the planner.</p>
+      <p><strong>Usage data</strong> — basic technical data such as IP address, browser type, pages visited, and timestamps, used for security and troubleshooting.</p>
 
-  <h2>3. Use of Data</h2>
-  <p>CreatorzHive uses the collected data for various purposes:</p>
-  <ul>
-    <li>To provide and maintain our service</li>
-    <li>To notify you about changes to our service</li>
-    <li>To allow you to participate in interactive features of our service</li>
-    <li>To provide customer care and support</li>
-    <li>To gather analysis or valuable information so we can improve our service</li>
-    <li>To monitor the usage of our service</li>
-    <li>To detect, prevent and address technical issues</li>
-  </ul>
+      <h2>3. How We Use Your Information</h2>
+      <ul>
+        <li>To provide the planner, analytics dashboard, and deals/invoices features</li>
+        <li>To calculate growth deltas, statistics-based insights, and predictions from your own historical data — this is rule-based analysis of your data, not AI or machine learning, and not shared or trained on across other users</li>
+        <li>To send account-related emails, such as verification and password reset</li>
+        <li>To keep the service secure and detect abuse</li>
+      </ul>
 
-  <h2>4. Security of Data</h2>
-  <p>The security of your data is important to us, but remember that no method of transmission over the Internet or method of electronic storage is 100% secure. While we strive to use commercially acceptable means to protect your personal data, we cannot guarantee its absolute security.</p>
+      <h2>4. How We Access Platform Data</h2>
+      <p>We only ever connect to Instagram, TikTok, and YouTube through each platform's official OAuth authorization flow — you approve the connection on the platform's own sign-in screen, and we never see or store your platform password. We don't scrape data or access anything beyond what the granted permissions allow.</p>
 
-  <h2>5. Third-Party Service Providers</h2>
-  <p>We may employ third-party companies and individuals to facilitate our service:</p>
-  <ul>
-    <li>Google (OAuth authentication)</li>
-    <li>Meta/Facebook (OAuth authentication and social platform integration)</li>
-    <li>Email service providers (for notifications)</li>
-  </ul>
+      <h2>5. Data Sharing</h2>
+      <p>We do not sell your data, and we do not use advertising or third-party analytics/tracking scripts on CreatorzHive. We share data only with:</p>
+      <ul>
+        <li>Instagram/Meta, TikTok, and YouTube/Google — to fetch the analytics data for the accounts you've connected</li>
+        <li>Google — if you choose to sign in with Google</li>
+        <li>Our email delivery provider — to send verification and account emails</li>
+      </ul>
 
-  <h2>6. Links to Other Sites</h2>
-  <p>Our service may contain links to other sites that are not operated by us. If you click on a third-party link, you will be directed to that third party's site. We strongly advise you to review the Privacy Policy of every site you visit.</p>
+      <h2>6. Data Security</h2>
+      <p>Passwords are stored hashed, never in plain text. Connected-platform access tokens are encrypted at rest. Traffic to the service is served over HTTPS. That said, no method of transmission or storage is 100% secure, and we can't guarantee absolute security.</p>
 
-  <h2>7. Children's Privacy</h2>
-  <p>Our service does not address anyone under the age of 18. We do not knowingly collect personally identifiable information from children under 18. If we become aware that we have collected personal data from a child under 18, we take steps to delete such information and terminate that person's account.</p>
+      <h2>7. Data Retention and Your Choices</h2>
+      <p>You can disconnect any platform at any time from Settings, which immediately stops any further data collection from it. Historical analytics snapshots are kept so your growth charts and trends stay accurate over time. To request deletion of your account and associated data, contact us at <a href="mailto:privacy@creatorzhive.com">privacy@creatorzhive.com</a>.</p>
 
-  <h2>8. Changes to This Privacy Policy</h2>
-  <p>We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "last updated" date.</p>
+      <h2>8. Cookies and Sessions</h2>
+      <p>CreatorzHive uses a single secure session cookie to keep you signed in. We don't use third-party advertising or tracking cookies.</p>
 
-  <h2>9. Contact Us</h2>
-  <p>If you have any questions about this Privacy Policy, please contact us at: privacy@creatorzhive.com</p>
-</div>
+      <h2>9. Children's Privacy</h2>
+      <p>CreatorzHive is not directed at anyone under 18. We do not knowingly collect personal information from children under 18. If we become aware that we have, we'll delete it and terminate the associated account.</p>
+
+      <h2>10. Changes to This Policy</h2>
+      <p>We may update this Privacy Policy as the service evolves. We'll update the "last updated" date above whenever a change is made.</p>
+
+      <h2>11. Contact Us</h2>
+      <p>Questions about this Privacy Policy? Reach us at <a href="mailto:privacy@creatorzhive.com">privacy@creatorzhive.com</a>.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="legal-footer">
+  <div class="legal-footer-inner">
+    <span>&copy; <?= htmlspecialchars($year) ?> CreatorzHive. All rights reserved.</span>
+    <nav aria-label="Legal">
+      <a href="<?= htmlspecialchars(route_url('privacy-policy')) ?>">Privacy Policy</a>
+      <a href="<?= htmlspecialchars(route_url('terms-of-service')) ?>">Terms of Service</a>
+    </nav>
+  </div>
+</footer>
+
 </body>
 </html>
