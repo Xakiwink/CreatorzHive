@@ -109,10 +109,14 @@ final class InstagramOAuthController extends AbstractController
         response_redirect(route_url('settings-integrations'));
     }
 
+    /** Max age (seconds) a signed OAuth state is accepted, limiting the replay window. */
+    public const STATE_MAX_AGE = 900;
+
     private function buildState(int $userId): string
     {
         $nonce   = bin2hex(random_bytes(16));
-        $payload = $userId . '.' . $nonce;
+        $issued  = (string) time();
+        $payload = $userId . '.' . $nonce . '.' . $issued;
         $sig     = hash_hmac('sha256', $payload, (string) env('APP_SECRET', ''));
 
         return $payload . '.' . $sig;
@@ -120,16 +124,20 @@ final class InstagramOAuthController extends AbstractController
 
     private function verifyState(string $state): ?int
     {
-        $parts = explode('.', $state, 3);
-        if (count($parts) !== 3) {
+        $parts = explode('.', $state, 4);
+        if (count($parts) !== 4) {
             return null;
         }
 
-        [$userIdStr, $nonce, $sig] = $parts;
-        $payload     = $userIdStr . '.' . $nonce;
+        [$userIdStr, $nonce, $issuedStr, $sig] = $parts;
+        $payload     = $userIdStr . '.' . $nonce . '.' . $issuedStr;
         $expectedSig = hash_hmac('sha256', $payload, (string) env('APP_SECRET', ''));
 
         if (!hash_equals($expectedSig, $sig)) {
+            return null;
+        }
+
+        if (!ctype_digit($issuedStr) || (time() - (int) $issuedStr) > self::STATE_MAX_AGE) {
             return null;
         }
 
