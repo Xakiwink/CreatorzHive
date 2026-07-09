@@ -458,6 +458,8 @@
 
   async function boot() {
     await loadComponent('frontend/components/sidebar.html', '#sidebar-container');
+    const logoMark = document.querySelector('#sidebar-container .logo-mark');
+    if (logoMark) logoMark.src = assetPath('frontend/assets/icon.svg');
     /* Strip creator-only nav for admins before paint/hydrate — avoids a flash of dashboard/planner/etc. */
     applyRoleNavigation();
     if (window.__USER__) {

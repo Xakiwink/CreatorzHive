@@ -84,10 +84,8 @@
   width: 44px;
   height: 44px;
   border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, #ecfdf5 0%, #e9e4ff 42%, #ddd6fe 78%, #e2e8f0 100%);
-  border: 1px solid rgba(108, 92, 231, 0.22);
+  object-fit: cover;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.75) inset,
     0 6px 20px rgba(108, 92, 231, 0.2),
     0 4px 14px rgba(26, 188, 156, 0.12),
     0 2px 6px rgba(15, 23, 42, 0.06);

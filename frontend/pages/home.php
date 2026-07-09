@@ -10,8 +10,8 @@ $year = date('Y');
   <meta name="color-scheme" content="light dark">
   <meta name="description" content="Know which content makes money. Then make more of it. Plan posts, track real growth, and get statistics-based insights across Instagram, TikTok, and YouTube — all from one calm workspace.">
   <title>CreatorzHive — Know which content makes money</title>
-  <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>">
-  <link rel="apple-touch-icon" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>">
+  <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2">
+  <link rel="apple-touch-icon" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2">
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/main.css')) ?>">
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/components.css')) ?>">
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/animations.css')) ?>">
@@ -23,7 +23,7 @@ $year = date('Y');
 <header class="landing-nav">
   <div class="landing-nav-inner">
     <a href="<?= htmlspecialchars(route_url('home')) ?>" class="landing-logo">
-      <img class="landing-logo-mark" src="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>" alt="">
+      <img class="landing-logo-mark" src="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2" alt="">
       <span class="landing-logo-text">CreatorzHive</span>
     </a>
     <nav class="landing-nav-links" aria-label="Section links">
@@ -294,7 +294,7 @@ $year = date('Y');
 <footer class="landing-footer">
   <div class="landing-footer-inner">
     <div class="landing-footer-brand">
-      <img class="landing-logo-mark" src="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>" alt="">
+      <img class="landing-logo-mark" src="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2" alt="">
       <span class="landing-logo-text">CreatorzHive</span>
     </div>
     <nav class="landing-footer-links" aria-label="Legal">

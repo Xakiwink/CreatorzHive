@@ -12,8 +12,8 @@ $googleAuthStartUrl = google_auth_start_url('creator');
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Sign in — CreatorzHive</title>
-  <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>">
-  <link rel="apple-touch-icon" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>">
+  <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2">
+  <link rel="apple-touch-icon" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2">
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/auth.css')) ?>">
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/dark-mode.css')) ?>">
 </head>
@@ -22,7 +22,7 @@ $googleAuthStartUrl = google_auth_start_url('creator');
   <aside class="left" aria-hidden="false">
     <div class="auth-brand-inner">
       <div class="auth-logo-row">
-        <span class="auth-logo-mark" aria-hidden="true"></span>
+        <img class="auth-logo-mark" src="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2" alt="">
       </div>
       <span class="eyebrow auth-brand-eyebrow">Account</span>
       <h1>Welcome back</h1>

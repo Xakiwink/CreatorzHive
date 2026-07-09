@@ -11,6 +11,8 @@ $googleAuthStartUrl = google_auth_start_url('creator');
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Create account — CreatorzHive</title>
+  <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2">
+  <link rel="apple-touch-icon" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2">
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/auth.css')) ?>">
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/dark-mode.css')) ?>">
 </head>
@@ -18,7 +20,7 @@ $googleAuthStartUrl = google_auth_start_url('creator');
 <div class="auth-wrap">
   <aside class="left">
     <div class="auth-brand-inner">
-      <div class="auth-logo-row"><span class="auth-logo-mark" aria-hidden="true"></span></div>
+      <div class="auth-logo-row"><img class="auth-logo-mark" src="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2" alt=""></div>
       <span class="eyebrow auth-brand-eyebrow">Join</span>
       <h1>Join CreatorzHive</h1>
       <p class="auth-tagline">Built for creators and brands who treat content like a business.</p>

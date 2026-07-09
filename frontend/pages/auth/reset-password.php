@@ -10,6 +10,8 @@ $token = isset($_GET['token']) ? htmlspecialchars((string) $_GET['token'], ENT_Q
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>New password — CreatorzHive</title>
+  <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2">
+  <link rel="apple-touch-icon" href="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2">
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/auth.css')) ?>">
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('frontend/css/dark-mode.css')) ?>">
 </head>
@@ -17,7 +19,7 @@ $token = isset($_GET['token']) ? htmlspecialchars((string) $_GET['token'], ENT_Q
 <div class="auth-wrap">
   <aside class="left">
     <div class="auth-brand-inner">
-      <div class="auth-logo-row"><span class="auth-logo-mark" aria-hidden="true"></span></div>
+      <div class="auth-logo-row"><img class="auth-logo-mark" src="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2" alt=""></div>
       <h1>Choose a new password</h1>
       <p class="auth-tagline">Use at least 8 characters and mix letters with numbers or symbols.</p>
     </div>
