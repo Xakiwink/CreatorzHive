@@ -76,9 +76,9 @@ final class AdminUserController extends AbstractController
         $this->renderPanel('settings');
     }
 
-    public function overviewPage(): void
+    public function dashboardPage(): void
     {
-        $this->renderPanel('overview');
+        $this->renderPanel('dashboard');
     }
 
     public function securityPage(): void

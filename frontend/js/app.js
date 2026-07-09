@@ -61,9 +61,9 @@
     'settings-integrations': 'Settings',
     'settings-notifications': 'Settings',
     'settings-preferences': 'Settings',
+    'admin-dashboard': 'Dashboard',
     'admin-users': 'User Management',
     'admin-settings': 'Platform Settings',
-    'admin-overview': 'Overview',
     'admin-security': 'Security & Activity',
   };
 
@@ -92,7 +92,7 @@
     });
 
     if (contentRoutes.indexOf(route) !== -1) {
-      window.location.href = routeQuery('settings');
+      window.location.href = routeQuery('admin-dashboard');
     }
   }
 

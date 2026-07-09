@@ -26,7 +26,7 @@ router_get_action('settings-notifications', CreatorzHive\Controllers\SettingsCon
 router_get_action('settings-preferences', CreatorzHive\Controllers\SettingsController::class, 'preferences', ['auth']);
 router_get_action('admin-users', CreatorzHive\Controllers\AdminUserController::class, 'usersPage', ['auth', 'role:admin']);
 router_get_action('admin-settings', CreatorzHive\Controllers\AdminUserController::class, 'settingsPage', ['auth', 'role:admin']);
-router_get_action('admin-overview', CreatorzHive\Controllers\AdminUserController::class, 'overviewPage', ['auth', 'role:admin']);
+router_get_action('admin-dashboard', CreatorzHive\Controllers\AdminUserController::class, 'dashboardPage', ['auth', 'role:admin']);
 router_get_action('admin-security', CreatorzHive\Controllers\AdminUserController::class, 'securityPage', ['auth', 'role:admin']);
 
 router_get_action('google-auth', CreatorzHive\Controllers\GoogleAuthController::class, 'start');

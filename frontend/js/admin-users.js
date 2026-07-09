@@ -271,7 +271,7 @@
 
   function initAdminTabs() {
     var panels = document.querySelectorAll('.settings-panel');
-    var activePanel = String(window.__ADMIN_PANEL__ || 'users');
+    var activePanel = String(window.__ADMIN_PANEL__ || 'dashboard');
     panels.forEach(function (p) {
       p.classList.toggle('d-none', p.id !== 'panel-' + activePanel);
     });

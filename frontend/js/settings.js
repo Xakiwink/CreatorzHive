@@ -474,8 +474,8 @@
       '<div class="card-header"><h4 class="card-title">Full admin controls</h4></div><div class="card-body">' +
       '<p class="text-sm text-muted mb-3">Platform snapshot, provider toggles, user management, and security activity now live under the dedicated Admin section.</p>' +
       '<a class="btn btn-primary btn-sm" href="' +
-      esc(routeUrl('admin-overview')) +
-      '">Go to Admin Overview</a>' +
+      esc(routeUrl('admin-dashboard')) +
+      '">Go to Admin Dashboard</a>' +
       '</div></div></div>';
   }
 

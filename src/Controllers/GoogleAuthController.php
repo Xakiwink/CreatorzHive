@@ -61,8 +61,10 @@ final class GoogleAuthController extends AbstractController
 
     public function start(): void
     {
-        if (session_get_user() !== null) {
-            response_redirect(route_url('dashboard'));
+        $existing = session_get_user();
+        if ($existing !== null) {
+            $landing = (string) ($existing['role'] ?? '') === 'admin' ? 'admin-dashboard' : 'dashboard';
+            response_redirect(route_url($landing));
         }
 
         if (!google_auth_is_configured()) {
@@ -152,7 +154,8 @@ final class GoogleAuthController extends AbstractController
         }
 
         session_remove('google_auth_role');
-        response_redirect(route_url('dashboard'));
+        $landing = (string) ($user['role'] ?? '') === 'admin' ? 'admin-dashboard' : 'dashboard';
+        response_redirect(route_url($landing));
     }
 
     /**

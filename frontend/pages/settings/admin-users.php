@@ -28,7 +28,35 @@
 
         <div class="settings-panels">
 
-          <section id="panel-users" class="settings-panel card card--feature">
+          <section id="panel-dashboard" class="settings-panel card card--feature">
+            <div class="card-header"><h3 class="card-title">Dashboard</h3></div>
+            <div class="card-body">
+              <h4 class="settings-subheading">System snapshot</h4>
+              <div class="admin-summary-grid" id="adminSummaryCards"></div>
+
+              <hr class="settings-divider">
+
+              <h4 class="settings-subheading">API integrations control</h4>
+              <p class="text-muted text-sm mb-3">Enable/disable providers, test credentials, and monitor token expiry risks. Tokens are read from <code>.env</code>.</p>
+              <div class="table-wrapper">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Provider</th>
+                      <th>Enabled</th>
+                      <th>Token</th>
+                      <th>Connected</th>
+                      <th>Expiring &lt;7d</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminIntegrationsBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="panel-users" class="settings-panel card card--feature d-none">
             <div class="card-header"><h3 class="card-title">User management</h3></div>
             <div class="card-body">
               <h4 class="settings-subheading">Create user</h4>
@@ -121,34 +149,6 @@
             </div>
           </section>
 
-          <section id="panel-overview" class="settings-panel card card--feature d-none">
-            <div class="card-header"><h3 class="card-title">System overview</h3></div>
-            <div class="card-body">
-              <h4 class="settings-subheading">System snapshot</h4>
-              <div class="admin-summary-grid" id="adminSummaryCards"></div>
-
-              <hr class="settings-divider">
-
-              <h4 class="settings-subheading">API integrations control</h4>
-              <p class="text-muted text-sm mb-3">Enable/disable providers, test credentials, and monitor token expiry risks. Tokens are read from <code>.env</code>.</p>
-              <div class="table-wrapper">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>Provider</th>
-                      <th>Enabled</th>
-                      <th>Token</th>
-                      <th>Connected</th>
-                      <th>Expiring &lt;7d</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="adminIntegrationsBody"></tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-
           <section id="panel-security" class="settings-panel card card--feature d-none">
             <div class="card-header"><h3 class="card-title">Security &amp; activity</h3></div>
             <div class="card-body">
@@ -195,7 +195,7 @@
 <div id="modal-container"></div>
 <div id="toast-container"></div>
 <?php require __DIR__ . '/../partials/app_script_globals.php'; ?>
-<script>window.__ADMIN_PANEL__ = <?= json_encode((string) ($admin_panel ?? 'users')) ?>;</script>
+<script>window.__ADMIN_PANEL__ = <?= json_encode((string) ($admin_panel ?? 'dashboard')) ?>;</script>
 <script src="<?= htmlspecialchars(asset_url('frontend/js/utils.js')) ?>"></script>
 <script src="<?= htmlspecialchars(asset_url('frontend/js/app.js')) ?>"></script>
 <script src="<?= htmlspecialchars(asset_url('frontend/js/admin-users.js')) ?>"></script>

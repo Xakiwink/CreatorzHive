@@ -14,8 +14,10 @@ final class SystemController extends AbstractController
 {
     public function home(): void
     {
-        if (session_get_user() !== null) {
-            $this->redirect(route_url('dashboard'));
+        $user = session_get_user();
+        if ($user !== null) {
+            $landing = (string) ($user['role'] ?? '') === 'admin' ? 'admin-dashboard' : 'dashboard';
+            $this->redirect(route_url($landing));
 
             return;
         }

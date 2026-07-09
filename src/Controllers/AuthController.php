@@ -220,8 +220,9 @@ final class AuthController extends AbstractController
         
             $this->rateLimit->reset($rateRow);
             $this->rateLimit->reset($identifierRateRow);
-        
-            $this->json->success(['redirect' => route_url('dashboard')], 'Login successful');
+
+            $landing = (string) ($user['role'] ?? '') === 'admin' ? 'admin-dashboard' : 'dashboard';
+            $this->json->success(['redirect' => route_url($landing)], 'Login successful');
     }
 
     public function logout()
