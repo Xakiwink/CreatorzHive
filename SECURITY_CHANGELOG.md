@@ -14,33 +14,35 @@ Companion to SECURITY_AUDIT_REPORT.md and SECURITY_FIX_PLAN.md. Every file touch
 
 ---
 
-## `src/Services/InstagramOAuthService.php`
+## `src/Services/InstagramOAuthService.php` — REVERTED
 
-**Change:** Removed two unconditional `file_put_contents()` calls inside `doCompleteConnection()` that wrote the full Instagram token-exchange payload (including the plaintext long-lived access token and a 30-character prefix of the short-lived token) to `backend/storage/logs/oauth-instagram-debug.json`. Removed the now-unused `use function storage_path;` import.
+**Change (applied then reverted):** Removed, then restored, two `file_put_contents()` calls inside `doCompleteConnection()` that write the full Instagram token-exchange payload (including the plaintext long-lived access token and a 30-character prefix of the short-lived token) to `backend/storage/logs/oauth-instagram-debug.json`.
 
-**Security improvement:** Eliminates a persistent plaintext-secret-on-disk exposure that bypassed the app's own token-at-rest encryption (`TokenCrypto`).
+**Why reverted:** This logging was added deliberately in a prior session (`705f6d0 Fix: Add OAuth exchange debug logging for Instagram`) to diagnose Instagram's token exchange on InfinityFree — active diagnostic tooling, not dead code. Removing it took away real troubleshooting capability for a fragile integration. Reverted via `git revert 53775bd` (commit `d62c1e8`); file is now byte-identical to before this audit touched it (`git diff` against the pre-audit commit is empty).
 
-**Verification:** `php -l src/Services/InstagramOAuthService.php` — no syntax errors. `tests/unit/InstagramOAuthTest.php` does not exercise `doCompleteConnection()`'s logging (only `authorizeUrl()`), so no test changes were needed. Confirmed no other code reads `oauth-instagram-debug.json` (grepped repo-wide).
-
----
-
-## `src/Controllers/InstagramOAuthController.php`
-
-**Change:** `buildState()`/`verifyState()` now embed a signed issued-at timestamp in the `state` payload (`userId.nonce.issuedAt.hmac`, was `userId.nonce.hmac`) and reject states older than a new `STATE_MAX_AGE` constant (900 seconds / 15 minutes).
-
-**Security improvement:** Bounds the replay window for the Instagram OAuth `state` token (see SECURITY_AUDIT_REPORT.md Finding 2). Does not change happy-path behavior — real connections complete in well under 15 minutes.
-
-**Verification:** `php -l` clean. `tests/unit/InstagramOAuthTest.php` only asserts on `authorizeUrl()` output (the opaque `state` string it's given, not its internal format), so it's unaffected.
+**Status:** Reverted. The plaintext-token-on-disk concern is still open — see SECURITY_FIX_PLAN.md item 9 for a way to address it without repeating this mistake (redact the token value, keep the rest of the diagnostic).
 
 ---
 
-## `ig-cb.php`
+## `src/Controllers/InstagramOAuthController.php` — REVERTED
 
-**Change:** Updated the inline `state` parser (this file independently re-implements state verification rather than reusing the controller) to match the new 4-part format and expiry check, referencing `InstagramOAuthController::STATE_MAX_AGE` so both verifiers can't drift out of sync.
+**Change (applied then reverted):** `buildState()`/`verifyState()` briefly embedded a signed issued-at timestamp in the `state` payload (`userId.nonce.issuedAt.hmac`, was `userId.nonce.hmac`) and rejected states older than a new `STATE_MAX_AGE` constant (900 seconds).
 
-**Security improvement:** Keeps this file — the one actually configured as the live callback via `INSTAGRAM_OAUTH_REDIRECT_URI` in `.env` — consistent with the hardened verification in the controller class.
+**Why reverted:** This state format (`userId.nonce.hmac`, no timestamp) was deliberately built in a prior session (`01b27a4`, `6b96c0a`) to make the Instagram OAuth flow session-independent, working around PHP workers not sharing session files across the OAuth redirect on InfinityFree shared hosting. Changing the format was not a safe, non-breaking change as this audit initially assessed it to be. Reverted via `git revert c229a6a` (commit `1663515`); file is now byte-identical to before this audit touched it.
 
-**Verification:** `php -l ig-cb.php` — no syntax errors. Confirmed the class reference resolves (`namespace CreatorzHive\Controllers` in the source file, referenced fully-qualified from the global-namespace script, after `vendor/autoload.php` is required earlier in the same file).
+**Status:** Reverted. Finding 2's underlying concern (no session binding, no expiry) remains open — see SECURITY_FIX_PLAN.md item 10 for a staged, test-before-trust approach.
+
+---
+
+## `ig-cb.php` — REVERTED
+
+**Change (applied then reverted):** The inline `state` parser (this file independently re-implements state verification rather than reusing the controller) was updated to match the controller's new 4-part format and expiry check.
+
+**Why reverted:** Same reason as the Controller change above — this file is the one actually configured as the live callback via `INSTAGRAM_OAUTH_REDIRECT_URI` in `.env`. Reverted in the same commit as the Controller (`1663515`); confirmed both files parse the original `userId.nonce.hmac` format identically again.
+
+**Incident note:** Between the fix being applied and reverted, the user re-uploaded only the reverted `InstagramOAuthController.php` (which generates the old 3-part state) while this file on the live server still expected the new 4-part format — meaning every Instagram connection attempt failed with "Invalid OAuth state" until this file was also reverted locally and re-uploaded. This is why any future change to this OAuth flow must treat the Controller, Service, and this file as one atomic unit — see the note at the top of SECURITY_FIX_PLAN.md's "Recommended, not applied" section.
+
+**Status:** Reverted.
 
 ---
 

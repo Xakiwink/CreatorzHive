@@ -8,15 +8,17 @@
 
 The codebase is in noticeably good shape for a hand-rolled procedural/OOP hybrid PHP app: **all SQL access goes through a single PDO wrapper using prepared statements** (no string-concatenated queries were found anywhere), **CSRF protection is applied consistently to every state-changing POST route**, **output escaping (`htmlspecialchars` server-side, a shared `escapeHtml()` helper client-side) is applied consistently** everywhere sampled, session cookies are `HttpOnly`/`SameSite=Lax` with a configurable `Secure` flag, and passwords are hashed with bcrypt (cost 12). **No malware, web shells, obfuscated payloads, or backdoors were found** — the oddly-named `tiktokzewzmpsjzQhD8YOLrokyLMUavbPvshxz.txt` at the project root is a legitimate TikTok domain-verification file, not malicious.
 
-Four confirmed issues were found and fixed (see below); none required changing routing, UI, or business logic. One additional issue (Instagram OAuth's stateless-vs-session-bound design) is only partially mitigated — a full fix risks reintroducing a session-loss bug this design was built to work around, so per the audit brief it is documented as a recommendation rather than auto-applied.
+Four confirmed issues were found; two required changing routing, UI, or business logic outcomes for the Instagram integration in ways this audit initially got wrong (see the correction note below Finding 2 and Finding 3) and were reverted at the user's request. The other two (Findings 1 and 4) required no functional change and remain fixed.
+
+**Correction (post-review):** Findings 2 and 3 below were initially "fixed" by this audit, but those fixes were reverted after deployment because they broke a working production integration. Both the Instagram OAuth state design (Finding 2) and its debug logging (Finding 3) turned out to be **deliberate fixes from a prior session** (see git history `01b27a4`, `6b96c0a`, `705f6d0`) for a real InfinityFree hosting constraint — PHP workers not sharing session files across the OAuth redirect — not oversights. This audit did not check recent commit history closely enough before changing them. They are documented below as-found, with their status corrected to **Reverted**, and the security concern each raised is carried forward as a recommendation only, to be implemented carefully (if at all) with the working integration in mind. See SECURITY_FIX_PLAN.md and SECURITY_CHANGELOG.md for the full correction.
 
 None of these findings point to an obvious cause for the prior Google Safe Browsing "Dangerous Site" flag (no malicious script/redirect/payload exists in the code). The most plausible code-level contributor is Finding 1 below (a public, unauthenticated diagnostic page); it's also common for InfinityFree's shared IP ranges to inherit reputation flags from other free-tier tenants unrelated to your code. See SECURITY_FIX_PLAN.md for the Search Console recommendation.
 
 | # | Finding | Severity | Status |
 |---|---------|----------|--------|
 | 1 | `public/verify-deployment.php` publicly discloses DB host/name/user, `APP_SECRET` presence, and table row counts with no auth | **High** | ✅ Fixed |
-| 2 | Instagram OAuth `state` is a stateless, session-independent bearer token (unlike Google/TikTok/YouTube) | **High** | ⚠️ Partially mitigated (expiry added); full fix documented, not auto-applied |
-| 3 | Instagram OAuth token exchange logged plaintext long-lived access token to disk unconditionally | **Medium** | ✅ Fixed |
+| 2 | Instagram OAuth `state` is a stateless, session-independent bearer token (unlike Google/TikTok/YouTube) | **High** | ↩️ Reverted — deliberate design, not a bug; see correction above |
+| 3 | Instagram OAuth token exchange logged plaintext long-lived access token to disk unconditionally | **Medium** | ↩️ Reverted — deliberate diagnostic tooling, not leftover debug code; see correction above |
 | 4 | Legacy, unrouted `app/` (App\* namespace) and root `routes.php` directly reachable over HTTP | **Low** | ✅ Fixed |
 
 ---
@@ -59,19 +61,17 @@ Instagram's flow (both entry points — the routed `InstagramOAuthController::ca
 
 This means: a user who legitimately starts "Connect Instagram" and obtains a valid `state` for their own account could send the resulting Instagram authorize URL to a victim. If the victim completes Instagram's own consent screen (for their own real Instagram Business account), the callback fires with the attacker's `state` value + the victim's authorization `code`. The app would then (a) log the victim's browser in as the attacker's CreatorzHive account, and (b) link the victim's Instagram Business account (and its access token) to the attacker's account — because nothing ties the `state` to the session that initiated it.
 
-### Why this wasn't blindly "fixed" to match the other three flows
+### Why this wasn't blindly "fixed" to match the other three flows — and what happened when it was
 
-The self-contained design (and the very existence of the duplicate `ig-cb.php` handler with extensive session-debug logging) strongly suggests this was a deliberate workaround for a session-loss problem specific to the Instagram redirect chain on InfinityFree — session-binding it like Google/TikTok/YouTube risks reintroducing that original bug. Per the audit brief's instruction to not auto-apply changes that risk behavior regressions, this was **not** converted to session-bound state.
+The self-contained design (and the very existence of the duplicate `ig-cb.php` handler with extensive session-debug logging) strongly suggested this was a deliberate workaround for a session-loss problem specific to the Instagram redirect chain on InfinityFree. That suspicion was correct: git history (`01b27a4 Fix: Make Instagram OAuth session-independent, fix fingerprint on shared hosting`, `6b96c0a Fix: Three-part Instagram OAuth session fix`) confirms this exact three-part `state` format was built, deliberately, to work around **PHP workers not sharing session files across the OAuth round-trip on InfinityFree shared hosting**.
 
-### Fix applied (safe, non-breaking mitigation)
+This audit initially applied a "safe, non-breaking" mitigation anyway — adding a signed issued-at timestamp to the state payload (`userId.nonce.timestamp.hmac`, a fourth part) with a 15-minute validity window, updated in both `InstagramOAuthController::verifyState()` and `ig-cb.php`'s independent inline verifier. This was deployed, but the user only re-uploaded the reverted `InstagramOAuthController.php` (not `ig-cb.php`, which is the file actually wired up as the live callback via `INSTAGRAM_OAUTH_REDIRECT_URI`), so for a period the two verifiers disagreed on the state format and every Instagram connection attempt failed with "Invalid OAuth state." **All three files have since been reverted to the exact pre-audit state** (confirmed via `git diff` against the pre-audit commit — no remaining differences).
 
-Added a signed issued-at timestamp to the state payload (`userId.nonce.timestamp.hmac`) with a 15-minute validity window, checked in **both** `InstagramOAuthController::verifyState()` and `ig-cb.php`'s inline verifier (kept in lock-step since they parse the same signed format). This doesn't change the happy path at all (a real OAuth round-trip completes in seconds) but sharply reduces the window in which a leaked/shared `state` value could be replayed.
+### Recommended follow-up (not applied — see SECURITY_FIX_PLAN.md)
 
-### Recommended follow-up (not auto-applied — see SECURITY_FIX_PLAN.md)
+The underlying concern (a signed `state` with no expiry, valid across sessions) is real, but any fix must be tested against the actual InfinityFree environment before being trusted, given how narrowly the original session-loss bug was worked around. See SECURITY_FIX_PLAN.md for a staged approach.
 
-Session-bind the state as a defense-in-depth layer while keeping the signed token as a fallback, and/or make the state single-use (delete/mark-consumed on first successful callback) via a small `job_queue`-style table, so a captured state can't be reused a second time even within the validity window.
-
-### Status: Partially mitigated (expiry window added); deeper fix documented as a recommendation
+### Status: Reverted — not currently mitigated. Treat any future change here as requiring live testing on InfinityFree before considering it done, not just a local `php -l` check.
 
 ---
 
@@ -85,11 +85,15 @@ Session-bind the state as a defense-in-depth layer while keeping the signed toke
 
 Every Instagram connection wrote the full token-exchange response — including the **long-lived access token in plaintext** (`exchange_data`) and a 30-character prefix of the short-lived token — to `backend/storage/logs/oauth-instagram-debug.json`, **unconditionally**, regardless of `APP_DEBUG`. `backend/` is blocked from direct web access by `.htaccess`, so this wasn't remotely readable in the current configuration, but it directly undermines the app's own `TokenCrypto`/encrypted-token-at-rest design by leaving a plaintext copy on disk indefinitely (the file is overwritten, not rotated, but persists between connections), and would become exposed if the `.htaccess` rule were ever misapplied or the host ignored it.
 
-### Fix applied
+### Correction — this was not dead debugging code
 
-Removed both unconditional `file_put_contents(...oauth-instagram-debug.json...)` calls. This is dead debugging code with no functional purpose — connection behavior, error handling, and return values are unchanged.
+This audit initially removed both `file_put_contents(...oauth-instagram-debug.json...)` calls, on the assumption they were leftover debug cruft with no functional purpose. That was wrong: git history (`705f6d0 Fix: Add OAuth exchange debug logging for Instagram`) shows this logging was added deliberately, in the same debugging session that produced the working OAuth design in Finding 2, to diagnose Instagram's token-exchange behavior. It's active diagnostic tooling for a fragile, still-monitored integration, not dead code. It has been restored in full.
 
-### Status: Fixed
+### Recommended follow-up (not applied — see SECURITY_FIX_PLAN.md)
+
+The plaintext-token-on-disk concern is still valid and worth addressing, but *without* removing the diagnostic capability — e.g. redact the token value while keeping the rest of the diagnostic fields, or gate the token-containing fields specifically behind `APP_DEBUG`. This needs sign-off before being applied again, given what happened the first time.
+
+### Status: Reverted — logging restored as-is; the data-exposure concern remains open, see SECURITY_FIX_PLAN.md.
 
 ---
 
