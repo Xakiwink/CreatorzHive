@@ -130,7 +130,6 @@ CLI utilities for local development and server diagnostics:
 public/
 ├── index.php           Front controller — routes all requests
 ├── setup.php           One-time setup wizard (delete after use)
-├── verify-deployment.php  Deployment health checker
 ├── webhook/
 │   └── process-jobs.php  Background job trigger (called by UptimeRobot)
 ├── uploads/            User-uploaded media files

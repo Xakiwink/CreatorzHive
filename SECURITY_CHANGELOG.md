@@ -4,13 +4,13 @@ Companion to SECURITY_AUDIT_REPORT.md and SECURITY_FIX_PLAN.md. Every file touch
 
 ---
 
-## `public/verify-deployment.php`
+## `public/verify-deployment.php` — DELETED
 
-**Change:** Added an IP-allowlist gate (reusing `SETUP_ALLOWED_IPS` from `.env`, same pattern as `public/setup.php`) at the top of the file. Requests from disallowed IPs get HTTP 403 and a short message, before `error_reporting`/`display_errors` are touched and before any DB/env introspection runs.
+**Change:** First added an IP-allowlist gate (reusing `SETUP_ALLOWED_IPS` from `.env`, same pattern as `public/setup.php`). While the user was testing that fix, it surfaced an uncaught `Error: Call to undefined function env()` on line 54 of the *original* file — confirmed via `git show` of the pre-audit commit that line 54 is exactly `$db_host = env('DB_HOST', 'NOT SET');`, called before `backend/index.php` (which defines `env()`) is required later in the same file. Further review found that later `require_once backend/index.php` also runs the full front controller's `router_dispatch()`, which 404s (no route registered for this path) and calls `exit`, meaning the DB/Application/Security/Job/Features sections never actually ran for anyone, ever. Given two independent functional bugs on top of the original disclosure issue, and the file's own docblock already calling it a delete-after-use tool, the user chose deletion (`git rm public/verify-deployment.php`) over a repair.
 
-**Security improvement:** Closes an unauthenticated information-disclosure endpoint that exposed `DB_HOST`/`DB_DATABASE`/`DB_USERNAME`, `APP_SECRET` presence + length, and row counts across `users`, `posts`, `social_accounts`, `deals`, `invoices`, `notifications`, `job_queue`.
+**Security improvement:** Removes an unauthenticated information-disclosure endpoint that exposed `DB_HOST`/`DB_DATABASE`/`DB_USERNAME`, `APP_SECRET` presence + length, and row counts across `users`, `posts`, `social_accounts`, `deals`, `invoices`, `notifications`, `job_queue` — permanently, rather than gating a broken tool.
 
-**Verification:** `php -l public/verify-deployment.php` — no syntax errors. Logic mirrors `public/setup.php`'s already-deployed, working IP-gate.
+**Verification:** Grepped the repo for any reference to `verify-deployment.php` outside documentation — none in code/routes/`.htaccess`, confirming nothing depends on it. Updated the one stale doc reference in `docs/guides/CODEBASE_ORGANIZATION.md`.
 
 ---
 

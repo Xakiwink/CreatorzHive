@@ -6,12 +6,12 @@ Companion to SECURITY_AUDIT_REPORT.md. Lists every planned fix, why it's require
 
 ## Applied fixes
 
-### 1. IP-gate `public/verify-deployment.php`
+### 1. Delete `public/verify-deployment.php`
 
 - **Why:** Publicly readable by anyone on the internet; discloses DB host/name/user, `APP_SECRET` presence+length, and business-data row counts (Finding 1).
 - **Files:** `public/verify-deployment.php`
-- **Change:** Added the same `SETUP_ALLOWED_IPS`-based allowlist check `public/setup.php` already uses, returning HTTP 403 before any diagnostic logic or `display_errors` toggle runs.
-- **Expected impact:** None for legitimate use — once you add your IP to `SETUP_ALLOWED_IPS` in `.env` (see deployment instructions below), the page behaves exactly as before. Anonymous visitors now get a 403 instead of your infrastructure details.
+- **Change:** First tried an IP-allowlist gate (mirroring `public/setup.php`'s `SETUP_ALLOWED_IPS` pattern). Testing that fix surfaced two independent, pre-existing functional bugs in the page itself: (a) it calls `env()` in its "Environment & Configuration" section before `backend/index.php` — which defines that helper — is required later in the file, and (b) that later `require_once backend/index.php` runs the full router, which 404s (no route is registered for this path) and calls `exit` partway through, meaning the DB/Application/Security/Job/Features sections have likely never actually executed for anyone. Given the file's own docblock already calls it a one-time, delete-after-use tool, and it has two functional bugs on top of the disclosure issue, it was deleted (`git rm`) rather than repaired.
+- **Expected impact:** None for legitimate use — the page's own instructions already say to delete it once deployment is confirmed. If a deployment-diagnostics tool is wanted again later, it should be rewritten from scratch behind the `SETUP_ALLOWED_IPS` gate rather than resurrecting this version.
 
 ### 2. ~~Remove unconditional plaintext OAuth token logging~~ — REVERTED
 
@@ -67,6 +67,6 @@ Companion to SECURITY_AUDIT_REPORT.md. Lists every planned fix, why it's require
 
 ---
 
-## Deployment note for fix #1
+## Deployment note
 
-`SETUP_ALLOWED_IPS` in the live `.env` is currently empty, meaning both `setup.php` and (as of this fix) `verify-deployment.php` only allow `127.0.0.1`/`::1` — i.e., **nobody** can reach either page remotely right now, including you. If you need to use `verify-deployment.php` again, temporarily set `SETUP_ALLOWED_IPS=<your IP>` (or `SETUP_ALLOWED_IPS=*` briefly, then remove it) in `.env`, matching the existing instructions already printed on the `setup.php` "Access Denied" screen.
+`SETUP_ALLOWED_IPS` in the live `.env` is currently empty, meaning `setup.php` only allows `127.0.0.1`/`::1` — i.e., **nobody** can reach it remotely right now, including you. If you need to use `setup.php` again, temporarily set `SETUP_ALLOWED_IPS=<your IP>` (or `SETUP_ALLOWED_IPS=*` briefly, then remove it) in `.env`.

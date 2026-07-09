@@ -16,7 +16,7 @@ None of these findings point to an obvious cause for the prior Google Safe Brows
 
 | # | Finding | Severity | Status |
 |---|---------|----------|--------|
-| 1 | `public/verify-deployment.php` publicly discloses DB host/name/user, `APP_SECRET` presence, and table row counts with no auth | **High** | ✅ Fixed |
+| 1 | `public/verify-deployment.php` publicly discloses DB host/name/user, `APP_SECRET` presence, and table row counts with no auth | **High** | ✅ Fixed (deleted) |
 | 2 | Instagram OAuth `state` is a stateless, session-independent bearer token (unlike Google/TikTok/YouTube) | **High** | ↩️ Reverted — deliberate design, not a bug; see correction above |
 | 3 | Instagram OAuth token exchange logged plaintext long-lived access token to disk unconditionally | **Medium** | ↩️ Reverted — deliberate diagnostic tooling, not leftover debug code; see correction above |
 | 4 | Legacy, unrouted `app/` (App\* namespace) and root `routes.php` directly reachable over HTTP | **Low** | ✅ Fixed |
@@ -41,9 +41,11 @@ This is exactly the kind of endpoint that gets found by automated scanners and c
 
 ### Fix applied
 
-Gated the page behind the same IP-allowlist mechanism `public/setup.php` already uses (`SETUP_ALLOWED_IPS` env var / localhost default), returning HTTP 403 to disallowed visitors before any diagnostic output or error-display setting is executed. No functionality was removed — the page still works exactly as before for whoever configures their IP in `.env`, matching the existing, already-trusted pattern used by setup.php.
+First gated the page behind the same IP-allowlist mechanism `public/setup.php` already uses. While verifying that fix, the user found the page also fatals with an uncaught `Error: Call to undefined function env()` — the "Environment & Configuration" section calls `env()` before anything loads that helper (`backend/index.php`, which defines it, isn't required until a later section). A second, more serious bug was found while investigating: that later `require_once .../backend/index.php` runs the full front controller including `router_dispatch()`, which — since no route is registered for `verify-deployment.php` — ends by calling `response_html(...); exit;` on a 404. That silently truncates the page after Section 1 every time, meaning the DB/Application/Security/Job/Features checks have likely never actually run for anyone.
 
-### Status: Fixed
+Given the page had two independent, pre-existing functional bugs on top of the disclosure issue and was already documented as a one-time, delete-after-use tool, the user chose deletion over a repair. **The file has been removed** (`git rm public/verify-deployment.php`) rather than patched.
+
+### Status: Fixed (deleted)
 
 ---
 
