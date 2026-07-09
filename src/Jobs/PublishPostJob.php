@@ -11,7 +11,9 @@ use CreatorzHive\Repositories\SocialAccountRepository;
 use CreatorzHive\Services\NotificationService;
 use CreatorzHive\Services\SocialApiService;
 use RuntimeException;
+use function env;
 use function job_runner_dispatch;
+use function upload_url_needs_public_segment;
 
 final class PublishPostJob implements JobHandlerInterface
 {
@@ -56,7 +58,7 @@ final class PublishPostJob implements JobHandlerInterface
             throw new RuntimeException('Invalid post_id');
         }
 
-        $post = $this->posts->findById($postId);
+        $post = $this->posts->getWithMedia($postId);
         if ($post === null) {
             throw new RuntimeException('Post not found');
         }
@@ -68,6 +70,35 @@ final class PublishPostJob implements JobHandlerInterface
         if (($post['status'] ?? '') !== 'scheduled') {
             return;
         }
+
+        // findById() only returns raw post columns -- cover_media_id is a
+        // foreign key, not a URL. Instagram/YouTube publishing needs an
+        // actual reachable image URL, so resolve it from the attached media
+        // (falling back to the first attached file if no cover was chosen).
+        $media = $post['media'] ?? [];
+        $coverMediaId = (int) ($post['cover_media_id'] ?? 0);
+        $coverUrl = '';
+        foreach ($media as $m) {
+            if ($coverMediaId > 0 && (int) ($m['id'] ?? 0) === $coverMediaId) {
+                $coverUrl = (string) ($m['cdn_url'] ?? '');
+                break;
+            }
+        }
+        if ($coverUrl === '' && $media !== []) {
+            $coverUrl = (string) ($media[0]['cdn_url'] ?? '');
+        }
+        // media_files.cdn_url is stored relative (e.g. "uploads/x.jpg") -- fine
+        // for an <img> tag resolved against the page origin, but Instagram's
+        // Graph API fetches image_url itself server-side, so it must be a
+        // fully-qualified public URL, not a relative/root-relative path.
+        if ($coverUrl !== '' && !preg_match('#^https?://#i', $coverUrl)) {
+            $relative = ltrim($coverUrl, '/');
+            if (upload_url_needs_public_segment() && strpos($relative, 'public/') !== 0) {
+                $relative = 'public/' . $relative;
+            }
+            $coverUrl = rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/' . $relative;
+        }
+        $post['cover_url'] = $coverUrl;
 
         $userId = (int) $post['user_id'];
         $platforms = $post['platforms'] ?? [];
