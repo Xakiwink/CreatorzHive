@@ -23,7 +23,7 @@ $year = date('Y');
 <header class="landing-nav">
   <div class="landing-nav-inner">
     <a href="<?= htmlspecialchars(route_url('home')) ?>" class="landing-logo">
-      <span class="landing-logo-mark" aria-hidden="true"></span>
+      <img class="landing-logo-mark" src="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>" alt="">
       <span class="landing-logo-text">CreatorzHive</span>
     </a>
     <nav class="landing-nav-links" aria-label="Section links">
@@ -294,7 +294,7 @@ $year = date('Y');
 <footer class="landing-footer">
   <div class="landing-footer-inner">
     <div class="landing-footer-brand">
-      <span class="landing-logo-mark" aria-hidden="true"></span>
+      <img class="landing-logo-mark" src="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>" alt="">
       <span class="landing-logo-text">CreatorzHive</span>
     </div>
     <nav class="landing-footer-links" aria-label="Legal">

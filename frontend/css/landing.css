@@ -25,8 +25,7 @@
   height: 32px;
   flex-shrink: 0;
   border-radius: var(--radius-md);
-  background: linear-gradient(145deg, #ede9fe 0%, #e2e8f0 100%);
-  border: 1px solid var(--color-border);
+  object-fit: cover;
 }
 
 .landing-logo-text {

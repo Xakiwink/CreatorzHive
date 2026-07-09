@@ -51,8 +51,7 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  background: linear-gradient(145deg, #ede9fe 0%, #e2e8f0 100%);
-  border: 1px solid var(--color-border);
+  object-fit: cover;
   box-shadow: var(--shadow-xs);
 }
 
