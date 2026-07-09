@@ -62,6 +62,9 @@
     'settings-notifications': 'Settings',
     'settings-preferences': 'Settings',
     'admin-users': 'User Management',
+    'admin-settings': 'Platform Settings',
+    'admin-overview': 'Overview',
+    'admin-security': 'Security & Activity',
   };
 
   function applyRoleNavigation() {
@@ -113,6 +116,13 @@
     if (settingsDropdown && route.indexOf('settings') === 0) {
       settingsDropdown.classList.add('open');
       const trigger = settingsDropdown.querySelector('.dropdown-trigger');
+      if (trigger) trigger.setAttribute('aria-expanded', 'true');
+    }
+
+    const adminDropdown = document.querySelector('#adminNavDropdown');
+    if (adminDropdown && route.indexOf('admin') === 0) {
+      adminDropdown.classList.add('open');
+      const trigger = adminDropdown.querySelector('.dropdown-trigger');
       if (trigger) trigger.setAttribute('aria-expanded', 'true');
     }
   }

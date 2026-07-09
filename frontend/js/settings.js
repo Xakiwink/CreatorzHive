@@ -442,41 +442,12 @@
     });
   }
 
-  function renderAdminApiPanel(data) {
+  function renderAdminApiPanel() {
     const mount = document.getElementById('integrationsMount');
     if (!mount) return;
-    const integrations = data.integrations || [];
-    const summary = data.summary || {};
     const esc = Utils.escapeHtml;
     const prefix = typeof window.__BASE_PATH__ === 'string' ? String(window.__BASE_PATH__).replace(/\/$/, '') : '';
     const baseOrigin = window.location.origin || '';
-
-    let rows = '';
-    integrations.forEach(function (row) {
-      const key = 'integration_enabled_' + row.platform;
-      rows +=
-        '<tr><td>' +
-        esc(row.label || row.platform) +
-        '</td><td><label class="form-switch"><input type="checkbox" data-int-toggle="' +
-        esc(key) +
-        '"' +
-        (row.enabled ? ' checked' : '') +
-        '></label></td><td>' +
-        (row.token_configured
-          ? '<span class="text-success">' +
-            esc(row.token_source === 'ui' ? 'UI' : row.token_source === 'env' ? '.env' : 'OK') +
-            '</span>'
-          : '<span class="text-danger">Missing</span>') +
-        '</td><td>' +
-        esc(String(row.connected_accounts || 0)) +
-        '</td><td>' +
-        (parseInt(row.expiring_soon, 10) > 0
-          ? '<span class="text-warning">' + esc(String(row.expiring_soon)) + '</span>'
-          : '<span class="text-muted">0</span>') +
-        '</td><td><button type="button" class="btn btn-sm btn-secondary" data-int-test="' +
-        esc(row.platform) +
-        '">Test</button></td></tr>';
-    });
 
     mount.innerHTML =
       '<div class="form-stack admin-api-stack">' +
@@ -500,82 +471,17 @@
       '</code> (routes for your role). CORS: set <code>API_CORS_ORIGINS</code> in <code>.env</code>. See <code>docs/api.md</code>.</p>' +
       '</div></div>' +
       '<div class="card card--feature admin-api-subcard mt-3" style="border:1px solid var(--color-border);">' +
-      '<div class="card-header"><h4 class="card-title">Platform snapshot</h4></div><div class="card-body">' +
-      '<ul class="text-sm" style="margin:0;padding-left:1.25rem;">' +
-      '<li>Total users: <strong>' +
-      esc(String(summary.users_total != null ? summary.users_total : '—')) +
-      '</strong></li>' +
-      '<li>Active users: <strong>' +
-      esc(String(summary.users_active != null ? summary.users_active : '—')) +
-      '</strong></li>' +
-      '<li>Active sessions: <strong>' +
-      esc(String(summary.sessions_active != null ? summary.sessions_active : '—')) +
-      '</strong></li>' +
-      '<li>Pending jobs: <strong>' +
-      esc(String(summary.jobs_pending != null ? summary.jobs_pending : '—')) +
-      '</strong></li>' +
-      '</ul></div></div>' +
-      '<div class="card card--feature admin-api-subcard mt-3" style="border:1px solid var(--color-border);">' +
-      '<div class="card-header"><h4 class="card-title">Platform API credentials</h4></div><div class="card-body">' +
-      '<p class="text-sm text-muted mb-2">Configure Meta, TikTok, YouTube, and X tokens below (encrypted at rest).</p>' +
-      '<div id="adminPlatformCredentialsMount"></div></div></div>' +
-      '<div class="card card--feature admin-api-subcard mt-3" style="border:1px solid var(--color-border);">' +
-      '<div class="card-header"><h4 class="card-title">Provider toggles</h4></div><div class="card-body">' +
-      '<p class="text-sm text-muted mb-2">Enable providers for creators. Token column: <strong>UI</strong> or <strong>.env</strong>.</p>' +
-      '<div class="table-wrapper"><table class="table"><thead><tr><th>Provider</th><th>Enabled</th><th>Token</th><th>Connected</th><th>Expiring &lt;7d</th><th></th></tr></thead><tbody>' +
-      rows +
-      '</tbody></table></div>' +
-      '<button type="button" class="btn btn-primary mt-3" id="adminApiPanelSaveProviders">Save provider toggles</button>' +
+      '<div class="card-header"><h4 class="card-title">Full admin controls</h4></div><div class="card-body">' +
+      '<p class="text-sm text-muted mb-3">Platform snapshot, provider toggles, user management, and security activity now live under the dedicated Admin section.</p>' +
+      '<a class="btn btn-primary btn-sm" href="' +
+      esc(routeUrl('admin-overview')) +
+      '">Go to Admin Overview</a>' +
       '</div></div></div>';
-
-    const credMount = mount.querySelector('#adminPlatformCredentialsMount');
-    const credGroups = data.platform_credentials || [];
-    if (credMount && window.AdminPlatformCredentials) {
-      if (window.AdminPlatformCredentials.renderAll) {
-        window.AdminPlatformCredentials.renderAll(credMount, credGroups);
-      } else if (credGroups[0]) {
-        window.AdminPlatformCredentials.render(credMount, credGroups[0]);
-      }
-    }
-
-    mount.querySelectorAll('[data-int-test]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        const platform = btn.getAttribute('data-int-test');
-        window
-          .api('admin_test_integration', 'GET', { platform: platform })
-          .then(function (r) {
-            window.Toast.success((r && r.message) || 'OK');
-          })
-          .catch(function (err) {
-            window.Toast.error(err.message || 'Test failed');
-          });
-      });
-    });
-
-    const saveBtn = mount.querySelector('#adminApiPanelSaveProviders');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', function () {
-        const payload = {};
-        mount.querySelectorAll('[data-int-toggle]').forEach(function (input) {
-          const key = input.getAttribute('data-int-toggle');
-          if (key) payload[key] = input.checked ? '1' : '0';
-        });
-        window
-          .api('admin_update_settings', 'POST', payload)
-          .then(function () {
-            window.Toast.success('Provider toggles saved');
-          })
-          .catch(function (err) {
-            window.Toast.error(err.message || 'Save failed');
-          });
-      });
-    }
   }
 
   async function loadIntegrations() {
     if (isAdminRole()) {
-      const res = await window.api('admin_overview', 'GET');
-      renderAdminApiPanel(res.data || {});
+      renderAdminApiPanel();
       return;
     }
     const res = await window.api('integrations_data', 'GET');

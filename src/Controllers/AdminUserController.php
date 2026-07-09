@@ -61,9 +61,29 @@ final class AdminUserController extends AbstractController
         $this->auth = $auth;
     }
 
+    private function renderPanel(string $panel): void
+    {
+        $this->views->render('settings/admin-users', ['admin_panel' => $panel]);
+    }
+
     public function usersPage(): void
     {
-        $this->views->render('settings/admin-users');
+        $this->renderPanel('users');
+    }
+
+    public function settingsPage(): void
+    {
+        $this->renderPanel('settings');
+    }
+
+    public function overviewPage(): void
+    {
+        $this->renderPanel('overview');
+    }
+
+    public function securityPage(): void
+    {
+        $this->renderPanel('security');
     }
 
     public function usersIndex(): void
@@ -85,64 +105,7 @@ final class AdminUserController extends AbstractController
             'settings' => $this->admin->settingsGetAll(),
             'summary' => $this->admin->platformSummary(),
             'integrations' => $this->admin->integrationStatuses(),
-            'platform_credentials' => $this->secrets->allGroupsPublic(),
         ], 'Admin overview loaded');
-    }
-
-    public function platformCredentials(): void
-    {
-        $group = strtolower(trim((string) request_get('group', 'meta')));
-        $public = $this->secrets->groupPublic($group);
-        if ($public === []) {
-            $this->json->error('Unknown credential group', 422);
-
-            return;
-        }
-
-        $this->json->success($public, 'Platform credentials loaded');
-    }
-
-    public function updatePlatformCredentials(): void
-    {
-        $actor = session_get_user();
-        $payload = array_merge(request_all(), request_json_body());
-        $group = strtolower(trim((string) ($payload['group'] ?? 'meta')));
-
-        if ($this->secrets->group($group) === null) {
-            $this->json->error('Unknown credential group', 422);
-
-            return;
-        }
-
-        $result = $this->secrets->applyGroupUpdate($group, $payload);
-        if ($result['saved'] === [] && $result['cleared'] === []) {
-            $this->json->error('No credential changes submitted. Enter a value or mark a field to clear.', 422);
-
-            return;
-        }
-
-        $this->audit->logCreate(
-            $actor !== null ? (int) ($actor['id'] ?? 0) : null,
-            'admin.platform_credentials.updated',
-            'platform_credentials',
-            null,
-            ['group' => $group],
-            ['saved' => $result['saved'], 'cleared' => $result['cleared']]
-        );
-
-        $validation = $this->admin->validateSavedCredentials($group, $result['saved']);
-        $message = 'Platform credentials updated';
-        if ($validation['warnings'] !== []) {
-            $message .= ' (' . implode(' ', $validation['warnings']) . ')';
-        }
-
-        $this->json->success([
-            'group' => $group,
-            'saved' => $result['saved'],
-            'cleared' => $result['cleared'],
-            'credentials' => $this->secrets->groupPublic($group),
-            'validation' => $validation,
-        ], $message);
     }
 
     public function settingsUpdate(): void
@@ -265,6 +228,28 @@ final class AdminUserController extends AbstractController
         $limit = (int) request_get('limit', 100);
         $rows = $this->audit->logListRecent($limit);
         $this->json->success(['logs' => $rows], 'Audit logs loaded');
+    }
+
+    public function securityActivity(): void
+    {
+        $rows = $this->db->fetchAll(
+            "SELECT `key`, tokens, last_refill FROM rate_limits
+             WHERE `key` LIKE 'ip:%:login' AND tokens >= 3
+             ORDER BY tokens DESC, last_refill DESC LIMIT 50"
+        );
+
+        $logins = array_map(static function (array $row): array {
+            $key = (string) $row['key'];
+            $ip = substr($key, 3, -6);
+
+            return [
+                'ip' => $ip,
+                'attempts' => (int) $row['tokens'],
+                'last_attempt' => (string) $row['last_refill'],
+            ];
+        }, $rows);
+
+        $this->json->success(['logins' => $logins], 'Security activity loaded');
     }
 
     public function usersStore(): void

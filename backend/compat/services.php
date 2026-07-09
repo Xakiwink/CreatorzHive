@@ -50,11 +50,6 @@ function admin_service_integration_statuses()
     return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\AdminService::class)->integrationStatuses(...func_get_args());
 }
 
-function admin_service_validate_saved_credentials(string $group, array $savedFieldKeys)
-{
-    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\AdminService::class)->validateSavedCredentials(...func_get_args());
-}
-
 function instagram_oauth_is_configured()
 {
     return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\InstagramOAuthService::class)->isConfigured(...func_get_args());

@@ -11,12 +11,8 @@ use function admin_service_integration_providers;
 use function admin_service_settings_defaults;
 use function admin_service_settings_get_all;
 use function admin_service_settings_path;
-use function instagram_oauth_is_configured;
-use function instagram_oauth_redirect_uri;
 use function platform_api_secrets_platform_token_configured;
-use function platform_api_secrets_resolve_env;
 use function platform_api_secrets_token_source_for_platform;
-use function social_api_service_http_request;
 use function storage_path;
 use CreatorzHive\Core\Database\Connection;
 
@@ -180,55 +176,6 @@ final class AdminService
             }
         
             return $statuses;
-    }
-
-    public function validateSavedCredentials(string $group, array $savedFieldKeys)
-    {
-        $warnings = [];
-            $group = strtolower(trim($group));
-        
-            $tokenFieldsToPlatform = [
-                'instagram_access_token' => 'instagram',
-                'tiktok_access_token' => 'tiktok',
-                'youtube_access_token' => 'youtube',
-                'twitter_bearer_token' => 'twitter',
-            ];
-        
-            foreach ($savedFieldKeys as $fieldKey) {
-                $platform = $tokenFieldsToPlatform[$fieldKey] ?? '';
-                if ($platform === '') {
-                    continue;
-                }
-        
-                $providers = admin_service_integration_providers();
-                if (!isset($providers[$platform])) {
-                    continue;
-                }
-        
-                $token = platform_api_secrets_resolve_env((string) $providers[$platform]['token_env']);
-                if ($token === '') {
-                    $warnings[] = ucfirst($platform) . ' token is empty after save.';
-                    continue;
-                }
-        
-                $res = social_api_service_http_request(
-                    'GET',
-                    (string) $providers[$platform]['test_url'],
-                    ['Authorization: Bearer ' . $token]
-                );
-                if (!$res['ok']) {
-                    $warnings[] = ucfirst($platform) . ' connection test failed (HTTP ' . (int) ($res['status'] ?? 0) . ').';
-                }
-            }
-        
-            if ($group === 'instagram' && in_array('instagram_app_id', $savedFieldKeys, true) && instagram_oauth_is_configured()) {
-                $redirect = instagram_oauth_redirect_uri();
-                if ($redirect === '') {
-                    $warnings[] = 'Instagram OAuth redirect URI could not be determined.';
-                }
-            }
-
-            return ['ok' => $warnings === [], 'warnings' => $warnings];
     }
 
 }

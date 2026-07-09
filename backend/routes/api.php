@@ -80,5 +80,4 @@ router_get_action('admin_overview', CreatorzHive\Controllers\AdminUserController
 router_post_action('admin_update_settings', CreatorzHive\Controllers\AdminUserController::class, 'settingsUpdate', ['auth', 'role:admin', 'csrf']);
 router_get_action('admin_audit_logs', CreatorzHive\Controllers\AdminUserController::class, 'auditLogsIndex', ['auth', 'role:admin']);
 router_get_action('admin_test_integration', CreatorzHive\Controllers\AdminUserController::class, 'integrationTest', ['auth', 'role:admin']);
-router_get_action('admin_platform_credentials', CreatorzHive\Controllers\AdminUserController::class, 'platformCredentials', ['auth', 'role:admin']);
-router_post_action('admin_update_platform_credentials', CreatorzHive\Controllers\AdminUserController::class, 'updatePlatformCredentials', ['auth', 'role:admin', 'csrf']);
+router_get_action('admin_security_activity', CreatorzHive\Controllers\AdminUserController::class, 'securityActivity', ['auth', 'role:admin']);

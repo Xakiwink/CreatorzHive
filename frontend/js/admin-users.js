@@ -5,6 +5,7 @@
   var createForm = document.getElementById('adminCreateUserForm');
   var settingsForm = document.getElementById('adminSettingsForm');
   var auditBody = document.getElementById('adminAuditBody');
+  var securityBody = document.getElementById('adminSecurityBody');
   var summaryCards = document.getElementById('adminSummaryCards');
   var integrationsBody = document.getElementById('adminIntegrationsBody');
 
@@ -148,16 +149,26 @@
           });
         });
       }
+    });
+  }
 
-      var credMount = document.getElementById('adminPlatformCredentialsMount');
-      var credGroups = data.platform_credentials || [];
-      if (credMount && window.AdminPlatformCredentials) {
-        if (window.AdminPlatformCredentials.renderAll) {
-          window.AdminPlatformCredentials.renderAll(credMount, credGroups);
-        } else if (credGroups[0]) {
-          window.AdminPlatformCredentials.render(credMount, credGroups[0]);
-        }
+  function loadSecurityActivity() {
+    if (!securityBody) return Promise.resolve();
+    return window.api('admin_security_activity', 'GET').then(function (res) {
+      securityBody.innerHTML = '';
+      var logins = (res.data && res.data.logins) || [];
+      if (logins.length === 0) {
+        securityBody.innerHTML = '<tr><td colspan="3" class="text-muted text-sm">No repeated failed login attempts recorded.</td></tr>';
+        return;
       }
+      logins.forEach(function (row) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + esc(row.ip) + '</td>' +
+          '<td>' + esc(row.attempts) + '</td>' +
+          '<td>' + esc(Utils.formatDate(row.last_attempt, 'medium')) + '</td>';
+        securityBody.appendChild(tr);
+      });
     });
   }
 
@@ -258,11 +269,20 @@
     });
   }
 
+  function initAdminTabs() {
+    var panels = document.querySelectorAll('.settings-panel');
+    var activePanel = String(window.__ADMIN_PANEL__ || 'users');
+    panels.forEach(function (p) {
+      p.classList.toggle('d-none', p.id !== 'panel-' + activePanel);
+    });
+  }
+
   function boot() {
     if (!bodyEl || !createForm) return;
+    initAdminTabs();
     createForm.addEventListener('submit', createUser);
     if (settingsForm) settingsForm.addEventListener('submit', saveAdminSettings);
-    Promise.all([loadUsers(), loadOverview(), loadAuditLogs()]).catch(function (err) {
+    Promise.all([loadUsers(), loadOverview(), loadAuditLogs(), loadSecurityActivity()]).catch(function (err) {
       window.Toast.error(err.message || 'Could not load users');
     });
   }

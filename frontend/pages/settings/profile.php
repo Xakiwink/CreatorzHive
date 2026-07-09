@@ -215,9 +215,6 @@
 </script>
 <script src="<?= htmlspecialchars(asset_url('frontend/js/utils.js')) ?>"></script>
 <script src="<?= htmlspecialchars(asset_url('frontend/js/app.js')) ?>"></script>
-<?php if ($settingsIsAdmin): ?>
-<script src="<?= htmlspecialchars(asset_url('frontend/js/admin-platform-credentials.js')) ?>"></script>
-<?php endif; ?>
 <script src="<?= htmlspecialchars(asset_url('frontend/js/settings.js')) ?>"></script>
 </body>
 </html>
