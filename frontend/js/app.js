@@ -118,13 +118,6 @@
       const trigger = settingsDropdown.querySelector('.dropdown-trigger');
       if (trigger) trigger.setAttribute('aria-expanded', 'true');
     }
-
-    const adminDropdown = document.querySelector('#adminNavDropdown');
-    if (adminDropdown && route.indexOf('admin') === 0) {
-      adminDropdown.classList.add('open');
-      const trigger = adminDropdown.querySelector('.dropdown-trigger');
-      if (trigger) trigger.setAttribute('aria-expanded', 'true');
-    }
   }
 
   /** Resolve light|dark|system (and legacy values) to light or dark for data-theme. */
