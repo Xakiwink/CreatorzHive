@@ -12,6 +12,17 @@
     return Utils.escapeHtml(String(v == null ? '' : v));
   }
 
+  // Line icons matching the sidebar's icon language (frontend/components/sidebar.html) --
+  // reused verbatim (users/security/notifications nav icons, dashboard's check/clock) for
+  // visual consistency instead of plain unillustrated summary tiles.
+  var SUMMARY_ICONS = {
+    users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.742-.477 3 3 0 00-4.682-2.72m.94 3.198v.75c0 .414-.336.75-.75.75H5.25a.75.75 0 01-.75-.75v-.75m13.5 0a9.09 9.09 0 01-13.5 0m13.5 0a9.09 9.09 0 00-13.5 0m13.5 0v-1.35a3 3 0 00-3-3h-1.5m-7.5 4.35v-1.35a3 3 0 013-3H7.5m0 0A3 3 0 104.5 9.75 3 3 0 007.5 13.5zm9 0a3 3 0 100-6 3 3 0 000 6z" /></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+    bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>',
+    security: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+  };
+
   function boolToText(v) {
     return parseInt(v, 10) === 1 ? 'Yes' : 'No';
   }
@@ -71,11 +82,13 @@
     });
   }
 
-  function summaryCard(title, value) {
+  function summaryCard(title, value, icon) {
     return (
       '<div class="integration-card">' +
-      '<div class="integration-card-head"><div><strong>' + esc(title) + '</strong><br><span class="text-muted text-sm">' + esc(value) + '</span></div></div>' +
-      '</div>'
+      '<div class="integration-card-head">' +
+      '<span class="integration-icon integration-icon--admin">' + (SUMMARY_ICONS[icon] || '') + '</span>' +
+      '<div><strong>' + esc(title) + '</strong><br><span class="text-muted text-sm">' + esc(value) + '</span></div>' +
+      '</div></div>'
     );
   }
 
@@ -100,11 +113,11 @@
 
       if (summaryCards) {
         summaryCards.innerHTML =
-          summaryCard('Total users', summary.users_total || 0) +
-          summaryCard('Active users', summary.users_active || 0) +
-          summaryCard('Unverified users', summary.users_unverified || 0) +
-          summaryCard('Active sessions', summary.sessions_active || 0) +
-          summaryCard('Pending jobs', summary.jobs_pending || 0);
+          summaryCard('Total users', summary.users_total || 0, 'users') +
+          summaryCard('Active users', summary.users_active || 0, 'check') +
+          summaryCard('Unverified users', summary.users_unverified || 0, 'bell') +
+          summaryCard('Active sessions', summary.sessions_active || 0, 'security') +
+          summaryCard('Pending jobs', summary.jobs_pending || 0, 'clock');
       }
 
       if (integrationsBody) {

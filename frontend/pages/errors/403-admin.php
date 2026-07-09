@@ -18,7 +18,7 @@ $errorMessage = isset($message) ? (string) $message : 'You are not allowed to ac
 <div class="auth-wrap">
   <aside class="left">
     <div class="auth-brand-inner">
-      <div class="auth-logo-row"><span class="auth-logo-mark" aria-hidden="true"></span></div>
+      <div class="auth-logo-row"><img class="auth-logo-mark" src="<?= htmlspecialchars(asset_url('frontend/assets/icon.svg')) ?>?v=2" alt=""></div>
       <span class="eyebrow auth-brand-eyebrow">Admin access</span>
       <h1>This area is for creator workflows</h1>
       <p class="auth-tagline">As an admin, you can manage users, integrations, and site settings from your operations panels.</p>

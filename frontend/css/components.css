@@ -933,6 +933,12 @@ input.success:focus {
   gap: var(--space-4);
 }
 
+.admin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+}
+
 .integration-card {
   padding: var(--space-4);
   border: 1px solid var(--color-border);
@@ -977,6 +983,10 @@ input.success:focus {
 
 .integration-icon--twitter {
   color: #0f1419;
+}
+
+.integration-icon--admin {
+  color: var(--color-accent);
 }
 
 html[data-theme="dark"] .integration-icon--tiktok,

@@ -26,7 +26,7 @@
           <p class="page-lead text-muted">Control platform settings, monitor changes, and manage users.</p>
         </header>
 
-        <section class="card card--feature" style="margin-bottom:16px;">
+        <section class="card card--feature">
           <div class="card-header"><h3 class="card-title">Platform control settings</h3></div>
           <div class="card-body">
             <form id="adminSettingsForm" class="form-stack">
@@ -70,14 +70,14 @@
           </div>
         </section>
 
-        <section class="card card--feature" style="margin-bottom:16px;">
+        <section class="card card--feature">
           <div class="card-header"><h3 class="card-title">System snapshot</h3></div>
           <div class="card-body">
-            <div class="integration-grid" id="adminSummaryCards"></div>
+            <div class="admin-summary-grid" id="adminSummaryCards"></div>
           </div>
         </section>
 
-        <section class="card card--feature" style="margin-bottom:16px;">
+        <section class="card card--feature">
           <div class="card-header"><h3 class="card-title">Platform API credentials</h3></div>
           <div class="card-body">
             <p class="text-muted text-sm mb-3">Configure Meta, TikTok, YouTube, and X API tokens. Values are encrypted and never shown again after save.</p>
@@ -85,7 +85,7 @@
           </div>
         </section>
 
-        <section class="card card--feature" style="margin-bottom:16px;">
+        <section class="card card--feature">
           <div class="card-header"><h3 class="card-title">API integrations control</h3></div>
           <div class="card-body">
             <p class="text-muted text-sm mb-3">Enable/disable providers, test credentials, and monitor token expiry risks.</p>
@@ -107,7 +107,7 @@
           </div>
         </section>
 
-        <section class="card card--feature" style="margin-bottom:16px;">
+        <section class="card card--feature">
           <div class="card-header"><h3 class="card-title">Create user</h3></div>
           <div class="card-body">
             <form id="adminCreateUserForm" class="form-stack">
@@ -157,7 +157,7 @@
           </div>
         </section>
 
-        <section class="card card--feature" style="margin-top:16px;">
+        <section class="card card--feature">
           <div class="card-header"><h3 class="card-title">Recent change log</h3></div>
           <div class="card-body">
             <div class="table-wrapper">
