@@ -7,9 +7,21 @@ namespace CreatorzHive\Controllers;
 use CreatorzHive\Controllers\Support\AbstractController;
 use CreatorzHive\Core\Http\JsonResponder;
 use CreatorzHive\Core\Http\ViewRenderer;
+use function route_url;
+use function session_get_user;
 
 final class SystemController extends AbstractController
 {
+    public function home(): void
+    {
+        if (session_get_user() !== null) {
+            $this->redirect(route_url('dashboard'));
+
+            return;
+        }
+
+        require_once base_path('frontend/pages/home.php');
+    }
 
     public function ping()
     {

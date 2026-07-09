@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+router_get_action('home', CreatorzHive\Controllers\SystemController::class, 'home');
+
 router_get_action('login', CreatorzHive\Controllers\AuthController::class, 'loginPage');
 router_get_action('register', CreatorzHive\Controllers\AuthController::class, 'registerPage');
 router_get_action('forgot-password', CreatorzHive\Controllers\AuthController::class, 'forgotPage');

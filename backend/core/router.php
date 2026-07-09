@@ -84,7 +84,7 @@ function router_resolve_route(): string
 
     $route = trim((string) $uri, '/');
 
-    return $route === '' ? 'login' : $route;
+    return $route === '' ? 'home' : $route;
 }
 
 function router_is_api_request(): bool
