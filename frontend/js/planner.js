@@ -870,7 +870,7 @@
       document.getElementById('modalClose')?.addEventListener('click', function () {
         document.getElementById('modal')?.classList.remove('modal--composer');
       }, { once: true });
-      fetch(assetPath('frontend/pages/planner/post-create.html'))
+      fetch(assetPath('frontend/pages/planner/post-create.html') + '?v=' + Date.now())
         .then(function (r) { return r.text(); })
         .then(function (html) {
           document.getElementById('postComposerMount').innerHTML = html;
@@ -913,7 +913,7 @@
         document.getElementById('modalClose')?.addEventListener('click', function () {
           document.getElementById('modal')?.classList.remove('modal--composer');
         }, { once: true });
-        return fetch(assetPath('frontend/pages/planner/post-create.html')).then(function (r) {
+        return fetch(assetPath('frontend/pages/planner/post-create.html') + '?v=' + Date.now()).then(function (r) {
           return r.text().then(function (html) {
             return { p: p, html: html };
           });
