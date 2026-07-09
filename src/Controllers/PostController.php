@@ -175,21 +175,22 @@ final class PostController extends AbstractController
                 }
         
                 $platforms = $this->input->normalizePlatforms($payload['platforms'] ?? null);
-        
+
                 $validation = validator_validate($payload, [
-                    'title' => 'required|max:255',
+                    'title' => 'max:255',
                     'content' => 'required|max:10000',
                     'status' => 'in:draft,scheduled,published',
                 ]);
-        
+
                 if (!$validation['valid']) {
                     $this->json->error('Validation failed', 422, $validation['errors']);
                 }
-        
+
+                $title = $this->input->deriveTitle((string) ($payload['title'] ?? ''), (string) $payload['content']);
                 $status = (string) $payload['status'];
                 $scheduledAt = null;
                 $publishedAt = null;
-        
+
                 if ($status === 'scheduled') {
                     $scheduledAt = isset($payload['scheduled_at']) ? trim((string) $payload['scheduled_at']) : '';
                     if ($scheduledAt === '') {
@@ -203,7 +204,7 @@ final class PostController extends AbstractController
                 } elseif ($status === 'published') {
                     $publishedAt = now();
                 }
-        
+
                 $userId = (int) $user['id'];
                 $mediaIds = $this->input->normalizeIdList($payload['media_ids'] ?? null);
                 $tagIds = $this->input->normalizeIdList($payload['tag_ids'] ?? null);
@@ -211,10 +212,10 @@ final class PostController extends AbstractController
                 if ($coverMediaId !== null && $this->media->findByIdForUser($coverMediaId, $userId) === null) {
                     $this->json->error('Invalid media attachment', 422);
                 }
-        
+
                 $postId = $this->posts->create([
                     'user_id' => $userId,
-                    'title' => (string) $payload['title'],
+                    'title' => $title,
                     'content' => (string) $payload['content'],
                     'caption' => isset($payload['caption']) ? (string) $payload['caption'] : null,
                     'platforms' => $platforms,
@@ -234,9 +235,9 @@ final class PostController extends AbstractController
                 $this->analytics->recalculate($userId);
 
                 if ($status === 'published') {
-                    $this->notifications->postPublished($userId, (string) $payload['title'], $postId);
+                    $this->notifications->postPublished($userId, $title, $postId);
                 }
-        
+
                 $post = $this->posts->getFullForUser($postId, $userId);
                 $this->json->success(['id' => $postId, 'post' => $post], 'Post created successfully');
     }
@@ -266,19 +267,20 @@ final class PostController extends AbstractController
                 $platforms = $this->input->normalizePlatforms($payload['platforms'] ?? null);
         
                 $validation = validator_validate($payload, [
-                    'title' => 'required|max:255',
+                    'title' => 'max:255',
                     'content' => 'required|max:10000',
                     'status' => 'in:draft,scheduled,published',
                 ]);
-        
+
                 if (!$validation['valid']) {
                     $this->json->error('Validation failed', 422, $validation['errors']);
                 }
-        
+
+                $title = $this->input->deriveTitle((string) ($payload['title'] ?? ''), (string) $payload['content']);
                 $status = (string) $payload['status'];
                 $scheduledAt = null;
                 $publishedAt = null;
-        
+
                 if ($status === 'scheduled') {
                     $scheduledAt = isset($payload['scheduled_at']) ? trim((string) $payload['scheduled_at']) : '';
                     if ($scheduledAt === '') {
@@ -312,7 +314,7 @@ final class PostController extends AbstractController
                 }
         
                 $update = [
-                    'title' => (string) $payload['title'],
+                    'title' => $title,
                     'content' => (string) $payload['content'],
                     'caption' => isset($payload['caption']) ? (string) $payload['caption'] : null,
                     'platforms' => $platforms,
@@ -334,7 +336,7 @@ final class PostController extends AbstractController
 
                 $wasPublished = (string) ($existing['status'] ?? '') === 'published';
                 if ($status === 'published' && !$wasPublished) {
-                    $this->notifications->postPublished($userId, (string) $payload['title'], $postId);
+                    $this->notifications->postPublished($userId, $title, $postId);
                 }
         
                 $post = $this->posts->getFullForUser($postId, $userId);

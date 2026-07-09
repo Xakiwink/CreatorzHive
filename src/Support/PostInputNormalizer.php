@@ -22,6 +22,26 @@ final class PostInputNormalizer
     }
 
     /**
+     * Title is optional in the composer (most platforms have no title concept --
+     * only YouTube does). Falls back to a snippet of the post text so posts still
+     * get a sensible label in lists/notifications and a real YouTube video title.
+     */
+    public function deriveTitle(string $title, string $content): string
+    {
+        $title = trim($title);
+        if ($title !== '') {
+            return $title;
+        }
+
+        $content = trim($content);
+        if ($content === '') {
+            return 'Untitled post';
+        }
+
+        return mb_strlen($content) > 60 ? mb_substr($content, 0, 60) . '…' : $content;
+    }
+
+    /**
      * @param mixed $raw
      * @return list<int>
      */
