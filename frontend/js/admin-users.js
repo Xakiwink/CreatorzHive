@@ -24,12 +24,21 @@
     clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
   };
 
-  function boolToText(v) {
-    return parseInt(v, 10) === 1 ? 'Yes' : 'No';
+  var allUsers = [];
+  var activeUserFilter = 'all';
+
+  function statusBadge(on, trueLabel, falseLabel) {
+    return (
+      '<span class="badge ' + (on ? 'badge-success' : 'badge-danger') + '">' +
+      esc(on ? trueLabel : falseLabel) +
+      '</span>'
+    );
   }
 
   function buildRow(user) {
     var tr = document.createElement('tr');
+    var verified = parseInt(user.email_verified, 10) === 1;
+    var active = parseInt(user.is_active, 10) === 1;
     tr.innerHTML =
       '<td>' + esc(user.id) + '</td>' +
       '<td><input class="form-input" data-field="name" value="' + esc(user.name) + '"></td>' +
@@ -40,11 +49,12 @@
       '<option value="brand">Brand</option>' +
       '<option value="admin">Admin</option>' +
       '</select></td>' +
-      '<td>' + esc(boolToText(user.email_verified)) + '</td>' +
-      '<td>' + esc(boolToText(user.is_active)) + '</td>' +
+      '<td>' + statusBadge(verified, 'Verified', 'Unverified') + '</td>' +
+      '<td>' + statusBadge(active, 'Active', 'Inactive') + '</td>' +
       '<td>' +
       '<button class="btn btn-sm btn-secondary" data-action="save">Save</button> ' +
       '<button class="btn btn-sm btn-secondary" data-action="verify">Verify</button> ' +
+      '<button class="btn btn-sm btn-secondary" data-action="reset-password">Reset password</button> ' +
       '<button class="btn btn-sm btn-danger" data-action="delete">Delete</button>' +
       '</td>';
 
@@ -56,6 +66,9 @@
     });
     tr.querySelector('[data-action="verify"]').addEventListener('click', function () {
       verifyUser(user.id);
+    });
+    tr.querySelector('[data-action="reset-password"]').addEventListener('click', function () {
+      openResetPasswordModal(user);
     });
     tr.querySelector('[data-action="delete"]').addEventListener('click', function () {
       deleteUser(user.id);
@@ -73,13 +86,79 @@
     };
   }
 
-  function loadUsers() {
-    return window.api('admin_users', 'GET').then(function (res) {
-      bodyEl.innerHTML = '';
-      var users = (res.data && res.data.users) || [];
-      users.forEach(function (user) {
+  function matchesFilter(user, filter) {
+    if (filter === 'active') return parseInt(user.is_active, 10) === 1;
+    if (filter === 'inactive') return parseInt(user.is_active, 10) !== 1;
+    if (filter === 'unverified') return parseInt(user.email_verified, 10) !== 1;
+    if (filter === 'admin') return String(user.role) === 'admin';
+    return true;
+  }
+
+  function renderUsers() {
+    bodyEl.innerHTML = '';
+    allUsers
+      .filter(function (u) {
+        return matchesFilter(u, activeUserFilter);
+      })
+      .forEach(function (user) {
         bodyEl.appendChild(buildRow(user));
       });
+    if (bodyEl.children.length === 0) {
+      bodyEl.innerHTML = '<tr><td colspan="8" class="text-muted text-sm">No users match this filter.</td></tr>';
+    }
+  }
+
+  function initUserFilters() {
+    var filterBar = document.getElementById('adminUserFilters');
+    if (!filterBar) return;
+    filterBar.querySelectorAll('.tab-pill').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        filterBar.querySelectorAll('.tab-pill').forEach(function (b) {
+          b.classList.remove('active');
+        });
+        btn.classList.add('active');
+        activeUserFilter = btn.getAttribute('data-filter') || 'all';
+        renderUsers();
+      });
+    });
+  }
+
+  function openResetPasswordModal(user) {
+    var bodyHtml =
+      '<div class="form-row">' +
+      '<label class="form-label" for="resetPwInput">New password for ' + esc(user.username) + '</label>' +
+      '<input class="form-input" type="password" id="resetPwInput" minlength="8" placeholder="Min. 8 characters" autocomplete="new-password">' +
+      '</div>';
+    var footerHtml =
+      '<button type="button" class="btn btn-secondary" id="resetPwCancel">Cancel</button>' +
+      '<button type="button" class="btn btn-primary" id="resetPwSave">Set new password</button>';
+    window.Modal.open('Reset password', bodyHtml, footerHtml);
+
+    document.getElementById('resetPwCancel').addEventListener('click', function () {
+      window.Modal.close();
+    });
+    document.getElementById('resetPwSave').addEventListener('click', function () {
+      var input = document.getElementById('resetPwInput');
+      var val = input ? input.value : '';
+      if (val.length < 8) {
+        window.Toast.error('Password must be at least 8 characters');
+        return;
+      }
+      window.api('admin_update_user', 'POST', { id: String(user.id), password: val })
+        .then(function () {
+          window.Toast.success('Password reset');
+          window.Modal.close();
+        })
+        .catch(function (err) {
+          window.Toast.error(err.message || 'Reset failed');
+        });
+    });
+  }
+
+  function loadUsers() {
+    return window.api('admin_users', 'GET').then(function (res) {
+      allUsers = (res.data && res.data.users) || [];
+      renderUsers();
     });
   }
 
@@ -280,6 +359,7 @@
   function boot() {
     if (!bodyEl || !createForm) return;
     initAdminTabs();
+    initUserFilters();
     createForm.addEventListener('submit', createUser);
     if (settingsForm) settingsForm.addEventListener('submit', saveAdminSettings);
     Promise.all([loadUsers(), loadOverview(), loadAuditLogs(), loadSecurityActivity()]).catch(function (err) {

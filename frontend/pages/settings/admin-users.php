@@ -85,6 +85,13 @@
               <hr class="settings-divider">
 
               <h4 class="settings-subheading">All users</h4>
+              <div class="tab-pills mb-3" id="adminUserFilters" role="group" aria-label="Filter users by status">
+                <button type="button" class="tab-pill active" data-filter="all">All</button>
+                <button type="button" class="tab-pill" data-filter="active">Active</button>
+                <button type="button" class="tab-pill" data-filter="inactive">Inactive</button>
+                <button type="button" class="tab-pill" data-filter="unverified">Unverified</button>
+                <button type="button" class="tab-pill" data-filter="admin">Admins</button>
+              </div>
               <div class="table-wrapper">
                 <table class="table">
                   <thead>
