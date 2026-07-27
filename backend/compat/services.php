@@ -342,6 +342,11 @@ function notification_service_post_published(int $userId, string $postTitle, int
     return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\NotificationService::class)->postPublished(...func_get_args());
 }
 
+function notification_service_post_scheduled(int $userId, string $postTitle, int $postId, string $scheduledAt)
+{
+    return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\NotificationService::class)->postScheduled(...func_get_args());
+}
+
 function notification_service_post_failed(int $userId, string $postTitle, string $reason)
 {
     return \CreatorzHive\Core\Application::instance()->get(CreatorzHive\Services\NotificationService::class)->postFailed(...func_get_args());

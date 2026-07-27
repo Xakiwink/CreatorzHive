@@ -26,7 +26,7 @@ final class NotificationRepository
             }
         
             if ($category === 'posts') {
-                $sql .= ' AND type IN (\'post_published\', \'post_failed\')';
+                $sql .= ' AND type IN (\'post_published\', \'post_failed\', \'post_scheduled\')';
             } elseif ($category === 'deals') {
                 $sql .= ' AND type IN (\'deal_updated\', \'deal_completed\')';
             } elseif ($category === 'invoices') {
@@ -47,7 +47,7 @@ final class NotificationRepository
                 $sql .= ' AND is_read = 0';
             }
             if ($category === 'posts') {
-                $sql .= ' AND type IN (\'post_published\', \'post_failed\')';
+                $sql .= ' AND type IN (\'post_published\', \'post_failed\', \'post_scheduled\')';
             } elseif ($category === 'deals') {
                 $sql .= ' AND type IN (\'deal_updated\', \'deal_completed\')';
             } elseif ($category === 'invoices') {

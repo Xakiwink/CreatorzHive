@@ -384,7 +384,7 @@ CREATE TABLE `notification_preferences` (
   `email_deal_updated` tinyint(1) NOT NULL DEFAULT '1',
   `email_invoice_paid` tinyint(1) NOT NULL DEFAULT '1',
   `email_weekly_summary` tinyint(1) NOT NULL DEFAULT '1',
-  `push_post_published` tinyint(1) NOT NULL DEFAULT '0',
+  `push_post_published` tinyint(1) NOT NULL DEFAULT '1',
   `push_deal_updated` tinyint(1) NOT NULL DEFAULT '0',
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

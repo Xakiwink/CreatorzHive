@@ -704,6 +704,17 @@
   transition: all var(--duration-fast);
 }
 
+.media-dropzone-v2.field-invalid {
+  border-color: var(--color-danger);
+  background: rgba(244, 67, 54, 0.08);
+}
+
+.media-dropzone-v2.field-invalid:hover,
+.media-dropzone-v2.field-invalid.dragover {
+  border-color: var(--color-danger);
+  background: rgba(244, 67, 54, 0.12);
+}
+
 .media-dropzone-v2:hover,
 .media-dropzone-v2.dragover {
   border-color: var(--color-accent);

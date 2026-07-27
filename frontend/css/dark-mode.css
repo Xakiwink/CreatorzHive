@@ -87,9 +87,18 @@ html[data-theme="dark"] .table tbody tr:hover {
 
 html[data-theme="dark"] .form-input,
 html[data-theme="dark"] .form-select,
+html[data-theme="dark"] .input-select,
+html[data-theme="dark"] .input-date,
+html[data-theme="dark"] .input-search,
 html[data-theme="dark"] .form-textarea {
   background: #181512;
   border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+html[data-theme="dark"] .form-select option,
+html[data-theme="dark"] .input-select option {
+  background: #181512;
   color: var(--color-text-primary);
 }
 

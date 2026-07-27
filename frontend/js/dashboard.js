@@ -326,7 +326,7 @@
         '</td>' +
         '<td><div class="table-actions">' +
         '<a class="btn btn-ghost btn-sm" href="' +
-        Utils.escapeHtml(window.routeQuery('planner')) +
+        Utils.escapeHtml(window.routeQuery('planner', { id: String(p.id) })) +
         '">Edit</a>' +
         '<button type="button" class="btn btn-ghost btn-sm" data-delete-post="' +
         Utils.escapeHtml(String(p.id)) +
@@ -350,6 +350,18 @@
     });
   }
 
+  function normalizeMediaUrl(url) {
+    const value = String(url || '').trim();
+    if (value === '') {
+      return '';
+    }
+    if (/^(https?:)?\/\//.test(value) || value.charAt(0) === '/') {
+      return value;
+    }
+    const base = typeof window.__BASE_PATH__ === 'string' ? String(window.__BASE_PATH__).replace(/\/$/, '') : '';
+    return (base ? base + '/' : '/') + value.replace(/^\/+/, '');
+  }
+
   function renderUpcomingPosts(posts) {
     const mount = document.getElementById('upcomingMount');
     if (!mount) return;
@@ -360,7 +372,7 @@
     }
     let html = '';
     posts.forEach((p) => {
-      const thumb = p.cover_thumb || p.cover_url || '';
+      const thumb = normalizeMediaUrl(p.cover_thumb || p.cover_url || '');
       const plats = Array.isArray(p.platforms) ? p.platforms : [];
       const badges = plats.map(platformBadge).join(' ');
       const when = p.scheduled_at
@@ -433,7 +445,7 @@
         (conn
           ? platformHealthNote(conn, health)
           : '<a class="btn btn-sm btn-secondary" href="' +
-            Utils.escapeHtml(window.routeQuery('settings', { tab: 'integrations' })) +
+            Utils.escapeHtml(window.routeQuery('settings-integrations' )) +
             '">Connect</a>') +
         '</div>';
     });

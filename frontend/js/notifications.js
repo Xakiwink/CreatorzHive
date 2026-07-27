@@ -1,6 +1,7 @@
 (function () {
   const NOTIF_TYPE_META = {
     post_published: { className: 'notif-type--success', label: 'Post' },
+    post_scheduled: { className: 'notif-type--scheduled', label: 'Post' },
     post_failed: { className: 'notif-type--danger', label: 'Post' },
     deal_updated: { className: 'notif-type--deal', label: 'Deal' },
     deal_completed: { className: 'notif-type--win', label: 'Deal' },
@@ -20,6 +21,8 @@
     const ic =
       type === 'post_published'
         ? '<svg class="notif-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+        : type === 'post_scheduled'
+        ? '<svg class="notif-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v5l3 3"/></svg>'
         : type === 'post_failed'
           ? '<svg class="notif-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
           : type === 'deal_updated'

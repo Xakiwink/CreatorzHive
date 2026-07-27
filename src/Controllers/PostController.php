@@ -236,6 +236,8 @@ final class PostController extends AbstractController
 
                 if ($status === 'published') {
                     $this->notifications->postPublished($userId, $title, $postId);
+                } elseif ($status === 'scheduled') {
+                    $this->notifications->postScheduled($userId, $title, $postId, $scheduledAt);
                 }
 
                 $post = $this->posts->getFullForUser($postId, $userId);
@@ -335,10 +337,13 @@ final class PostController extends AbstractController
                 $this->analytics->recalculate($userId);
 
                 $wasPublished = (string) ($existing['status'] ?? '') === 'published';
+                $wasScheduled = (string) ($existing['status'] ?? '') === 'scheduled';
                 if ($status === 'published' && !$wasPublished) {
                     $this->notifications->postPublished($userId, $title, $postId);
+                } elseif ($status === 'scheduled' && !$wasScheduled) {
+                    $this->notifications->postScheduled($userId, $title, $postId, $scheduledAt);
                 }
-        
+
                 $post = $this->posts->getFullForUser($postId, $userId);
                 $this->json->success(['post' => $post], 'Post updated successfully');
     }

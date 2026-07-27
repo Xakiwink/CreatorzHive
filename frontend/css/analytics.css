@@ -103,8 +103,17 @@
 }
 
 .analytics-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
   width: 100%;
   max-width: 220px;
+}
+
+.analytics-filter-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
 }
 
 .analytics-select {

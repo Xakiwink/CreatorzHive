@@ -75,19 +75,19 @@ final class NotificationService
 
     public function allowInApp(int $userId, string $type)
     {
-        $p = $this->prefs($userId);
-            switch ($type) {
-                case 'post_published':
-                    return !empty($p['push_post_published']);
-                case 'deal_updated':
-                case 'deal_completed':
-                    return !empty($p['push_deal_updated']);
-                case 'post_failed':
-                case 'invoice_paid':
-                case 'welcome':
-                default:
-                    return true;
-            }
+        switch ($type) {
+            case 'deal_updated':
+            case 'deal_completed':
+                $p = $this->prefs($userId);
+
+                return !empty($p['push_deal_updated']);
+            case 'post_published':
+            case 'post_failed':
+            case 'invoice_paid':
+            case 'welcome':
+            default:
+                return true;
+        }
     }
 
     public function createInApp(
@@ -99,10 +99,10 @@ final class NotificationService
     ?string $icon = null
 )
     {
-        if (!notification_service_allow_in_app($userId, $type)) {
+        if (!$this->allowInApp($userId, $type)) {
                 return;
             }
-            notification_create($userId, $type, $title, $body, $actionUrl, $icon);
+            $this->notifications->create($userId, $type, $title, $body, $actionUrl, $icon);
     }
 
     public function postPublished(int $userId, string $postTitle, int $postId)
@@ -121,6 +121,20 @@ final class NotificationService
                 'email_post_published',
                 'Your post was published',
                 '<p>“' . htmlspecialchars($postTitle, ENT_QUOTES, 'UTF-8') . '” is now published.</p><p><a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '">Open planner</a></p>'
+            );
+    }
+
+    public function postScheduled(int $userId, string $postTitle, int $postId, string $scheduledAt)
+    {
+        $url = route_url('planner', ['highlight_post' => (string) $postId]);
+        $scheduledLabel = date('M j, Y H:i', strtotime($scheduledAt));
+            $this->createInApp(
+                $userId,
+                'post_scheduled',
+                'Post scheduled',
+                '“' . $postTitle . '” is scheduled for ' . $scheduledLabel . '.',
+                $url,
+                '🕒'
             );
     }
 

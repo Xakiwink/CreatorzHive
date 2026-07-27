@@ -86,13 +86,62 @@ function mailer_render_template_by_name(string $templateFile, array $data): stri
     $path = storage_path('email-templates/' . ltrim($templateFile, '/'));
     $html = is_file($path)
         ? (string) file_get_contents($path)
-        : '<p>Hello {{name}}</p><p>{{body}}</p>';
+        : mailer_fallback_template($templateFile, $data);
 
     foreach ($data as $key => $value) {
         if (is_scalar($value) || $value === null) {
-            $html = str_replace('{{' . $key . '}}', (string) $value, $html);
+            $html = str_replace('{{' . $key . '}}', mailer_template_value($key, $value), $html);
         }
     }
 
-    return $html;
+    return mailer_remove_unresolved_placeholders($html);
+}
+
+function mailer_fallback_template(string $templateFile, array $data): string
+{
+    switch (basename($templateFile)) {
+        case 'verify-email.html':
+            return '<h2>Welcome to CreatorzHive, {{name}}</h2>'
+                . '<p>Please verify your email by clicking the link below:</p>'
+                . '<p><a href="{{url}}">Verify Email</a></p>';
+
+        case 'reset-password.html':
+            if (trim((string) ($data['otp'] ?? '')) !== '') {
+                return '<h2>Password Recovery OTP</h2>'
+                    . '<p>Hello {{name}}, use this one-time code to reset your password:</p>'
+                    . '<p style="font-size:28px;letter-spacing:4px;font-weight:700;margin:16px 0;">{{otp}}</p>'
+                    . '<p>This code expires in {{expires_minutes}} minutes.</p>'
+                    . '<p>Then continue here: <a href="{{url}}">Reset Password</a></p>';
+            }
+
+            return '<h2>Password Reset</h2>'
+                . '<p>Hello {{name}}, reset your password by clicking the link below:</p>'
+                . '<p><a href="{{url}}">Reset Password</a></p>';
+
+        case 'notification-generic.html':
+        default:
+            return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{subject}}</title></head>'
+                . '<body style="font-family: Inter, system-ui, sans-serif; line-height: 1.5; color: #1e293b;">'
+                . '<p>Hi {{name}},</p><div>{{body}}</div>'
+                . '<p style="margin-top:24px;color:#64748b;font-size:12px;">CreatorzHive</p>'
+                . '</body></html>';
+    }
+}
+
+function mailer_template_value(string $key, $value): string
+{
+    if ($value === null) {
+        return '';
+    }
+
+    if ($key === 'body') {
+        return (string) $value;
+    }
+
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+
+function mailer_remove_unresolved_placeholders(string $html): string
+{
+    return (string) preg_replace('/\{\{[A-Za-z0-9_]+\}\}/', '', $html);
 }

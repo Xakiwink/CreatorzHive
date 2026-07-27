@@ -743,11 +743,18 @@
     ta?.addEventListener('input', function () {
       ta.classList.remove('field-invalid');
     });
+    title?.addEventListener('input', function () {
+      title.classList.remove('field-invalid');
+    });
 
     document.querySelectorAll('input[name="pm_platform"]').forEach(function (r) {
       r.addEventListener('change', function () {
         updateCharCounters();
         updatePreview();
+        const mediaDropzone = document.getElementById('pmDropzone');
+        if (mediaDropzone) {
+          mediaDropzone.classList.remove('field-invalid');
+        }
       });
     });
 
@@ -847,6 +854,10 @@
             mime: d.mime_type,
           });
           renderComposerMedia();
+          const mediaDropzone = document.getElementById('pmDropzone');
+          if (mediaDropzone) {
+            mediaDropzone.classList.remove('field-invalid');
+          }
           window.Toast.success('Uploaded');
         })
         .catch(function (err) {
@@ -1013,6 +1024,33 @@
       return;
     }
 
+    if (platforms.includes('youtube') && title === '') {
+      window.Toast.error('YouTube posts require a title.');
+      const missingTitle = document.getElementById('pmTitle');
+      if (missingTitle) {
+        missingTitle.classList.add('field-invalid');
+        missingTitle.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        missingTitle.focus();
+      }
+      return;
+    }
+
+    if (platforms.includes('youtube')) {
+      const youtubeInvalid = composerMedia.length === 0 || composerMedia.some(function (m) {
+        return !(typeof m.mime === 'string' && m.mime.indexOf('video/') === 0);
+      });
+      if (youtubeInvalid) {
+        window.Toast.error('YouTube posts require video media.');
+        const mediaDropzone = document.getElementById('pmDropzone');
+        if (mediaDropzone) {
+          mediaDropzone.classList.add('field-invalid');
+          mediaDropzone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          mediaDropzone.focus();
+        }
+        return;
+      }
+    }
+
     if (status === 'scheduled' && !sched) {
       window.Toast.error('Pick a scheduled date and time.');
       return;
@@ -1168,6 +1206,11 @@
     });
 
     loadCalendar(calMonth, calYear);
+
+    const openId = Number(Utils.getQueryParam('id')) || 0;
+    if (openId > 0) {
+      openEditModal(openId);
+    }
   }
 
   window.Planner = {
